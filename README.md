@@ -40,6 +40,39 @@ bunx supabase gen types typescript --project-id "yhydjqxtnqinaxnqnegn" --schema 
 
 ---
 
+# Docker
+[Dockerfile With Bun](Dockerfile)
+
+## Build and run the Docker image
+```bash
+docker build -t san-rafael .
+```
+> [!NOTE]
+> This command tells Docker to build an image with the tag my-nuxt-app using the current directory (denoted by the .).
+
+```bash
+docker run -p 3000:3000 san-rafael
+```
+
+## Using docker compose (optional)
+Create de docker-compose.yml
+
+```yml
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+```
+
+docker-compose.yml for more complex applications
+```bash
+docker-compose up
+```
+
+---
+
 # POR HACER
 
 ## Genealogia (La tabla es la de reproduccion)
