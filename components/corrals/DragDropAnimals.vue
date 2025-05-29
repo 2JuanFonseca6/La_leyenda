@@ -1,4 +1,6 @@
 <template>
+
+  <AnimalDrag />
   <div class="flex gap-8 p-6">
     <!-- Columna Izquierda: Animales -->
     <div class="w-1/3">
