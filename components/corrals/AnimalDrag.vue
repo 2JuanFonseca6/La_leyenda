@@ -1,3 +1,4 @@
+<!-- components/corrals/AnimalDrag.vue -->
 <script setup lang="ts">
 import { h, resolveComponent, ref, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -23,7 +24,19 @@ type Animal = {
   fecha_nacimiento?: string
   venta?: boolean
   historialSalud?: any[]
+  corralId?: number | null // Agregamos esta propiedad para el drag and drop
 }
+
+// Props para recibir animales asignados desde el componente padre
+const props = defineProps<{
+  assignedAnimals?: string[] // IDs de animales que ya están asignados a corrales
+}>()
+
+// Emits para comunicar cambios al componente padre
+const emit = defineEmits<{
+  animalDragStart: [animal: Animal]
+  unassignAnimal: [animalId: string]
+}>()
 
 const data = ref<Animal[]>([])
 const total = ref(0)
@@ -47,7 +60,18 @@ const estadoSaludColorMap: Record<EstadoSalud, string> = {
 const columns: TableColumn<Animal>[] = [
   {
     accessorKey: 'id_animal',
-    header: 'ID Animal'
+    header: 'ID Animal',
+    cell: ({ row }) => {
+      const animal = row.original
+      return h('div', {
+        class: 'drag-handle cursor-grab hover:cursor-grabbing flex items-center gap-2',
+        draggable: true,
+        onDragstart: (event: DragEvent) => handleDragStart(event, animal),
+      }, [
+        h('span', { class: 'text-lg' }, '🐄'),
+        h('span', {}, animal.id_animal)
+      ])
+    }
   },
   {
     accessorKey: 'raza',
@@ -113,6 +137,19 @@ const columns: TableColumn<Animal>[] = [
   }
 ]
 
+// Función para manejar el inicio del drag
+const handleDragStart = (event: DragEvent, animal: Animal) => {
+  if (!event.dataTransfer) return
+  
+  // Almacenar el ID del animal en el dataTransfer
+  event.dataTransfer.setData('animalId', animal.id_animal)
+  event.dataTransfer.setData('animalData', JSON.stringify(animal))
+  event.dataTransfer.effectAllowed = 'move'
+  
+  // Emitir evento al componente padre
+  emit('animalDragStart', animal)
+}
+
 // Función para obtener animales desde la API
 const fetchAnimals = async () => {
   isPending.value = true
@@ -177,42 +214,99 @@ const triggerSearch = () => {
 // Watcher para cambios en la paginación
 watch([() => pagination.value.page, () => pagination.value.pageSize], fetchAnimals)
 
-// Eliminamos el watcher automático de globalFilter
-// En su lugar, usaremos eventos manuales para activar la búsqueda
-
 // Carga inicial
 fetchAnimals()
+
+// Función para obtener las clases CSS de una fila según si está asignada
+const getRowClasses = (animal: Animal) => {
+  const isAssigned = props.assignedAnimals?.includes(animal.id_animal)
+  return isAssigned 
+    ? 'opacity-50 bg-gray-100 dark:bg-gray-800' 
+    : 'hover:bg-gray-50 dark:hover:bg-gray-900'
+}
+
+// Agregar estado para el drop zone de desasignación
+const isDragOver = ref(false)
+
+// Función para manejar el drop de desasignación
+const handleUnassignDrop = (event: DragEvent) => {
+  event.preventDefault()
+  isDragOver.value = false
+  
+  const animalId = event.dataTransfer?.getData('animalId')
+  if (animalId) {
+    // Emitir evento para desasignar animal
+    emit('unassignAnimal', animalId)
+  }
+}
 </script>
 
 <template>
-  <div class="flex flex-col flex-1 w-full">
-    <div class="flex px-4 py-3.5 border-b border-accented">
-      <UInput 
-        v-model="globalFilter" 
-        class="max-w-sm" 
-        placeholder="Buscar por ID o término..." 
-        icon="i-heroicons-magnifying-glass"
-        :loading="isPending"
-        @keyup.enter="triggerSearch" />
-      <UButton 
-        icon="i-heroicons-magnifying-glass"
-        @click="triggerSearch" 
-        class="ml-2"
-      />
+  <div class="flex flex-col flex-1 w-full h-full">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold mb-4">Animales Disponibles</h2>
+      <div class="flex px-4 py-3.5 border-b border-accented">
+        <UInput 
+          v-model="globalFilter" 
+          class="max-w-sm" 
+          placeholder="Buscar por ID o término..." 
+          icon="i-heroicons-magnifying-glass"
+          :loading="isPending"
+          @keyup.enter="triggerSearch" />
+        <UButton 
+          icon="i-heroicons-magnifying-glass"
+          @click="triggerSearch" 
+          class="ml-2"
+        />
+      </div>
     </div>
 
-    <UTable
-      :data="data"
-      :columns="columns"
-      :loading="isPending"
-    />
+    <div class="flex-1 overflow-hidden">
+      <UTable
+        :data="data"
+        :columns="columns"
+        :loading="isPending"
+        :ui="{
+          tbody: 'divide-y divide-gray-200 dark:divide-gray-700',
+          tr: 'transition-colors duration-200'
+        }"
+      >
+        <template #empty-state>
+          <div class="flex flex-col items-center justify-center py-6 text-center">
+            <div class="text-4xl mb-2">🔍</div>
+            <div class="text-gray-500">No se encontraron animales</div>
+          </div>
+        </template>
+      </UTable>
+    </div>
     
-    <div class="flex justify-center border-t border-default pt-4">
+    <div class="flex justify-center border-t border-default pt-4 mt-4">
       <UPagination 
         v-model:page="pagination.page" 
         :items-per-page="pagination.pageSize" 
         :total="total" 
       />
     </div>
-  </div>
+</div>
 </template>
+
+<style scoped>
+.drag-handle {
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing !important;
+}
+
+/* Estilos para filas de animales asignados */
+:deep(.opacity-50 td) {
+  color: rgb(156 163 175) !important;
+}
+
+/* Efecto visual durante drag */
+.drag-handle:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+</style>

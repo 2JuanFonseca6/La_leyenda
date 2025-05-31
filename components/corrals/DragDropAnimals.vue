@@ -1,31 +1,13 @@
+<!-- components/corrals/DragDropAnimals.vue -->
 <template>
-
-  <AnimalDrag />
-  <div class="flex gap-8 p-6">
-    <!-- Columna Izquierda: Animales -->
-    <div class="w-1/3">
-      <h2 class="text-xl font-bold mb-4">Animales Disponibles</h2>
-      <div 
-        class="drop-zone min-h-[300px] p-4 rounded-lg border-2 border-dashed border-gray-300"
-        :class="{ 'drag-over': isDragOverUnassigned }"
-        @dragover.prevent="handleUnassignedDragOver"
-        @dragleave="handleDragLeave"
-        @drop="onDrop($event, null)"
-      >
-        <div
-          v-for="animal in unassignedAnimals"
-          :key="animal.id"
-          class="drag-el hover:bg-gray-50 mb-2"
-          draggable="true"
-          @dragstart="startDrag($event, animal)"
-        >
-          🐄 {{ animal.title }}
-        </div>
-        <div v-if="unassignedAnimals.length === 0" class="text-gray-500 text-center py-8">
-          <div class="text-4xl mb-2">📦</div>
-          <div>Arrastra animales aquí para desasignarlos</div>
-        </div>
-      </div>
+  <div class="flex gap-8 p-6 h-screen">
+    <!-- Columna Izquierda: Componente de Tabla de Animales -->
+    <div class="w-1/3 flex flex-col">
+      <AnimalDrag 
+        :assigned-animals="assignedAnimalIds"
+        @animal-drag-start="handleAnimalDragStart"
+        @unassign-animal="handleUnassignAnimal"
+      />
     </div>
 
     <!-- Columna Derecha: Tabla de Corrales -->
@@ -57,7 +39,6 @@
                     size="sm"
                     square
                     :class="expanded[corral.id] ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'"
-                    
                   />
                 </td>
                 <td class="px-4 py-3 font-medium">{{ corral.name }}</td>
@@ -96,12 +77,12 @@
                         <div class="flex flex-wrap gap-2">
                           <div
                             v-for="animal in getAnimalsInCorral(corral.id)"
-                            :key="animal.id"
+                            :key="animal.id_animal"
                             class="drag-el bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] border border-blue-200 hover:border-blue-400 hover:shadow-md"
                             draggable="true"
                             @dragstart="startDrag($event, animal)"
                           >
-                            🐄 {{ animal.title }}
+                            🐄 {{ animal.id_animal }} - {{ animal.raza }}
                           </div>
                         </div>
                       </div>
@@ -139,10 +120,18 @@
 <script setup lang="ts">
 import { UButton } from '#components'
 import { ref, computed } from 'vue'
+import AnimalDrag from './AnimalDrag.vue'
 
+// Tipos actualizados para usar los datos reales de la API
 type Animal = {
-  id: number
-  title: string
+  id_animal: string
+  raza: string
+  peso_actual: number
+  tipo_animal: string
+  estado_salud: string
+  fecha_nacimiento?: string
+  venta?: boolean
+  historialSalud?: any[]
   corralId: number | null
 }
 
@@ -151,14 +140,8 @@ type Corral = {
   name: string
 }
 
-const animals = ref<Animal[]>([
-  { id: 1, title: 'Vaca Holstein', corralId: null },
-  { id: 2, title: 'Caballo Árabe', corralId: null },
-  { id: 3, title: 'Cerdo Yorkshire', corralId: null },
-  { id: 4, title: 'Oveja Merino', corralId: null },
-  { id: 5, title: 'Toro Angus', corralId: null },
-  { id: 6, title: 'Cabra Nubia', corralId: null },
-])
+// Estado para almacenar animales asignados a corrales
+const animals = ref<Animal[]>([])
 
 const corrals = ref<Corral[]>([
   { id: 1, name: 'Corral A' },
@@ -166,8 +149,11 @@ const corrals = ref<Corral[]>([
   { id: 3, name: 'Corral C' },
 ])
 
-const unassignedAnimals = computed(() => 
-  animals.value.filter(animal => animal.corralId === null)
+// Computed para obtener IDs de animales asignados
+const assignedAnimalIds = computed(() => 
+  animals.value
+    .filter(animal => animal.corralId !== null)
+    .map(animal => animal.id_animal)
 )
 
 const getAnimalsInCorral = (corralId: number) => 
@@ -178,23 +164,22 @@ const expanded = ref<Record<number, boolean>>({})
 
 // Estado de drag and drop
 const isDragOver = ref<number | null>(null)
-const isDragOverUnassigned = ref(false)
+const currentDraggedAnimal = ref<Animal | null>(null)
 
 // Funciones de drag and drop
 const startDrag = (event: DragEvent, animal: Animal) => {
   if (!event.dataTransfer) return
   
-  event.dataTransfer.setData('animalId', animal.id.toString())
+  event.dataTransfer.setData('animalId', animal.id_animal)
+  event.dataTransfer.setData('animalData', JSON.stringify(animal))
   event.dataTransfer.effectAllowed = 'move'
+  
+  currentDraggedAnimal.value = animal
   
   // Si el animal está en un corral, mantenerlo expandido durante el drag
   if (animal.corralId !== null) {
     expanded.value[animal.corralId] = true
   }
-}
-
-const handleUnassignedDragOver = () => {
-  isDragOverUnassigned.value = true
 }
 
 const handleCorralDragOver = (corralId: number) => {
@@ -213,7 +198,6 @@ const handleDragLeave = (event: DragEvent) => {
   
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     isDragOver.value = null
-    isDragOverUnassigned.value = false
   }
 }
 
@@ -222,29 +206,65 @@ const onDrop = (event: DragEvent, corralId: number | null) => {
   
   // Limpiar estados de drag
   isDragOver.value = null
-  isDragOverUnassigned.value = false
   
   const animalId = event.dataTransfer?.getData('animalId')
-  if (!animalId) return
+  const animalDataStr = event.dataTransfer?.getData('animalData')
+  
+  if (!animalId || !animalDataStr) return
 
-  const animal = animals.value.find(a => a.id === Number(animalId))
-  if (animal) {
+  try {
+    const animalData = JSON.parse(animalDataStr)
+    
+    // Buscar si el animal ya existe en nuestro estado local
+    let animal = animals.value.find(a => a.id_animal === animalId)
+    
+    // Si no existe, crearlo a partir de los datos recibidos
+    if (!animal) {
+      animal = {
+        ...animalData,
+        corralId: null
+      }
+      if (animal) {
+        animals.value.push(animal)
+      }
+    }
+    
+    // Actualizar la asignación del corral
+    if (!animal) return;
     const previousCorralId = animal.corralId
     animal.corralId = corralId
     
     // Feedback en consola
     if (corralId === null) {
-      console.log(`${animal.title} fue desasignado del corral`)
+      console.log(`${animal.id_animal} - ${animal.raza} fue desasignado del corral`)
     } else {
       const corral = corrals.value.find(c => c.id === corralId)
-      console.log(`${animal.title} fue asignado al ${corral?.name}`)
+      console.log(`${animal.id_animal} - ${animal.raza} fue asignado al ${corral?.name}`)
     }
+  } catch (error) {
+    console.error('Error al procesar el drop:', error)
   }
+  
+  currentDraggedAnimal.value = null
 }
 
 // Función para alternar expansión manual
 const toggleExpand = (corralId: number) => {
   expanded.value[corralId] = !expanded.value[corralId]
+}
+
+// Manejadores de eventos del componente AnimalDrag
+const handleAnimalDragStart = (animal: any) => {
+  currentDraggedAnimal.value = animal
+  console.log('Iniciando drag del animal:', animal.id_animal)
+}
+
+const handleUnassignAnimal = (animalId: string) => {
+  const animal = animals.value.find(a => a.id_animal === animalId)
+  if (animal) {
+    animal.corralId = null
+    console.log(`${animal.id_animal} - ${animal.raza} fue desasignado`)
+  }
 }
 </script>
 
@@ -292,10 +312,6 @@ th {
   background-color: #f9fafb;
   font-weight: 500;
 }
-
-/* tr:hover td {
-  background-color: #f9fafb;
-} */
 
 /* Colores de fondo para expansión */
 .bg-gray-25 {
