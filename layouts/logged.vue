@@ -41,6 +41,12 @@ const items = ref<ContextMenuItem[]>([
     href: '/settings',
   },
   {
+    label: 'Corrales',
+    icon: 'i-healthicons-syringe-outline',
+    type: 'link',
+    href: '/corrals',
+  },
+  {
     label: 'Cerrar sesión',
     icon: 'i-heroicons-arrow-right-on-rectangle-solid',
     color: 'error' as const,
