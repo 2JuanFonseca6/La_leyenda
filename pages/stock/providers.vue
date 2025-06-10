@@ -31,6 +31,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 ]
 
 definePageMeta({
+  middleware: ['restricted'],
   layout: "logged"
 })
 </script>
