@@ -4,6 +4,9 @@ import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { Row, Table } from '@tanstack/table-core'
 import type { Database } from '~/types/supabase'
+import { useUserRole } from '~/composables/arestricted'
+
+const { userRole } = useUserRole();
 
 interface TableComponent {
   tableApi: Table<Reproduction>
@@ -123,6 +126,11 @@ const columns: TableColumn<Reproduction>[] = [
   }
 ]
 
+const displayColumns = computed(() => {
+  if (userRole.value === 'admin') return columns
+  return columns.filter(col => col.id !== 'select')
+})
+
 // Eliminamos la referencia a expanded
 const selectedIds = ref<number[]>([])
 
@@ -147,23 +155,21 @@ defineExpose({
 <template>
   <div class="w-full space-y-4 pb-4">
     <div class="flex justify-end gap-3">
-      <ReproductionCreateModal @saved="refreshTable" />
+      <ReproductionCreateModal v-if="userRole === 'admin'" @saved="refreshTable" />
 
-      <UButton v-if="selectedReproduction" color="primary" icon="i-heroicons-pencil-square"
-        @click="editModal?.openModal?.()" class="rounded-full md:rounded-lg">
-        <span class="hidden md:inline">Editar</span>
+      <UButton v-if="selectedReproduction && userRole === 'admin'" color="primary" icon="i-heroicons-pencil-square"
+        @click="editModal?.openModal?.()" class="rounded-full">
       </UButton>
 
-      <EditReproduction v-if="selectedReproduction" ref="editModal" :reproduction="selectedReproduction"
+      <EditReproduction v-if="selectedReproduction && userRole === 'admin'" ref="editModal" :reproduction="selectedReproduction"
         @saved="refreshTable" />
     </div>
 
-    <DeleteReproductions v-if="selectedIds.length > 0" :selected-ids="selectedIds" @deleted="refreshTable" />
+    <DeleteReproductions v-if="selectedIds.length > 0 && userRole === 'admin'" :selected-ids="selectedIds" @deleted="refreshTable" />
 
-    <!-- Eliminamos la funcionalidad de expanded -->
-    <UTable ref="table" :data="data" :columns="columns" :loading="isPending" class="flex-1" />
+    <UTable ref="table" :data="data" :columns="displayColumns" :loading="isPending" class="flex-1" />
 
-    <div class="px-4 py-3.5 border-t border-accented text-sm text-muted">
+    <div v-if="userRole === 'admin'" class="px-4 py-3.5 border-t border-accented text-sm text-muted">
       {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} de
       {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} filas seleccionadas.
     </div>

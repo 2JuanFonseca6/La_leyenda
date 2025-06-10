@@ -1,7 +1,6 @@
 <template>
   <BreadNav :items="breadcrumbItems" />
-  <h1>Genealogía</h1>
-
+    <h1 class="text-3xl font-bold tracking-widest uppercase text-center">Genealogía</h1>
   <GenealogyTable  />
 
 </template>

@@ -99,7 +99,7 @@ const handleSubmit = async () => {
     useToast().add({
       title: 'Error',
       description: err.data?.message || 'Error al actualizar el perfil',
-      color: 'error'
+      color: 'error',
       icon: 'i-heroicons-exclamation-circle'
     })
     console.error('Error updating user:', error)

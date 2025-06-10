@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useUserRole } from '~/composables/arestricted'
+
+const { userRole } = useUserRole()
+
 const props = defineProps<{
   item: InventoryItem
 }>()
@@ -93,8 +97,8 @@ const handleUpdate = async () => {
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Detalles del Inventario</h3>
         <div class="flex gap-2">
-          <UButton v-if="!isEditing" icon="i-heroicons-pencil-square" color="primary" @click="isEditing = true" />
-          <template v-else>
+          <UButton v-if="!isEditing && userRole === 'admin'" icon="i-heroicons-pencil-square" color="primary" @click="isEditing = true" />
+          <template v-else-if="userRole === 'admin'">
             <UButton icon="i-heroicons-x-mark" color="error" @click="isEditing = false" />
             <UButton icon="i-heroicons-check" color="success" :loading="isLoading" @click="handleUpdate" />
           </template>

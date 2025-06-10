@@ -1,10 +1,11 @@
-<!-- components/inventory/StockTable.vue -->
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import type { TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
 import type { Table } from "@tanstack/table-core";
+import { useUserRole } from '~/composables/arestricted'
 
+const { userRole } = useUserRole()
 type InventoryItem = {
   id_inventario: number;
   tipo: string;
@@ -150,6 +151,12 @@ const columns: TableColumn<InventoryItem>[] = [
   },
 ];
 
+const displayColumns = computed(() => {
+  if (userRole.value === 'admin') return columns
+  return columns.filter(col => col.id !== 'select')
+})
+
+
 const expanded = ref({});
 
 defineExpose({
@@ -181,7 +188,7 @@ const refreshTable = () => {
       v-model:expanded="expanded"
       ref="table"
       :data="data"
-      :columns="columns"
+      :columns="displayColumns"
       :loading="isPending"
       class="flex-1"
     >
@@ -190,7 +197,7 @@ const refreshTable = () => {
       </template>
     </UTable>
 
-    <div class="px-4 py-3.5 border-t border-accented text-sm text-muted">
+    <div v-if="userRole === 'admin'" class="px-4 py-3.5 border-t border-accented text-sm text-muted">
       {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} de
       {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} filas
       seleccionadas.
