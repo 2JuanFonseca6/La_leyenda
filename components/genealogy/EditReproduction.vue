@@ -147,6 +147,7 @@ const handleSubmit = async () => {
     useToast().add({
       title: "Registro actualizado!",
       color: "success",
+      icon: "i-heroicons-check-circle",
     });
 
     emit("saved");
@@ -156,6 +157,7 @@ const handleSubmit = async () => {
       title: "Error",
       description: error.data?.message || "Error al actualizar",
       color: "error",
+      icon: "i-heroicons-exclamation-circle",
     });
     console.error("Error updating reproduction:", error);
   } finally {

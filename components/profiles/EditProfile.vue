@@ -89,7 +89,8 @@ const handleSubmit = async () => {
 
     useToast().add({
       title: 'Perfil actualizado!',
-      color: 'success'
+      color: 'success',
+      icon: 'i-heroicons-check-circle'
     })
     emit('saved')
     closeModal()
@@ -99,6 +100,7 @@ const handleSubmit = async () => {
       title: 'Error',
       description: err.data?.message || 'Error al actualizar el perfil',
       color: 'error'
+      icon: 'i-heroicons-exclamation-circle'
     })
     console.error('Error updating user:', error)
   } finally {

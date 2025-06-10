@@ -151,7 +151,7 @@ const handleSubmit = async () => {
         fecha_evento: new Date(form.fecha_evento).toISOString(),
       },
     });
-    useToast().add({ title: "Registro creado!", color: "success" });
+    useToast().add({ title: "Registro creado!", color: "success", icon: "i-heroicons-check-circle", });
     emit("saved");
     closeModal();
   } catch (error: any) {
@@ -159,6 +159,7 @@ const handleSubmit = async () => {
       title: "Error",
       description: error.data?.message || "Error al crear el registro",
       color: "error",
+      icon: "i-heroicons-exclamation-circle",
     });
     console.error(error);
   } finally {

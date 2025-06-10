@@ -131,7 +131,8 @@ const handleSubmit = async () => {
 
     useToast().add({
       title: 'Perfil creado!',
-      color: 'success'
+      color: 'success',
+      icon: 'i-heroicons-check-circle'
     })
 
     emit('saved')
@@ -141,7 +142,8 @@ const handleSubmit = async () => {
     useToast().add({
       title: 'Error',
       description: err.data?.message || 'Error al crear el perfil',
-      color: 'error'
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle'
     })
     console.error('Error creating user:', error)
   } finally {

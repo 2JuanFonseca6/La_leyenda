@@ -84,6 +84,7 @@ const handleSubmit = async () => {
     isOpen.value = false
     useToast().add({
       title: 'Venta registrada!',
+      icon: "i-heroicons-check-circle",
       color: 'success'
     })
 
@@ -92,7 +93,8 @@ const handleSubmit = async () => {
     useToast().add({
       title: 'Error',
       description: error.data?.message || error.message,
-      color: 'error'
+      color: 'error',
+      icon: "i-heroicons-exclamation-circle",
     })
   } finally {
     isSubmitting.value = false

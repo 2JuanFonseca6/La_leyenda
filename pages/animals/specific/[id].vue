@@ -154,7 +154,8 @@ const handleVentaCreated = () => {
   refresh()
   useToast().add({
     title: 'Venta registrada!',
-    color: 'success'
+    color: 'success',
+    icon: 'i-heroicons-check-circle',
   })
 }
 

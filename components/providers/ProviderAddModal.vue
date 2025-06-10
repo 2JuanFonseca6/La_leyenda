@@ -115,7 +115,8 @@
       useToast().add({
         title: "Error al agregar proveedor",
         description: error.message,
-        color: "error"
+        color: "error",
+        icon: "i-heroicons-exclamation-circle"
       });
     } finally {
       isSubmitting.value = false;

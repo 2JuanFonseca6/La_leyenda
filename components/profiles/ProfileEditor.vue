@@ -85,7 +85,7 @@ const fetchUserData = async () => {
     };
 
   } catch (error: any) {
-    toast.add({ title: 'Error', description: 'Error cargando perfil', color: 'error' });
+    toast.add({ title: 'Error', description: 'Error cargando perfil', color: 'error', icon: 'i-heroicons-x-mark' });
   } finally {
     loading.value = false;
   }
@@ -142,13 +142,14 @@ const saveChanges = async () => {
     toast.add({
       title: 'Éxito',
       description: emailUpdated ? 'Revisa tu correo para confirmar el cambio' : 'Perfil actualizado',
-      color: 'success'
+      color: 'success',
+      icon: 'i-heroicons-check-circle'
     });
 
     isEditing.value = false;
 
   } catch (error: any) {
-    toast.add({ title: 'Error', description: error.message, color: 'error' });
+    toast.add({ title: 'Error', description: error.message, color: 'error', icon: 'i-heroicons-exclamation-circle' });
   } finally {
     loading.value = false;
   }

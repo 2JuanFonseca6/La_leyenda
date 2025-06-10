@@ -38,11 +38,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
       const userProfile = profile as Profile;
 
       if (to.meta.requiredRole !== userProfile.role) {
-        toast.add({ title: "Acceso no autorizado", color: "error" });
+        toast.add({ title: "Acceso no autorizado", color: "error", icon: "i-heroicons-exclamation-circle" });
         return navigateTo("/");
       }
     } catch (error) {
-      toast.add({ title: "Error cargando perfil", color: "error" });
+      toast.add({ title: "Error cargando perfil", color: "error", icon: "i-heroicons-exclamation-circle" });
       console.error("Error fetching profile:", error);
       return navigateTo("/");
     }
