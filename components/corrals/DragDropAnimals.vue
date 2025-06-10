@@ -38,7 +38,7 @@
                     <span
                       :class="expanded[corral.id] ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'">
                       {{ getAnimalsInCorral(corral.id).length }} animal{{ getAnimalsInCorral(corral.id).length !== 1 ?
-                      'es' : '' }}
+                        'es' : '' }}
                     </span>
                     <span v-if="getAnimalsInCorral(corral.id).length > 0"
                       class="text-xs bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] px-2 py-1 rounded-full text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]">
@@ -68,7 +68,10 @@
                             <div v-for="animal in getAnimalsInCorral(corral.id)" :key="animal.id_animal"
                               class="drag-el bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] border border-blue-200 hover:border-blue-400 hover:shadow-md group relative"
                               draggable="true" @dragstart="startDrag($event, animal)">
-                              <span>🐄 {{ animal.id_animal }} - {{ animal.raza }} - {{ animal.tipo_animal }}</span>
+                              <span>
+                                <UIcon name="i-healthicons-animal-cow-outline" class="size-5" />
+                                {{ animal.id_animal }} - {{ animal.raza }} - {{ animal.tipo_animal }}
+                              </span>
                               <!-- Botón de eliminar -->
                               <button @click.stop="removeAnimalFromCorral(animal.id_animal)"
                                 class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"

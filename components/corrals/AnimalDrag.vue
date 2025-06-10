@@ -69,6 +69,7 @@ const columns: TableColumn<Animal>[] = [
     cell: ({ row }) => {
       const animal = row.original
       const isAssigned = props.assignedAnimals?.includes(animal.id_animal)
+      const UIcon = resolveComponent('UIcon')
 
       return h('div', {
         class: `drag-handle flex items-center gap-2 ${isAssigned
@@ -79,7 +80,9 @@ const columns: TableColumn<Animal>[] = [
         onDragstart: !isAssigned ? (event: DragEvent) => handleDragStart(event, animal) : undefined,
         title: isAssigned ? 'Animal ya asignado a un corral' : 'Arrastra para asignar a un corral'
       }, [
-        h('span', { class: 'text-lg' }, isAssigned ? '🔒' : '🐄'),
+        isAssigned
+          ? h(UIcon, { name: 'i-heroicons-lock-closed', class: 'size-5 text-lg' })
+          : h(UIcon, { name: 'i-healthicons-animal-cow-outline', class: 'size-5 text-lg' }),
         h('span', {}, animal.id_animal),
         isAssigned ? h('span', {
           class: 'text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full ml-2'
@@ -268,11 +271,15 @@ const handleUnassignDrop = (event: DragEvent) => {
         <h2 class="text-xl font-bold">Animales Disponibles</h2>
         <div class="flex items-center gap-2 text-sm text-gray-600">
           <div class="flex items-center gap-1">
-            <span class="text-lg">🐄</span>
+            <span class="text-lg">
+              <UIcon name="i-healthicons-animal-cow-outline" class="size-5" />
+            </span>
             <span>{{ availableAnimals.length }} disponibles</span>
           </div>
           <div class="flex items-center gap-1">
-            <span class="text-lg">🔒</span>
+            <span class="text-lg">
+              <UIcon name="i-heroicons-lock-closed" class="size-5" />
+            </span>
             <span>{{ (props.assignedAnimals?.length || 0) }} asignados</span>
           </div>
         </div>

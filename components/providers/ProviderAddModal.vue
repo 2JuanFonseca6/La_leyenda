@@ -108,7 +108,7 @@
           direccion: form.direccion || ""
         }
       });
-      useToast().add({ title: "Proveedor agregado!", color: "success" });
+      useToast().add({ title: "Proveedor agregado!", color: "success", icon: "i-heroicons-check-circle" });
       emit("saved");
       closeModal();
     } catch (error: any) {

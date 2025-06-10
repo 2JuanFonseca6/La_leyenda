@@ -38,7 +38,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">% Variación Ventas</span>
-            <UIcon name="i-heroicons-trending-up" class="w-6 h-6 ml-2" />
+            <UIcon name="i-heroicons-arrow-trending-up-20-solid" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4">
