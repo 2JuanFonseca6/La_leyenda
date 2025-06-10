@@ -30,7 +30,8 @@
               <p v-if="form.madre_id">{{ form.madre_id }}</p>
               <p v-else class="text-gray-400 italic">Seleccionar madre</p>
             </div>
-            <DrawerAnimals v-model:modelValue="isMadreDrawerOpen" @select="form.madre_id = $event.id_animal" />
+            <DrawerAnimals v-model:modelValue="isMadreDrawerOpen" :allowedTypes="['VACA']"
+              @select="form.madre_id = $event.id_animal" />
           </UFormField>
 
           <UFormField name="padre_id">
@@ -44,7 +45,8 @@
               <p v-if="form.padre_id">{{ form.padre_id }}</p>
               <p v-else class="text-gray-400 italic">Seleccionar padre (opcional)</p>
             </div>
-            <DrawerAnimals v-model:modelValue="isPadreDrawerOpen" @select="form.padre_id = $event.id_animal" />
+            <DrawerAnimals v-model:modelValue="isPadreDrawerOpen" :allowedTypes="['TORO', 'NOVILLO']"
+              @select="form.padre_id = $event.id_animal" />
           </UFormField>
         </div>
 
