@@ -1,88 +1,75 @@
 <template>
-  <UModal
-    v-model:open="isOpen"
-    title="Nuevo Registro de Reproducción"
-    description="Registra un nuevo evento reproductivo"
-  >
-    <UButton
-      icon="i-heroicons-plus-16-solid"
-      @click="openModal"
+  <UModal v-model:open="isOpen" title="Nuevo Registro de Reproducción"
+    description="Registra un nuevo evento reproductivo">
+    <UButton icon="i-heroicons-plus-16-solid" @click="openModal"
       class="bg-[var(--color-custom-500)] dark:bg-[var(--color-custom-50)] text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)] hover:text-[var(--color-custom-50)] hover:dark:text-[var(--color-custom-500)] rounded-full"
-      title="Agregar reproducción"
-    />
+      title="Agregar reproducción" />
 
     <template #body>
-      <UForm
-        :schema="schema"
-        :state="form"
-        class="space-y-4"
-        @submit="handleSubmit"
-      >
+      <UForm :schema="schema" :state="form" class="space-y-6" @submit="handleSubmit">
+        <!-- Fecha -->
         <UFormField name="fecha_evento" required>
           <template #label>
-            <span
-              class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]"
-              >Fecha del Evento</span
-            >
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Fecha del Evento
+            </span>
           </template>
           <UInput v-model="form.fecha_evento" type="date" />
         </UFormField>
 
-        <div class="flex gap-4">
+        <!-- IDs Madre / Padre -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <UFormField name="madre_id" required>
             <template #label>
-              <span
-                class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]"
-                >ID Madre</span
-              >
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Madre
+              </span>
             </template>
-            <DrawerAnimals
-              v-model:modelValue="isMadreDrawerOpen"
-              @select="form.madre_id = $event.id_animal"
-            />
-            <UInput v-model="form.madre_id" />
+            <div @click="isMadreDrawerOpen = true"
+              class="border rounded p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+              <p v-if="form.madre_id">{{ form.madre_id }}</p>
+              <p v-else class="text-gray-400 italic">Seleccionar madre</p>
+            </div>
+            <DrawerAnimals v-model:modelValue="isMadreDrawerOpen" @select="form.madre_id = $event.id_animal" />
           </UFormField>
 
           <UFormField name="padre_id">
             <template #label>
-              <span
-                class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]"
-                >ID Padre</span
-              >
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Padre
+              </span>
             </template>
-            <DrawerAnimals
-              v-model:modelValue="isPadreDrawerOpen"
-              @select="form.padre_id = $event.id_animal"
-            />
-            <UInput v-model="form.padre_id" />
+            <div @click="isPadreDrawerOpen = true"
+              class="border rounded p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+              <p v-if="form.padre_id">{{ form.padre_id }}</p>
+              <p v-else class="text-gray-400 italic">Seleccionar padre (opcional)</p>
+            </div>
+            <DrawerAnimals v-model:modelValue="isPadreDrawerOpen" @select="form.padre_id = $event.id_animal" />
           </UFormField>
         </div>
 
+        <!-- Raza -->
         <UFormField name="raza" required>
           <template #label>
-            <span
-              class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]"
-              >Raza</span
-            >
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Raza
+            </span>
           </template>
           <UInput v-model="form.raza" />
         </UFormField>
 
+        <!-- Tipo de concepción -->
         <UFormField name="tipo_concepcion" required>
           <template #label>
-            <span
-              class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]"
-              >Tipo de Concepción</span
-            >
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Tipo de Concepción
+            </span>
           </template>
-          <USelect
-            v-model="form.tipo_concepcion"
-            :items="tiposConcepcion"
-            placeholder="Selecciona un tipo"
-          />
+          <USelect v-model="form.tipo_concepcion" :items="tiposConcepcion" placeholder="Selecciona un tipo" />
         </UFormField>
 
-        <div class="flex justify-end gap-3 mt-4">
+        <!-- Botones -->
+        <div class="flex justify-end gap-3 mt-6">
           <UButton type="button" @click="closeModal">Cancelar</UButton>
           <UButton type="submit" :loading="isSubmitting">
             Crear Registro
