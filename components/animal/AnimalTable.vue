@@ -3,11 +3,14 @@ import { ref, watch, computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { Table } from '@tanstack/table-core'
+import { useUserRole } from '~/composables/arestricted'
 
 interface TableComponent {
   tableApi: Table<Animal>
 }
 
+const { userRole } = useUserRole()
+const isAdmin = computed(() => userRole.value === 'admin')
 const table = ref<TableComponent | null>(null)
 
 const UButton = resolveComponent('UButton')
@@ -191,13 +194,13 @@ defineExpose({
   <div class="w-full space-y-4 pb-4">
     <div class="flex justify-between items-center px-4 py-3.5 border-b border-accented">
       <AnimalSearch class="w-full" />
-      <UButton icon="i-heroicons-plus-20-solid" @click="openAddModal" title="Agregar nuevo animal" />
+      <UButton v-if="isAdmin" icon="i-heroicons-plus-20-solid" @click="openAddModal" title="Agregar nuevo animal" />
       <AnimalAddModal ref="modalRef" @created="refreshTable" />
     </div>
 
-    <DeleteAnimals v-if="selectedIds.length > 0" :selected-ids="selectedIds" @deleted="refreshTable" />
+    <DeleteAnimals v-if="isAdmin && selectedIds.length > 0" :selected-ids="selectedIds" @deleted="refreshTable" />
 
-    <UTable v-model:expanded="expanded" ref="table" :data="data" :columns="columns" :loading="isPending" class="flex-1">
+    <UTable v-model:expanded="expanded" ref="table" :data="data" :columns="isAdmin ? columns : columns.slice(2)" :loading="isPending" class="flex-1">
       <template #expanded="{ row }">
         <AnimalExpandedCard :animal="row.original" @deleted="refreshTable" />
       </template>

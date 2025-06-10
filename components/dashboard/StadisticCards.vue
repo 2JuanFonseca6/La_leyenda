@@ -1,17 +1,15 @@
-<!-- components/dashboard/StadisticCards.vue -->
 <template>
   <div>
-    <!-- Solo tres gráficos: Recursos, Inventario y Gastos -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-6">
       <!-- Card 1: Recursos por Animal -->
-      <UCard>
+      <UCard class="min-h-[400px]">
         <template #header>
-          <div class="flex items-center justify-between">
-            <span>Recursos por Animal</span>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Recursos por Animal</span>
             <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-64 p-4">
+        <div class="h-[320px] p-4">
           <client-only>
             <Bar v-if="!pending" :data="animalBarData" :options="chartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -20,14 +18,14 @@
       </UCard>
 
       <!-- Card 2: Control de Inventario -->
-      <UCard>
+      <UCard class="min-h-[400px]">
         <template #header>
-          <div class="flex items-center justify-between">
-            <span>Control de Inventario</span>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Control de Inventario</span>
             <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-64 p-4">
+        <div class="h-[320px] p-4">
           <client-only>
             <Bar v-if="!pending" :data="inventoryBarData" :options="chartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -36,14 +34,14 @@
       </UCard>
 
       <!-- Card 3: Gastos Totales -->
-      <UCard>
+      <UCard class="min-h-[400px]">
         <template #header>
-          <div class="flex items-center justify-between">
-            <span>Gastos Totales</span>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Gastos Totales</span>
             <UIcon name="i-heroicons-currency-dollar-20-solid" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-64 p-4">
+        <div class="h-[320px] p-4">
           <client-only>
             <Bar v-if="!pending" :data="costBarData" :options="chartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -52,7 +50,6 @@
       </UCard>
     </div>
 
-    <!-- Error -->
     <div v-if="error" class="mt-4 text-red-500">
       Error al cargar gráficos: {{ error.message }}
     </div>
@@ -105,8 +102,16 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { position: 'top', labels: { color: '#6B7280' } },
+    legend: { 
+      position: 'top',
+      labels: { 
+        padding: 20,
+        boxWidth: 10,
+        color: '#6B7280'
+      }
+    },
     tooltip: {
+      padding: 12,
       callbacks: {
         label: (ctx) => {
           let label = ctx.dataset.label || ''
@@ -125,8 +130,22 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
     }
   },
   scales: {
-    x: { ticks: { color: '#6B7280' } },
-    y: { ticks: { color: '#6B7280' } }
+    x: { 
+      ticks: { 
+        color: '#6B7280',
+        maxRotation: 45,
+        minRotation: 45
+      }
+    },
+    y: { 
+      ticks: { 
+        color: '#6B7280'
+      },
+      grid: {
+        drawBorder: false,
+        color: '#E5E7EB'
+      }
+    }
   }
 }))
 
