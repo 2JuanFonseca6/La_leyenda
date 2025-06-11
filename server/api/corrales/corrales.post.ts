@@ -1,4 +1,4 @@
-// server/api/corrales/index.post.ts
+// server/api/corrales/corrales.post.ts
 import { serverSupabaseClient } from "#supabase/server";
 import { Database } from "~/types/supabase";
 import { createError, readBody } from "h3";
