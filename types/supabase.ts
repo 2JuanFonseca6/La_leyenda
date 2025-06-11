@@ -15,6 +15,7 @@ export type Database = {
           fecha_fallecimiento: string | null
           fecha_nacimiento: string
           id_animal: string
+          id_corral: string | null
           id_reproduccion: number | null
           peso_actual: number
           peso_inicial: number
@@ -26,6 +27,7 @@ export type Database = {
           fecha_fallecimiento?: string | null
           fecha_nacimiento: string
           id_animal: string
+          id_corral?: string | null
           id_reproduccion?: number | null
           peso_actual: number
           peso_inicial: number
@@ -37,6 +39,7 @@ export type Database = {
           fecha_fallecimiento?: string | null
           fecha_nacimiento?: string
           id_animal?: string
+          id_corral?: string | null
           id_reproduccion?: number | null
           peso_actual?: number
           peso_inicial?: number
@@ -44,6 +47,13 @@ export type Database = {
           tipo_animal?: Database["public"]["Enums"]["tipo_animal"] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "animals_id_corral_fkey"
+            columns: ["id_corral"]
+            isOneToOne: false
+            referencedRelation: "corrales"
+            referencedColumns: ["id_corral"]
+          },
           {
             foreignKeyName: "animals_id_reproduccion_fkey"
             columns: ["id_reproduccion"]
@@ -93,6 +103,33 @@ export type Database = {
             referencedColumns: ["id_animal"]
           },
         ]
+      }
+      corrales: {
+        Row: {
+          capacidad_maxima: number
+          descripcion: string | null
+          fecha_creacion: string | null
+          id_corral: string
+          nombre: string
+          tipo_corral: Database["public"]["Enums"]["tipo_corral"]
+        }
+        Insert: {
+          capacidad_maxima: number
+          descripcion?: string | null
+          fecha_creacion?: string | null
+          id_corral?: string
+          nombre: string
+          tipo_corral: Database["public"]["Enums"]["tipo_corral"]
+        }
+        Update: {
+          capacidad_maxima?: number
+          descripcion?: string | null
+          fecha_creacion?: string | null
+          id_corral?: string
+          nombre?: string
+          tipo_corral?: Database["public"]["Enums"]["tipo_corral"]
+        }
+        Relationships: []
       }
       genealogia: {
         Row: {
@@ -411,6 +448,13 @@ export type Database = {
         | "TORO"
         | "LECHONA"
       tipo_concepcion: "NATURAL" | "INSEMINACION"
+      tipo_corral:
+        | "ENGORDE"
+        | "CUARENTENA"
+        | "REPRODUCCION"
+        | "MATERNIDAD"
+        | "DESTETE"
+        | "OTROS"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -538,6 +582,14 @@ export const Constants = {
       ],
       tipo_animal: ["NOVILLO", "TERNERO", "TERNERA", "VACA", "TORO", "LECHONA"],
       tipo_concepcion: ["NATURAL", "INSEMINACION"],
+      tipo_corral: [
+        "ENGORDE",
+        "CUARENTENA",
+        "REPRODUCCION",
+        "MATERNIDAD",
+        "DESTETE",
+        "OTROS",
+      ],
       user_role: ["admin", "user"],
     },
   },

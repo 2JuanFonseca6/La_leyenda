@@ -32,7 +32,7 @@
                     variant="ghost" size="sm" square
                     :class="expanded[corral.id] ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'" />
                 </td>
-                <td class="px-4 py-3 font-medium">{{ corral.name }}</td>
+                <td class="px-4 py-3 font-medium">{{ corral.nombre }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <span
@@ -122,8 +122,19 @@
 
 <script setup lang="ts">
 import { UButton } from '#components'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AnimalDrag from './AnimalDrag.vue'
+
+// Tipos actualizados para la API
+type CorralAPI = {
+  id_corral: number
+  nombre: string
+  tipo_corral: string
+  capacidad_maxima: number
+  descripcion: string
+  fecha_creacion: string
+  animal_count: number
+}
 
 // Tipos actualizados para usar los datos reales de la API
 type Animal = {
@@ -138,19 +149,12 @@ type Animal = {
   corralId: number | null
 }
 
-type Corral = {
-  id: number
-  name: string
-}
-
 // Estado para almacenar animales asignados a corrales
 const animals = ref<Animal[]>([])
-
-const corrals = ref<Corral[]>([
-  { id: 1, name: 'Corral A' },
-  { id: 2, name: 'Corral B' },
-  { id: 3, name: 'Corral C' },
-])
+const corrals = ref<CorralAPI[]>([])
+const expanded = ref<Record<number, boolean>>({})
+const isDragOver = ref<number | null>(null)
+const currentDraggedAnimal = ref<Animal | null>(null)
 
 // Computed para obtener IDs de animales asignados
 const assignedAnimalIds = computed(() =>
@@ -162,12 +166,30 @@ const assignedAnimalIds = computed(() =>
 const getAnimalsInCorral = (corralId: number) =>
   animals.value.filter(animal => animal.corralId === corralId)
 
-// Estado de expansión de corrales
-const expanded = ref<Record<number, boolean>>({})
+const loadCorrals = async () => {
+  try {
+    const { data, error } = await useFetch('/api/corrales/corrales', {
+      method: 'GET',
+      query: {
+        page: 1,
+        pageSize: 100
+      }
+    })
 
-// Estado de drag and drop
-const isDragOver = ref<number | null>(null)
-const currentDraggedAnimal = ref<Animal | null>(null)
+    if (error.value) {
+      throw new Error(error.value.message || 'Error al cargar corrales')
+    }
+
+    corrals.value = data.value?.corrales || []
+    console.log('Corrales cargados:', corrals.value)
+  } catch (err) {
+    console.error('Error al cargar corrales:', err)
+  }
+}
+
+onMounted(() => {
+  loadCorrals()
+})
 
 // Función para verificar si un animal ya está asignado
 const isAnimalAlreadyAssigned = (animal: Animal | null) => {
@@ -208,6 +230,30 @@ const handleDragLeave = (event: DragEvent) => {
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     isDragOver.value = null
   }
+}
+
+const saveAssignments = async (assignments: AnimalAssignment[]) => {
+  try {
+    const { data, error } = await useFetch('/api/corrales/assign-animals', {
+      method: 'POST',
+      body: { assignments }
+    })
+
+    if (error.value) {
+      throw new Error(error.value.message || 'Error al guardar asignaciones')
+    }
+
+    console.log('Asignaciones guardadas:', data.value)
+    return data.value
+  } catch (err) {
+    console.error('Error al guardar asignaciones:', err)
+    throw err
+  }
+}
+
+interface AnimalAssignment {
+  id_animal: string
+  id_corral: number | null
 }
 
 const onDrop = (event: DragEvent, corralId: number | null) => {
