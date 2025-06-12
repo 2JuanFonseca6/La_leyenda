@@ -191,14 +191,17 @@ const loadCorrals = async () => {
       throw new Error(error.value.message || 'Error al cargar corrales')
     }
 
-    corrals.value = data.value?.corrales || []
+    corrals.value = (data.value?.corrales || []).map((corral: any) => ({
+      ...corral,
+      id_corral: Number(corral.id_corral)
+    }))
     console.log('Corrales cargados:', corrals.value)
   } catch (err) {
     console.error('Error al cargar corrales:', err)
     toast.add({
       title: 'Error',
       description: 'No se pudieron cargar los corrales',
-      color: 'red'
+      color: 'error'
     })
   }
 }
