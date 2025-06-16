@@ -1,20 +1,21 @@
 // server/api/corrales/specific/[id].put.ts
 import { serverSupabaseClient } from "#supabase/server";
 import { Database } from "~/types/supabase";
-import { createError, readBody, getRouterParam } from "h3";
+import { createError, readBody } from "h3";
 
 export default defineEventHandler(async (event) => {
-  console.log("--- HITTING /api/corrales/[id] PUT ---");
   const client = await serverSupabaseClient<Database>(event);
-  const corralId = getRouterParam(event, 'id');
   const body = await readBody(event);
+  const id = getRouterParam(event, 'id');
 
-  if (!corralId) {
+  if (!id || isNaN(Number(id))) {
     throw createError({
       statusCode: 400,
-      statusMessage: "ID del corral es requerido",
+      statusMessage: "ID de corral inválido",
     });
   }
+
+  const corralId = Number(id);
 
   const { nombre, tipo_corral, capacidad_maxima, descripcion } = body;
 
@@ -40,7 +41,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Validar tipos de corral permitidos
   const tiposPermitidos = ["ENGORDE", "CUARENTENA", "REPRODUCCION", "MATERNIDAD", "DESTETE", "OTROS"];
   if (!tiposPermitidos.includes(tipo_corral)) {
     throw createError({
@@ -50,16 +50,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Verificar que el corral existe
-    const { data: existingCorral, error: checkError } = await client
+    // Verificar si el corral existe
+    const { data: existingCorral, error: fetchError } = await client
       .from("corrales")
-      .select("*")
-      .eq("id_corral", corralId)
+      .select("id_corral")
+      .eq("id_corral", corralId.toString())
       .maybeSingle();
 
-    if (checkError) {
-      console.error("Error checking corral:", checkError);
-      throw checkError;
+    if (fetchError) {
+      console.error("Error fetching corral:", fetchError);
+      throw fetchError;
     }
 
     if (!existingCorral) {
@@ -69,41 +69,23 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Verificar si ya existe otro corral con el mismo nombre (excluyendo el actual)
+    // Verificar si ya existe otro corral con el mismo nombre
     const { data: duplicateCorral, error: duplicateError } = await client
       .from("corrales")
       .select("id_corral")
       .eq("nombre", nombre.trim())
-      .neq("id_corral", corralId)
+      .neq("id_corral", corralId.toString()) // Excluir el corral actual
       .maybeSingle();
 
     if (duplicateError) {
-      console.error("Error checking duplicate name:", duplicateError);
+      console.error("Error checking duplicate corral:", duplicateError);
       throw duplicateError;
     }
 
     if (duplicateCorral) {
       throw createError({
         statusCode: 409,
-        statusMessage: "Ya existe otro corral con ese nombre",
-      });
-    }
-
-    // Verificar capacidad si hay animales asignados
-    const { count: currentAnimals, error: countError } = await client
-      .from("animals")
-      .select("*", { count: "exact", head: true })
-      .eq("id_corral", corralId);
-
-    if (countError) {
-      console.error("Error counting animals:", countError);
-      throw countError;
-    }
-
-    if ((currentAnimals || 0) > capacidad_maxima) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `No se puede reducir la capacidad a ${capacidad_maxima}. Actualmente hay ${currentAnimals} animales asignados`,
+        statusMessage: "Ya existe un corral con ese nombre",
       });
     }
 
@@ -116,7 +98,7 @@ export default defineEventHandler(async (event) => {
         capacidad_maxima,
         descripcion: descripcion?.trim() || null,
       })
-      .eq("id_corral", corralId)
+      .eq("id_corral", corralId.toString())
       .select()
       .single();
 

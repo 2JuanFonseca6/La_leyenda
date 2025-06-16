@@ -29,23 +29,22 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
-            <template v-for="corral in corrals" :key="corral.id_corral">
+            <template v-for="corral in corrals" :key="`corral-${corral.id_corral}`">
               <!-- Fila principal del corral -->
               <tr class="hover:bg-[var(--color-custom-100)] cursor-pointer transition-colors"
-                :class="{ 'bg-[var(--color-custom-400)] text-[var(--color-custom-50)] dark:bg-[var(--color-custom-200)] dark:text-[var(--color-custom-500)]': expanded[corral.id_corral] }"
+                :class="{ 'bg-[var(--color-custom-400)] text-[var(--color-custom-50)] dark:bg-[var(--color-custom-200)] dark:text-[var(--color-custom-500)]': isExpanded(corral.id_corral) }"
                 @click="toggleExpand(corral.id_corral)">
                 <td class="px-4 py-3">
-                  <UButton :icon="expanded[corral.id_corral] ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                  <UButton :icon="isExpanded(corral.id_corral) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
                     variant="ghost" size="sm" square
-                    :class="expanded[corral.id_corral] ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'" />
+                    :class="isExpanded(corral.id_corral) ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'" />
                 </td>
                 <td class="px-4 py-3 font-medium">{{ corral.nombre }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <span
-                      :class="expanded[corral.id_corral] ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'">
-                      {{ corral.animal_count }} animal{{ corral.animal_count !== 1 ?
-                        'es' : '' }}
+                      :class="isExpanded(corral.id_corral) ? 'text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]' : 'text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]'">
+                      {{ corral.animal_count }} animal{{ corral.animal_count !== 1 ? 'es' : '' }}
                     </span>
                     <span v-if="corral.animal_count > 0"
                       class="text-xs bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] px-2 py-1 rounded-full text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)]">
@@ -56,7 +55,7 @@
               </tr>
 
               <!-- Fila expandible con drop zone -->
-              <tr v-if="expanded[corral.id_corral]" class="bg-gray-25">
+              <tr v-if="isExpanded(corral.id_corral)" :key="`expanded-${corral.id_corral}`" class="bg-gray-25">
                 <td colspan="3" class="px-0 py-0">
                   <div class="px-6 py-4 bg-gray-25 border-t border-gray-100">
                     <div
@@ -72,7 +71,8 @@
                         <h4 class="text-sm font-medium text-gray-700 mb-3">Animales en {{ corral.nombre }}:</h4>
                         <div class="animals-container max-h-48 overflow-y-auto pr-2">
                           <div class="flex flex-wrap gap-2">
-                            <div v-for="animal in getAnimalsInCorral(corral.id_corral)" :key="animal.id_animal"
+                            <div v-for="animal in getAnimalsInCorral(corral.id_corral)"
+                              :key="`animal-${animal.id_animal}-in-corral-${corral.id_corral}`"
                               class="drag-el bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] border border-blue-200 hover:border-blue-400 hover:shadow-md group relative"
                               draggable="true" @dragstart="startDrag($event, animal)">
                               <span>
@@ -163,9 +163,15 @@ type Animal = {
 // Estado para almacenar animales asignados a corrales
 const animals = ref<Animal[]>([])
 const corrals = ref<CorralAPI[]>([])
-const expanded = ref<Record<number, boolean>>({})
+// CAMBIO CLAVE: Usar Set en lugar de Record para mejor control del estado
+const expanded = ref<Set<number>>(new Set())
 const isDragOver = ref<number | null>(null)
 const currentDraggedAnimal = ref<Animal | null>(null)
+
+// Función helper para verificar si un corral está expandido
+const isExpanded = (corralId: number): boolean => {
+  return expanded.value.has(corralId)
+}
 
 // Computed para obtener IDs de animales asignados
 const assignedAnimalIds = computed(() =>
@@ -193,8 +199,19 @@ const loadCorrals = async () => {
 
     corrals.value = (data.value?.corrales || []).map((corral: any) => ({
       ...corral,
-      id_corral: Number(corral.id_corral)
-    }))
+      id_corral: Number(corral.id_corral) || 0
+    })).filter(corral => !isNaN(corral.id_corral))
+
+    // Reinicializar el estado expandido sin mantener estados previos
+    const currentExpanded = new Set(expanded.value)
+    expanded.value = new Set()
+    // Solo mantener expandidos los corrales que aún existen
+    currentExpanded.forEach(id => {
+      if (corrals.value.find(c => c.id_corral === id)) {
+        expanded.value.add(id)
+      }
+    })
+
     console.log('Corrales cargados:', corrals.value)
   } catch (err) {
     console.error('Error al cargar corrales:', err)
@@ -226,22 +243,26 @@ const startDrag = (event: DragEvent, animal: Animal) => {
 
   currentDraggedAnimal.value = animal
 
-  // Si el animal está en un corral, mantenerlo expandido durante el drag
+  // Mantener expandido el corral actual durante el drag
   if (animal.corralId !== null) {
-    expanded.value[animal.corralId] = true
+    const newSet = new Set(expanded.value)
+    newSet.add(animal.corralId)
+    expanded.value = newSet
   }
 }
 
 const handleCorralDragOver = (corralId: number) => {
+  if (isNaN(corralId)) return
   isDragOver.value = corralId
-  // Auto-expandir el corral cuando se arrastra sobre él
-  if (!expanded.value[corralId]) {
-    expanded.value[corralId] = true
+  // Auto-expandir solo si no está ya expandido
+  if (!expanded.value.has(corralId)) {
+    const newSet = new Set(expanded.value)
+    newSet.add(corralId)
+    expanded.value = newSet
   }
 }
 
 const handleDragLeave = (event: DragEvent) => {
-  // Verificar si realmente salimos del elemento
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   const x = event.clientX
   const y = event.clientY
@@ -294,8 +315,6 @@ const saveAssignments = async (assignments: AnimalAssignment[]) => {
 
 const onDrop = async (event: DragEvent, corralId: number | null) => {
   event.preventDefault()
-
-  // Limpiar estados de drag
   isDragOver.value = null
 
   const animalId = event.dataTransfer?.getData('animalId')
@@ -305,11 +324,8 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
 
   try {
     const animalData = JSON.parse(animalDataStr)
-
-    // Buscar si el animal ya existe en nuestro estado local
     let animal = animals.value.find(a => a.id_animal === animalId)
 
-    // Si no existe, crearlo a partir de los datos recibidos
     if (!animal) {
       animal = {
         ...animalData,
@@ -322,7 +338,6 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
 
     if (!animal) return;
 
-    // Verificar si el animal ya está asignado a otro corral
     if (animal.corralId !== null && animal.corralId !== corralId) {
       console.warn(`El animal ${animal.id_animal} ya está asignado al corral ${animal.corralId}.`)
       toast.add({
@@ -333,7 +348,6 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
       return;
     }
 
-    // Validar capacidad máxima del corral
     if (corralId) {
       const corral = corrals.value.find(c => c.id_corral === corralId)
       if (corral && getAnimalsInCorral(corralId).length >= corral.capacidad_maxima) {
@@ -346,19 +360,15 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
       }
     }
 
-    const previousCorralId = animal.corralId
-    // Guardamos el estado anterior para revertir en caso de error
     const originalCorralId = animal.corralId
     animal.corralId = corralId
 
     try {
-      // Enviar asignación al backend
       await saveAssignments([{
         id_animal: animal.id_animal,
         id_corral: corralId
       }])
 
-      // Feedback en consola
       if (corralId === null) {
         console.log(`${animal.id_animal} - ${animal.raza} fue desasignado del corral`)
       } else {
@@ -366,7 +376,6 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
         console.log(`${animal.id_animal} - ${animal.raza} fue asignado al ${corral?.nombre}`)
       }
     } catch (err) {
-      // Revertir en caso de error
       animal.corralId = originalCorralId
     }
 
@@ -377,9 +386,15 @@ const onDrop = async (event: DragEvent, corralId: number | null) => {
   currentDraggedAnimal.value = null
 }
 
-// Función para alternar expansión manual
+// CAMBIO CLAVE: Función para alternar expansión de manera inmutable
 const toggleExpand = (corralId: number) => {
-  expanded.value[corralId] = !expanded.value[corralId]
+  const newSet = new Set(expanded.value)
+  if (newSet.has(corralId)) {
+    newSet.delete(corralId)
+  } else {
+    newSet.add(corralId)
+  }
+  expanded.value = newSet
 }
 
 // Función para remover animal del corral
@@ -387,7 +402,6 @@ const removeAnimalFromCorral = async (animalId: string) => {
   const animal = animals.value.find(a => a.id_animal === animalId)
   if (animal) {
     const previousCorralId = animal.corralId
-    // Guardar estado anterior para revertir
     const originalCorralId = animal.corralId
     animal.corralId = null
 
@@ -400,7 +414,6 @@ const removeAnimalFromCorral = async (animalId: string) => {
       const previousCorral = corrals.value.find(c => c.id_corral === previousCorralId)
       console.log(`${animal.id_animal} - ${animal.raza} fue removido del ${previousCorral?.nombre}`)
     } catch (err) {
-      // Revertir si falla
       animal.corralId = originalCorralId
     }
   }
@@ -415,7 +428,6 @@ const handleAnimalDragStart = (animal: any) => {
 const handleUnassignAnimal = (animalId: string) => {
   const animal = animals.value.find(a => a.id_animal === animalId)
   if (animal) {
-    // Al desasignar desde AnimalDrag, lo manejamos igual que removeAnimalFromCorral
     removeAnimalFromCorral(animalId)
   }
 }
