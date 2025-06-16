@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useUserRole } from '~/composables/arestricted'
 import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { Table } from '@tanstack/table-core'
-import { useUserRole } from '~/composables/arestricted'
+
+const { userRole } = useUserRole()
 
 interface TableComponent {
   tableApi: Table<Animal>
 }
 
-const { userRole } = useUserRole()
-const isAdmin = computed(() => userRole.value === 'admin')
 const table = ref<TableComponent | null>(null)
 
 const UButton = resolveComponent('UButton')
@@ -59,12 +59,9 @@ const fetchAnimals = async () => {
 }
 
 watch([() => pagination.value.pageIndex, () => pagination.value.pageSize], fetchAnimals)
-
-// Carga inicial
 fetchAnimals()
 
-// Columnas se mantienen igual
-const columns: TableColumn<Animal>[] = [
+const adminColumns: TableColumn<Animal>[] = [
   {
     id: 'select',
     header: ({ table }) =>
@@ -82,11 +79,15 @@ const columns: TableColumn<Animal>[] = [
         'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
         'aria-label': 'Select row'
       })
-  },
+  }
+]
+
+const baseColumns: TableColumn<Animal>[] = [
   {
     id: 'expand',
-    cell: ({ row }) =>
-      h(UButton, {
+    cell: ({ row }) => {
+      if (userRole.value !== 'admin') return null // ❌ Oculta botón expandir para usuarios
+      return h(UButton, {
         color: 'neutral',
         variant: 'ghost',
         icon: 'i-lucide-chevron-down',
@@ -100,72 +101,38 @@ const columns: TableColumn<Animal>[] = [
         },
         onClick: () => row.toggleExpanded()
       })
-  },
-  {
-    accessorKey: 'id_animal',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Codigo Animal',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
     }
   },
   {
-    accessorKey: 'fecha_nacimiento',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Fecha de Nacimiento',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    },
-    cell: ({ row }) => new Date(row.getValue('fecha_nacimiento')).toLocaleDateString()
+    accessorKey: 'id_animal',
+    header: 'Código Animal'
   },
-  { accessorKey: 'raza', header: 'Raza' },
   {
-    accessorKey: 'tipo_animal', header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Tipo',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    },
+    accessorKey: 'fecha_nacimiento',
+    header: 'Fecha de Nacimiento',
+    cell: ({ row }) =>
+      new Date(row.getValue('fecha_nacimiento')).toLocaleDateString()
+  },
+  {
+    accessorKey: 'raza',
+    header: 'Raza'
+  },
+  {
+    accessorKey: 'tipo_animal',
+    header: 'Tipo'
   }
 ]
 
-const expanded = ref({})
+// columnas dinámicas
+const columns = computed(() => {
+  return userRole.value === 'admin'
+    ? [...adminColumns, ...baseColumns]
+    : baseColumns
+})
 
+const expanded = ref({})
 const selectedIds = ref<string[]>([])
 
-// Watcher para selecciones
 watch(
   () => table.value?.tableApi?.getSelectedRowModel().rows,
   (rows) => {
@@ -173,13 +140,12 @@ watch(
   }
 )
 
-// Función para refrescar la tabla
 const refreshTable = () => {
   table.value?.tableApi?.resetRowSelection()
   fetchAnimals()
 }
-const modalRef = ref()
 
+const modalRef = ref()
 const openAddModal = () => {
   modalRef.value?.openModal()
 }
@@ -194,26 +160,53 @@ defineExpose({
   <div class="w-full space-y-4 pb-4">
     <div class="flex justify-between items-center px-4 py-3.5 border-b border-accented">
       <AnimalSearch class="w-full" />
-      <UButton v-if="isAdmin" icon="i-heroicons-plus-20-solid" @click="openAddModal" title="Agregar nuevo animal" />
+      <UButton
+        v-if="userRole === 'admin'"
+        icon="i-heroicons-plus-20-solid"
+        @click="openAddModal"
+        title="Agregar nuevo animal"
+      />
       <AnimalAddModal ref="modalRef" @created="refreshTable" />
     </div>
 
-    <DeleteAnimals v-if="isAdmin && selectedIds.length > 0" :selected-ids="selectedIds" @deleted="refreshTable" />
+    <DeleteAnimals
+      v-if="userRole === 'admin' && selectedIds.length > 0"
+      :selected-ids="selectedIds"
+      @deleted="refreshTable"
+    />
 
-    <UTable v-model:expanded="expanded" ref="table" :data="data" :columns="isAdmin ? columns : columns.slice(2)" :loading="isPending" class="flex-1">
+    <UTable
+      v-model:expanded="expanded"
+      ref="table"
+      :data="data"
+      :columns="columns"
+      :loading="isPending"
+      class="flex-1"
+    >
       <template #expanded="{ row }">
-        <AnimalExpandedCard :animal="row.original" @deleted="refreshTable" />
+        <AnimalExpandedCard
+          :animal="row.original"
+          @deleted="refreshTable"
+          :can-edit="userRole === 'admin'"
+        />
       </template>
     </UTable>
 
-    <div class="px-4 py-3.5 border-t border-accented text-sm text-muted">
+    <div
+      v-if="userRole === 'admin'"
+      class="px-4 py-3.5 border-t border-accented text-sm text-muted"
+    >
       {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} de
       {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} filas seleccionadas.
     </div>
 
     <div class="flex justify-center border-t border-default pt-4">
-      <UPagination v-model:page="pagination.pageIndex" :items-per-page="pagination.pageSize" :total="total"
-        @update:page="(newPage: number) => pagination.pageIndex = newPage" />
+      <UPagination
+        v-model:page="pagination.pageIndex"
+        :items-per-page="pagination.pageSize"
+        :total="total"
+        @update:page="(newPage: number) => pagination.pageIndex = newPage"
+      />
     </div>
   </div>
 </template>
