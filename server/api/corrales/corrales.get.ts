@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
       .from("corrales")
       .select("*", { count: "exact", head: true });
 
-    // Construir select dinámicamente
+    // Construir selectFields dinámicamente
     let selectFields = `
       id_corral,
       nombre,
@@ -57,9 +57,11 @@ export default defineEventHandler(async (event) => {
       descripcion,
       fecha_creacion
     `;
-    
+
     if (includeAnimals) {
       selectFields += `, animals:animals(id_animal, raza, peso_actual, tipo_animal, estado_salud)`;
+    } else {
+      selectFields += `, animal_count:animals(count)`;
     }
 
     let dataQuery = client
@@ -86,30 +88,31 @@ export default defineEventHandler(async (event) => {
       throw dataError;
     }
 
-    // Obtener conteo de animales por corral
-    const { data: animalCounts, error: countAnimalsError } = await client
-      .from("animals")
-      .select("id_corral")
-      .not("id_corral", "is", null);
+    // Procesar los datos de animales
+    const corralesWithData = (data || []).map(corral => {
+      // Para el conteo de animales
+      let animalCount = 0;
 
-    if (countAnimalsError) {
-      console.error("Error contando animales:", countAnimalsError);
-    }
+      // Si se incluyeron animales, obtener el conteo y datos
+      if (includeAnimals) {
+        animalCount = corral.animals?.length || 0;
+      } else {
+        // Si no se incluyeron animales, usar el conteo de la consulta
+        animalCount = corral.animal_count || 0;
+      }
 
-    // Agregar conteo de animales a cada corral
-    const corralesWithCount = (data || []).map(corral => {
-      const animalCount = animalCounts?.filter(animal => animal.id_corral === corral.id_corral).length || 0;
-      
       return {
         ...corral,
-        animal_count: animalCount
+        animal_count: animalCount,
+        // Solo incluir animales si se solicitó
+        animals: includeAnimals ? (corral.animals || []) : []
       };
     });
 
-    console.log(`API Fetched ${corralesWithCount.length} corrales for page ${page}`);
+    console.log(`API Fetched ${corralesWithData.length} corrales for page ${page}`);
 
     return {
-      corrales: corralesWithCount,
+      corrales: corralesWithData,
       total: count ?? 0,
       page: page,
       pageSize: pageSize,

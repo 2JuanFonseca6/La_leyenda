@@ -66,7 +66,6 @@ type AnimalInCorral = {
   estado_salud: string;
 };
 
-
 type Corral = {
   id_corral: string;
   nombre: string;
@@ -135,7 +134,8 @@ async function fetchCorrales() {
     const { corrales: data, total } = await $fetch<{ corrales: Corral[]; total: number }>('/api/corrales/corrales', {
       query: {
         page: page.value,
-        pageSize: pageSize.value
+        pageSize: pageSize.value,
+        includeAnimals: true
       }
     })
 
