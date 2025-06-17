@@ -21,8 +21,9 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
   const page = Number(query.page) || 1;
-  const pageSize = Number(query.pageSize) || 50; // Por defecto más corrales
+  const pageSize = Number(query.pageSize) || 50;
   const searchTerm = String(query.search || "").trim();
+  const includeAnimals = query.includeAnimals === 'true';
 
   console.log(`API Received Query: ${JSON.stringify(query)}`);
 
@@ -47,16 +48,23 @@ export default defineEventHandler(async (event) => {
       .from("corrales")
       .select("*", { count: "exact", head: true });
 
+    // Construir select dinámicamente
+    let selectFields = `
+      id_corral,
+      nombre,
+      tipo_corral,
+      capacidad_maxima,
+      descripcion,
+      fecha_creacion
+    `;
+    
+    if (includeAnimals) {
+      selectFields += `, animals:animals(id_animal, raza, peso_actual, tipo_animal, estado_salud)`;
+    }
+
     let dataQuery = client
       .from("corrales")
-      .select(`
-        id_corral,
-        nombre,
-        tipo_corral,
-        capacidad_maxima,
-        descripcion,
-        fecha_creacion
-      `)
+      .select(selectFields)
       .order("nombre", { ascending: true })
       .range(rangeFrom, rangeTo);
 
@@ -78,7 +86,7 @@ export default defineEventHandler(async (event) => {
       throw dataError;
     }
 
-    // Obtener el conteo de animales por corral
+    // Obtener conteo de animales por corral
     const { data: animalCounts, error: countAnimalsError } = await client
       .from("animals")
       .select("id_corral")
@@ -91,6 +99,7 @@ export default defineEventHandler(async (event) => {
     // Agregar conteo de animales a cada corral
     const corralesWithCount = (data || []).map(corral => {
       const animalCount = animalCounts?.filter(animal => animal.id_corral === corral.id_corral).length || 0;
+      
       return {
         ...corral,
         animal_count: animalCount

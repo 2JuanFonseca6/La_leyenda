@@ -293,9 +293,11 @@ const handleUnassignDrop = (event: DragEvent) => {
 
       <!-- Zona de desasignación -->
       <div v-if="props.assignedAnimals && props.assignedAnimals.length > 0"
-        class="mt-4 p-4 border-2 border-dashed border-red-300 rounded-lg text-center transition-all duration-200"
-        :class="{ 'border-red-500 bg-red-100': isDragOver }" @dragover.prevent="isDragOver = true"
-        @dragleave="isDragOver = false" @drop="handleUnassignDrop">
+        class="mt-4 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200" :class="[
+          isDragOver
+            ? 'border-red-500 bg-red-100'
+            : 'border-red-300'
+        ]" @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false" @drop="handleUnassignDrop">
         <div class="text-red-600">
           <div class="text-2xl mb-2">🗑️</div>
           <div class="font-medium">Zona de Desasignación</div>
