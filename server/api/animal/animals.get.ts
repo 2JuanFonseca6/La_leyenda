@@ -1,6 +1,6 @@
 // server/api/animal/animals.get.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase"; // Asegúrate de que esta ruta es correcta
+import { Database } from "~/types/supabase";
 import { createError, getHeader, getQuery } from "h3";
 
 export default defineEventHandler(async (event) => {

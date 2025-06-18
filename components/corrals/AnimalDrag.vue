@@ -68,8 +68,8 @@ const columns: TableColumn<Animal>[] = [
     header: 'ID Animal',
     cell: ({ row }) => {
       const animal = row.original
-      const isAssigned = props.assignedAnimals?.includes(animal.id_animal)
       const UIcon = resolveComponent('UIcon')
+      const isAssigned = props.assignedAnimals?.includes(animal.id_animal)
 
       return h('div', {
         class: `drag-handle flex items-center gap-2 ${isAssigned
@@ -262,6 +262,17 @@ const handleUnassignDrop = (event: DragEvent) => {
     emit('unassignAnimal', animalId)
   }
 }
+
+const handleUnassignDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  isDragOver.value = true
+}
+
+// Función para manejar drag leave en la zona de desasignación
+const handleUnassignDragLeave = (event: DragEvent) => {
+  event.preventDefault()
+  isDragOver.value = false
+}
 </script>
 
 <template>
@@ -292,18 +303,39 @@ const handleUnassignDrop = (event: DragEvent) => {
       </div>
 
       <!-- Zona de desasignación -->
-      <div v-if="props.assignedAnimals && props.assignedAnimals.length > 0"
-        class="mt-4 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200" :class="[
-          isDragOver
-            ? 'border-red-500 bg-red-100'
-            : 'border-red-300'
-        ]" @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false" @drop="handleUnassignDrop">
-        <div class="text-red-600">
-          <div class="text-2xl mb-2">🗑️</div>
-          <div class="font-medium">Zona de Desasignación</div>
-          <div class="text-sm">Arrastra aquí los animales asignados para liberarlos</div>
+      <details class="group" open>
+        <summary class="flex cursor-pointer list-none items-center justify-between py-2 text-md font-medium">
+          <span>Zona de Desasignación</span>
+          <UIcon name="i-heroicons-chevron-down"
+            class="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
+        </summary>
+
+        <div v-if="props.assignedAnimals && props.assignedAnimals.length > 0"
+          class="mt-2 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200 min-h-[100px]"
+          :class="[
+            isDragOver
+              ? 'border-red-500 bg-red-100'
+              : 'border-red-300'
+          ]" @dragover.prevent="handleUnassignDragOver" @dragleave.prevent="handleUnassignDragLeave"
+          @drop.prevent="handleUnassignDrop">
+          <div class="text-red-600">
+            <div class="text-2xl mb-2">🗑️</div>
+            <div class="font-medium">Zona de Desasignación</div>
+            <div class="text-sm">Arrastra aquí los animales asignados para liberarlos</div>
+
+            <!-- Mensaje cuando se está arrastrando -->
+            <div v-if="isDragOver" class="mt-4 p-2 bg-red-200 rounded-lg">
+              <UIcon name="i-heroicons-arrow-down" class="text-xl animate-bounce" />
+              <p>Suelta aquí para desasignar</p>
+            </div>
+          </div>
         </div>
-      </div>
+        <div v-else class="mt-2 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+          <div class="text-gray-500">
+            No hay animales asignados para desasignar
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="flex-1 overflow-hidden">

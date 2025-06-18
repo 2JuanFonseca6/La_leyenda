@@ -60,7 +60,8 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      message: "Animal asignado al corral exitosamente"
+      message: "Animal asignado al corral exitosamente",
+      animalId
     };
 
   } catch (err: any) {

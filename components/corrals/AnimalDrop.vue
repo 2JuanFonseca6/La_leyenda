@@ -34,12 +34,17 @@
             <h3 class="font-semibold mb-2">Animales en este corral:</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               <div v-for="animal in row.original.animals" :key="animal.id_animal"
-                class="bg-gray-100 dark:bg-gray-700 rounded p-2 flex items-center">
+                class="bg-gray-100 dark:bg-gray-700 rounded p-2 flex items-center group">
                 <UIcon name="i-healthicons-animal-cow-outline" class="mr-2 text-primary" />
                 <div>
                   <p class="font-medium">{{ animal.id_animal }}</p>
                   <p class="text-xs">{{ animal.raza }} ({{ animal.peso_actual }} kg)</p>
                 </div>
+                <!-- Botón de desasignación -->
+                <UButton icon="i-heroicons-trash" color="red" variant="ghost" size="xs"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                  @click="unassignAnimal(animal.id_animal)"
+                  title="Desasignar animal" />
               </div>
             </div>
           </div>
@@ -166,7 +171,7 @@ const onDrop = async (event: DragEvent, corralId: string) => {  // CAMBIADO A ST
 
   try {
     // Asignar animal al corral
-    const response = await $fetch<{ success: boolean }>('/api/corrales/assign', {
+    const response = await $fetch<{ success: boolean, animalId: string }>('/api/corrales/assign', {
       method: 'PUT',
       body: {
         animalId,
@@ -178,7 +183,7 @@ const onDrop = async (event: DragEvent, corralId: string) => {  // CAMBIADO A ST
       // Actualizar datos
       await fetchCorrales();
       // Emitir evento para actualizar AnimalDrag
-      emit('animalAssigned', animalId);
+      emit('animalAssigned', response.animalId);
     }
   } catch (err: any) {
     console.error('Error asignando animal:', err);
@@ -196,6 +201,11 @@ const onDrop = async (event: DragEvent, corralId: string) => {  // CAMBIADO A ST
   }
 }
 
+const unassignAnimal = (animalId: string) => {
+  // Emitir evento para desasignar animal
+  emit('animalAssigned', animalId);
+}
+
 // Exponer función de actualización
 defineExpose({
   refresh: fetchCorrales
@@ -208,5 +218,6 @@ watch(page, fetchCorrales)
 // Emitir eventos
 const emit = defineEmits<{
   animalAssigned: [animalId: string]
+  unassignAnimal: [animalId: string]
 }>()
 </script>
