@@ -53,7 +53,7 @@ const handleAnimalAssigned = (animalId: string) => {
 const handleUnassignAnimal = async (animalId: string) => {
   try {
     // Desasignar en la base de datos
-    await $fetch('/api/animal/unassign/unassign', {
+    await $fetch('/api/corrales/unassign/unassign', {
       method: 'PUT',
       body: { animalId }
     });
@@ -68,6 +68,11 @@ const handleUnassignAnimal = async (animalId: string) => {
   } catch (error) {
     console.error('Error desasignando animal:', error)
   }
+}
+
+const handleCorralDragStart = (animalId: string) => {
+  // Activar visualización en zona de desasignación
+  animalDragRef.value?.activateUnassignZone?.(true);
 }
 
 // Cargar animales asignados al montar el componente

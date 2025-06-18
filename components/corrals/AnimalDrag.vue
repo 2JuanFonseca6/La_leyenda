@@ -273,6 +273,16 @@ const handleUnassignDragLeave = (event: DragEvent) => {
   event.preventDefault()
   isDragOver.value = false
 }
+
+// Para activar/desactivar visualmente la zona
+const activateUnassignZone = (active: boolean) => {
+  isDragOver.value = active;
+}
+
+defineExpose({
+  fetchAnimals,
+  activateUnassignZone
+});
 </script>
 
 <template>
@@ -388,6 +398,25 @@ const handleUnassignDragLeave = (event: DragEvent) => {
 .drag-handle:not(.cursor-not-allowed):hover {
   transform: translateY(-1px);
   transition: transform 0.2s ease;
+}
+
+/* En el scoped style */
+.drag-over-unassign {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Estilos para animales no disponibles */

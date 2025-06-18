@@ -1,4 +1,4 @@
-// server/api/animal/unassign.put.ts
+// server/api/corrales/unassign/unassign.put.ts
 import { serverSupabaseClient } from "#supabase/server";
 import { createError, readBody } from "h3";
 import { Database } from "~/types/supabase";

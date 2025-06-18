@@ -1,4 +1,4 @@
-// server/api/corrales/assigned.get.ts
+// server/api/corrales/assign/assigned.get.ts
 import { serverSupabaseClient } from "#supabase/server";
 import { Database } from "~/types/supabase";
 

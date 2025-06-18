@@ -33,8 +33,10 @@
           <div v-if="row.original.animals && row.original.animals.length > 0">
             <h3 class="font-semibold mb-2">Animales en este corral:</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              <div v-for="animal in row.original.animals" :key="animal.id_animal"
-                class="bg-gray-100 dark:bg-gray-700 rounded p-2 flex items-center group">
+              <div v-for="animal in row.original.animals" :key="animal.id_animal" :class="[
+                'bg-gray-100 dark:bg-gray-700 rounded p-2 flex items-center group',
+                isAnimalDragging === animal.id_animal ? 'ring-2 ring-primary' : '']" draggable="true"
+                @dragstart="onAnimalDragStart($event, animal.id_animal)">
                 <UIcon name="i-healthicons-animal-cow-outline" class="mr-2 text-primary" />
                 <div>
                   <p class="font-medium">{{ animal.id_animal }}</p>
@@ -43,8 +45,7 @@
                 <!-- Botón de desasignación -->
                 <UButton icon="i-heroicons-trash" color="red" variant="ghost" size="xs"
                   class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                  @click="unassignAnimal(animal.id_animal)"
-                  title="Desasignar animal" />
+                  @click="unassignAnimal(animal.id_animal)" title="Desasignar animal" />
               </div>
             </div>
           </div>
@@ -153,6 +154,21 @@ async function fetchCorrales() {
     loading.value = false
   }
 }
+
+const isAnimalDragging = ref<string | null>(null);
+
+// En el script setup
+const onAnimalDragStart = (event: DragEvent, animalId: string) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('animalId', animalId);
+    event.dataTransfer.effectAllowed = 'move';
+  }
+};
+
+// Agregar evento global para limpiar estado
+document.addEventListener('dragend', () => {
+  isAnimalDragging.value = null;
+});
 
 // Manejar drag over
 const onDragOver = (event: DragEvent, corralId: string) => {  // CAMBIADO A STRING
