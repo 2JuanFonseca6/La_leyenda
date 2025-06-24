@@ -7,21 +7,19 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
   const id = getRouterParam(event, 'id');
 
-  if (!id || isNaN(Number(id))) {
+  if (!id) {
     throw createError({
       statusCode: 400,
       statusMessage: "ID de corral inválido",
     });
   }
 
-  const corralId = Number(id);
-
   try {
     // Verificar si el corral existe
     const { data: existingCorral, error: fetchError } = await client
       .from("corrales")
       .select("id_corral")
-      .eq("id_corral", corralId.toString())
+      .eq("id_corral", id)
       .maybeSingle();
 
     if (fetchError) {
@@ -40,7 +38,7 @@ export default defineEventHandler(async (event) => {
     const { data: animalsInCorral, error: animalsError } = await client
       .from("animals")
       .select("id_animal")
-      .eq("id_corral", corralId.toString())
+      .eq("id_corral", id)
       .limit(1);
 
     if (animalsError) {
@@ -59,14 +57,14 @@ export default defineEventHandler(async (event) => {
     const { error } = await client
       .from("corrales")
       .delete()
-      .eq("id_corral", corralId.toString());
+      .eq("id_corral", id);
 
     if (error) {
       console.error("Error deleting corral:", error);
       throw error;
     }
 
-    console.log(`Corral eliminado exitosamente: ${corralId}`);
+    console.log(`Corral eliminado exitosamente: ${id}`);
 
     return {
       success: true,

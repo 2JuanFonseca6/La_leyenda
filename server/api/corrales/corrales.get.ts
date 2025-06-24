@@ -89,7 +89,25 @@ export default defineEventHandler(async (event) => {
     }
 
     // Procesar los datos de animales
-    const corralesWithData = (data || []).map(corral => {
+    type Corral = {
+      id_corral: string;
+      nombre: string;
+      tipo_corral: string;
+      capacidad_maxima: number;
+      descripcion: string;
+      fecha_creacion: string;
+      animals?: Array<{
+        id_animal: number;
+        raza: string;
+        peso_actual: number;
+        tipo_animal: string;
+        estado_salud: string;
+      }>;
+      animal_count?: number;
+      [key: string]: any;
+    };
+
+    const corralesWithData = (Array.isArray(data) ? (data as unknown as Corral[]) : []).map((corral) => {
       // Para el conteo de animales
       let animalCount = 0;
 
@@ -103,6 +121,7 @@ export default defineEventHandler(async (event) => {
 
       return {
         ...corral,
+        id_corral: corral.id_corral.toString(),
         animal_count: animalCount,
         // Solo incluir animales si se solicitó
         animals: includeAnimals ? (corral.animals || []) : []

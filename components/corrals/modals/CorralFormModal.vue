@@ -1,38 +1,52 @@
 <template>
-  <UModal v-model="open" :transition="true" :overlay="true" :persistent="true" prevent-close title="Corral Form" description="Complete los detalles del corral">
-    <UButton label="Open" variant="subtle" />
+  <UModal :model-value="props.modelValue" @update:modelValue="emit('update:modelValue', $event)" title="Corral Form"
+    description="Complete los detalles del corral" :overlay="true" :persistent="true">
+    <UButton color="primary" variant="subtle" icon="i-heroicons-plus"/>
     <template #body>
       <UForm :state="form" @submit="onSubmit">
-        <div class="space-y-6 pt-4">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-semibold leading-6">
-              {{ isEditMode ? 'Editar Corral' : 'Nuevo Corral' }}
-            </h3>
-            <UButton variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1" @click="closeModal" />
-          </div>
+        <div class="space-y-4 pt-2">
+          <h3 class="text-base font-semibold leading-6">
+            {{ isEditMode ? 'Editar Corral' : 'Nuevo Corral' }}
+          </h3>
 
-          <div class="space-y-4">
-            <UFormField label="Nombre" name="nombre" required>
-              <UInput v-model="form.nombre" />
-            </UFormField>
+          <UFormField name="nombre" required>
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Nombre del Corral
+              </span>
+            </template>
+            <UInput v-model="form.nombre" />
+          </UFormField>
 
-            <UFormField label="Tipo de Corral" name="tipo_corral" required>
-              <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" />
-            </UFormField>
+          <UFormField name="tipo_corral" required>
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Tipo de Corral
+              </span>
+            </template>
+            <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" />
+          </UFormField>
 
-            <UFormField label="Capacidad Máxima" name="capacidad_maxima" required>
-              <UInput v-model.number="form.capacidad_maxima" type="number" min="1" />
-            </UFormField>
+          <UFormField name="capacidad_maxima" required>
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Capacidad Máxima
+              </span>
+            </template>
+            <UInput v-model.number="form.capacidad_maxima" type="number" min="1" />
+          </UFormField>
 
-            <UFormField label="Descripción (Opcional)" name="descripcion">
-              <UTextarea v-model="form.descripcion" />
-            </UFormField>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-4">
-            <UButton label="Cancelar" @click="closeModal" />
-            <UButton :label="isEditMode ? 'Actualizar' : 'Crear'" type="submit" :loading="loading" />
-          </div>s
+          <UFormField name="descripcion">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Descripción (opcional)
+              </span>
+            </template>
+            <UTextarea v-model="form.descripcion" />
+          </UFormField>
+        </div>
+<div class="flex justify-end gap-3 pt-4">
+          <UButton :label="isEditMode ? 'Actualizar' : 'Crear'" type="submit" :loading="loading" />
         </div>
       </UForm>
     </template>
@@ -40,11 +54,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { useToast } from '#imports'
 import type { PropType } from 'vue'
 
-// Definir el tipo CorralAPI
 interface CorralAPI {
   id_corral: number
   nombre: string
@@ -56,14 +69,8 @@ interface CorralAPI {
 }
 
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true
-  },
-  corral: {
-    type: Object as PropType<CorralAPI | null>,
-    default: null
-  }
+  modelValue: { type: Boolean, required: true },
+  corral: { type: Object as PropType<CorralAPI | null>, default: null }
 })
 
 const emit = defineEmits<{
@@ -72,16 +79,6 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-
-const open = computed({
-  get() {
-    return props.modelValue
-  },
-  set(value) {
-    emit('update:modelValue', value)
-  }
-})
-
 const loading = ref(false)
 const isEditMode = computed(() => !!props.corral)
 
@@ -93,42 +90,28 @@ const form = reactive({
 })
 
 const tiposCorral = ['ENGORDE', 'CUARENTENA', 'REPRODUCCION', 'MATERNIDAD', 'DESTETE', 'OTROS']
+const tiposCorralOptions = tiposCorral.map(tipo => ({ label: tipo, value: tipo }))
 
-// Convertir array a opciones para USelect
-const tiposCorralOptions = tiposCorral.map(tipo => ({
-  label: tipo,
-  value: tipo
-}))
-
-// Watch para actualizar el formulario cuando cambia el corral
 watch(() => props.corral, (newCorral) => {
   if (newCorral) {
-    form.nombre = newCorral.nombre
-    form.tipo_corral = newCorral.tipo_corral
-    form.capacidad_maxima = newCorral.capacidad_maxima
-    form.descripcion = newCorral.descripcion || ''
+    Object.assign(form, {
+      nombre: newCorral.nombre,
+      tipo_corral: newCorral.tipo_corral,
+      capacidad_maxima: newCorral.capacidad_maxima,
+      descripcion: newCorral.descripcion || ''
+    })
   } else {
     resetForm()
   }
 }, { immediate: true })
 
-// Watch para resetear el formulario cuando se abre el modal
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen && !props.corral) {
-    resetForm()
-  }
-})
-
 function resetForm() {
-  form.nombre = ''
-  form.tipo_corral = 'ENGORDE'
-  form.capacidad_maxima = 10
-  form.descripcion = ''
-}
-
-function closeModal() {
-  open.value = false
-  resetForm()
+  Object.assign(form, {
+    nombre: '',
+    tipo_corral: 'ENGORDE',
+    capacidad_maxima: 10,
+    descripcion: ''
+  })
 }
 
 const onSubmit = async () => {
@@ -145,27 +128,20 @@ const onSubmit = async () => {
       body: form
     })
 
-    if (error.value) {
-      throw new Error(error.value.message || 'Error al guardar el corral')
-    }
+    if (error.value) throw new Error(error.value.message || 'Error al guardar el corral')
 
     if (data.value) {
       toast.add({
         title: 'Éxito',
         description: `Corral ${isEditMode.value ? 'actualizado' : 'creado'} correctamente`,
-        color: 'green'
+        color: 'success'
       })
 
-      emit('success', data.value)
-      closeModal()
+      emit('success', data.value as CorralAPI)
     }
   } catch (error: any) {
     console.error('Error saving corral:', error)
-    toast.add({
-      title: 'Error',
-      description: error.message || 'Error al guardar el corral',
-      color: 'red'
-    })
+    toast.add({ title: 'Error', description: error.message, color: 'error' })
   } finally {
     loading.value = false
   }

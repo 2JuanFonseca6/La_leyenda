@@ -43,9 +43,8 @@
                   <p class="text-xs">{{ animal.raza }} ({{ animal.peso_actual }} kg)</p>
                 </div>
                 <!-- Botón de desasignación -->
-                <UButton icon="i-heroicons-trash" color="red" variant="ghost" size="xs"
-                  class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                  @click="unassignAnimal(animal.id_animal)" title="Desasignar animal" />
+                <UButton icon="i-heroicons-arrows-pointing-out-solid" variant="ghost" size="xs"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto" title="Mover animal" />
               </div>
             </div>
           </div>

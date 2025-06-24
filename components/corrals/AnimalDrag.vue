@@ -313,7 +313,7 @@ defineExpose({
       </div>
 
       <!-- Zona de desasignación -->
-      <details class="group" open>
+      <details class="group">
         <summary class="flex cursor-pointer list-none items-center justify-between py-2 text-md font-medium">
           <span>Zona de Desasignación</span>
           <UIcon name="i-heroicons-chevron-down"
