@@ -9,24 +9,24 @@
           <h3 class="text-base font-semibold leading-6">
             Nuevo Corral
           </h3>
-
-          <UFormField name="nombre" required>
-            <template #label>
-              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-                Nombre del Corral
-              </span>
-            </template>
-            <UInput v-model="form.nombre" />
-          </UFormField>
-
-          <UFormField name="tipo_corral" required>
-            <template #label>
-              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-                Tipo de Corral
-              </span>
-            </template>
-            <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" />
-          </UFormField>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UFormField name="nombre" required>
+              <template #label>
+                <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                  Nombre del Corral
+                </span>
+              </template>
+              <UInput v-model="form.nombre" />
+            </UFormField>
+            <UFormField name="tipo_corral" required>
+              <template #label>
+                <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                  Tipo de Corral
+                </span>
+              </template>
+              <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" />
+            </UFormField>
+          </div>
 
           <UFormField name="capacidad_maxima" required>
             <template #label>
@@ -127,7 +127,7 @@ const onSubmit = async () => {
       })
 
       emit('success', data.value as unknown as CorralAPI)
-      emit('update:modelValue', false) 
+      emit('update:modelValue', false)
     }
   } catch (error: any) {
     console.error('Error saving corral:', error)
