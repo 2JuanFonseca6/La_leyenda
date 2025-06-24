@@ -1,12 +1,13 @@
 <template>
   <UModal :model-value="props.modelValue" @update:modelValue="emit('update:modelValue', $event)" title="Corral Form"
     description="Complete los detalles del corral" :overlay="true" :persistent="true">
-    <UButton color="primary" variant="subtle" icon="i-heroicons-plus"/>
+    <UButton color="primary" variant="subtle" icon="i-heroicons-plus" />
+
     <template #body>
       <UForm :state="form" @submit="onSubmit">
         <div class="space-y-4 pt-2">
           <h3 class="text-base font-semibold leading-6">
-            {{ isEditMode ? 'Editar Corral' : 'Nuevo Corral' }}
+            Nuevo Corral
           </h3>
 
           <UFormField name="nombre" required>
@@ -45,8 +46,9 @@
             <UTextarea v-model="form.descripcion" />
           </UFormField>
         </div>
-<div class="flex justify-end gap-3 pt-4">
-          <UButton :label="isEditMode ? 'Actualizar' : 'Crear'" type="submit" :loading="loading" />
+
+        <div class="flex justify-end gap-3 pt-4">
+          <UButton label="Crear" type="submit" :loading="loading" />
         </div>
       </UForm>
     </template>
@@ -54,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useToast } from '#imports'
 import type { PropType } from 'vue'
 
@@ -69,8 +71,7 @@ interface CorralAPI {
 }
 
 const props = defineProps({
-  modelValue: { type: Boolean, required: true },
-  corral: { type: Object as PropType<CorralAPI | null>, default: null }
+  modelValue: { type: Boolean, required: true }
 })
 
 const emit = defineEmits<{
@@ -80,7 +81,6 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const loading = ref(false)
-const isEditMode = computed(() => !!props.corral)
 
 const form = reactive({
   nombre: '',
@@ -92,19 +92,6 @@ const form = reactive({
 const tiposCorral = ['ENGORDE', 'CUARENTENA', 'REPRODUCCION', 'MATERNIDAD', 'DESTETE', 'OTROS']
 const tiposCorralOptions = tiposCorral.map(tipo => ({ label: tipo, value: tipo }))
 
-watch(() => props.corral, (newCorral) => {
-  if (newCorral) {
-    Object.assign(form, {
-      nombre: newCorral.nombre,
-      tipo_corral: newCorral.tipo_corral,
-      capacidad_maxima: newCorral.capacidad_maxima,
-      descripcion: newCorral.descripcion || ''
-    })
-  } else {
-    resetForm()
-  }
-}, { immediate: true })
-
 function resetForm() {
   Object.assign(form, {
     nombre: '',
@@ -114,14 +101,16 @@ function resetForm() {
   })
 }
 
+// Limpia el formulario al cerrar el modal
+watch(() => props.modelValue, (open) => {
+  if (!open) resetForm()
+})
+
 const onSubmit = async () => {
   loading.value = true
   try {
-    const url = isEditMode.value
-      ? `/api/corrales/specific/corrales${props.corral?.id_corral}`
-      : '/api/corrales/corrales'
-
-    const method = isEditMode.value ? 'PUT' : 'POST'
+    const url = '/api/corrales/corrales'
+    const method = 'POST'
 
     const { data, error } = await useFetch(url, {
       method,
@@ -133,11 +122,12 @@ const onSubmit = async () => {
     if (data.value) {
       toast.add({
         title: 'Éxito',
-        description: `Corral ${isEditMode.value ? 'actualizado' : 'creado'} correctamente`,
+        description: 'Corral creado correctamente',
         color: 'success'
       })
 
-      emit('success', data.value as CorralAPI)
+      emit('success', data.value as unknown as CorralAPI)
+      emit('update:modelValue', false) 
     }
   } catch (error: any) {
     console.error('Error saving corral:', error)
