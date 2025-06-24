@@ -4,7 +4,7 @@
     <UButton color="primary" variant="subtle" icon="i-heroicons-plus" />
 
     <template #body>
-      <UForm :state="form" @submit.prevent="onSubmit">
+      <UForm :state="form" @submit="onSubmit">
         <div class="space-y-4 pt-2">
           <h3 class="text-base font-semibold leading-6">
             Nuevo Corral
@@ -16,7 +16,7 @@
                   Nombre del Corral
                 </span>
               </template>
-              <UInput v-model="form.nombre" />
+              <UInput v-model="form.nombre" @keydown.enter.prevent />
             </UFormField>
             <UFormField name="tipo_corral" required>
               <template #label>
@@ -24,7 +24,7 @@
                   Tipo de Corral
                 </span>
               </template>
-              <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" />
+              <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" @keydown.enter.prevent />
             </UFormField>
           </div>
 
@@ -34,7 +34,7 @@
                 Capacidad Máxima
               </span>
             </template>
-            <UInput v-model.number="form.capacidad_maxima" type="number" min="1" />
+            <UInput v-model.number="form.capacidad_maxima" type="number" min="1" @keydown.enter.prevent />
           </UFormField>
 
           <UFormField name="descripcion">
@@ -43,12 +43,12 @@
                 Descripción (opcional)
               </span>
             </template>
-            <UTextarea v-model="form.descripcion" />
+            <UTextarea v-model="form.descripcion" @keydown.enter.prevent />
           </UFormField>
         </div>
 
         <div class="flex justify-end gap-3 pt-4">
-          <UButton label="Crear" type="submit" :loading="loading" />
+          <UButton label="Crear" type="submit" :loading="loading" :disabled="loading" />
         </div>
       </UForm>
     </template>
@@ -58,10 +58,9 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { useToast } from '#imports'
-import type { PropType } from 'vue'
 
 interface CorralAPI {
-  id_corral: number
+  id_corral: string
   nombre: string
   tipo_corral: string
   capacidad_maxima: number
@@ -73,10 +72,9 @@ interface CorralAPI {
 const props = defineProps({
   modelValue: { type: Boolean, required: true }
 })
-
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
-  'success': [corral: CorralAPI]
+  'update:modelValue': [boolean]
+  'success': [CorralAPI]
 }>()
 
 const toast = useToast()
@@ -89,8 +87,8 @@ const form = reactive({
   descripcion: ''
 })
 
-const tiposCorral = ['ENGORDE', 'CUARENTENA', 'REPRODUCCION', 'MATERNIDAD', 'DESTETE', 'OTROS']
-const tiposCorralOptions = tiposCorral.map(tipo => ({ label: tipo, value: tipo }))
+const tiposCorral = ['ENGORDE','CUARENTENA','REPRODUCCION','MATERNIDAD','DESTETE','OTROS']
+const tiposCorralOptions = tiposCorral.map(t => ({ label: t, value: t }))
 
 function resetForm() {
   Object.assign(form, {
@@ -101,40 +99,33 @@ function resetForm() {
   })
 }
 
-// Limpia el formulario al cerrar el modal
-watch(() => props.modelValue, (open) => {
+watch(() => props.modelValue, open => {
   if (!open) resetForm()
 })
 
 const onSubmit = async () => {
-  if (loading.value) return 
+  if (loading.value) return
   loading.value = true
-  try {
-    const url = '/api/corrales/corrales'
-    const method = 'POST'
 
-    const { data, error } = await useFetch(url, {
-      method,
+  try {
+    const response = await $fetch<CorralAPI>('/api/corrales/corrales', {
+      method: 'POST',
       body: form
     })
 
-    if (error.value) throw new Error(error.value.message || 'Error al guardar el corral')
+    toast.add({
+      title: 'Éxito',
+      description: 'Corral creado correctamente',
+      color: 'success'
+    })
 
-    if (data.value) {
-      toast.add({
-        title: 'Éxito',
-        description: 'Corral creado correctamente',
-        color: 'success'
-      })
+    emit('success', response)
+    resetForm()
+    emit('update:modelValue', false)
 
-      emit('success', data.value as unknown as CorralAPI)
-      emit('update:modelValue', false)
-
-      resetForm()
-    }
-  } catch (error: any) {
-    console.error('Error saving corral:', error)
-    toast.add({ title: 'Error', description: error.message, color: 'error' })
+  } catch (err: any) {
+    console.error('Error saving corral:', err)
+    toast.add({ title: 'Error', description: err.message || 'Error al guardar', color: 'error' })
   } finally {
     loading.value = false
   }
