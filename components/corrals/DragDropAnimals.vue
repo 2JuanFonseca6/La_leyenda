@@ -36,6 +36,7 @@ async function loadAssignedAnimals() {
 
 const handleCorralSuccess = (corral: any) => {
   console.log('Corral creado/actualizado:', corral)
+  refreshCorrales()
 }
 
 const handleDragStart = (animal: any) => { }
