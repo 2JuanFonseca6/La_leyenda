@@ -124,8 +124,8 @@ const deleteSelectedCorrales = async () => {
     return
   }
 
-  isDeleting.value = true
   deleteErrors.value = {}
+  isDeleting.value = true
   let successCount = 0
   let errorCount = 0
 
@@ -170,9 +170,17 @@ const deleteSelectedCorrales = async () => {
 }
 const open = ref(false)
 
+watch(open, (newValue) => {
+  if (newValue) {
+    fetchCorrales()
+  }
+})
+
 const emit = defineEmits<{
   (e: 'corral-deleted'): void
+  (e: 'refresh'): void
 }>()
+
 </script>
 
 <template>
@@ -204,7 +212,8 @@ const emit = defineEmits<{
           <h3 class="font-medium text-red-700 dark:text-red-300">Errores de eliminación:</h3>
           <ul class="mt-2 space-y-1">
             <li v-for="(error, id) in deleteErrors" :key="id" class="text-sm text-red-600 dark:text-red-400">
-              Corral <span class="truncate inline-block align-middle" style="max-width: 73px;">{{ id }}</span>: {{ error }}
+              Corral <span class="truncate inline-block align-middle" style="max-width: 73px;">{{ id }}</span>: {{ error
+              }}
             </li>
           </ul>
         </div>

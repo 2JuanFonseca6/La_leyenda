@@ -9,7 +9,7 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold mb-4">Corrales</h2>
         <div class="flex items-center gap-2">
-          <DeleteCorralModal @corral-deleted="refreshCorrales"/>
+          <DeleteCorralModal ref="deleteCorralModalRef" @corral-deleted="refreshCorrales"/>
           <CorralFormModal v-model="showCorralFormModal" @success="handleCorralSuccess" />
         </div>
       </div>
@@ -25,6 +25,7 @@ const animalDragRef = ref()
 const animalDropRef = ref()
 const assignedAnimalIds = ref<string[]>([])
 const showCorralFormModal = ref(false)
+const deleteCorralModalRef = ref()
 
 async function loadAssignedAnimals() {
   try {
@@ -36,7 +37,9 @@ async function loadAssignedAnimals() {
 
 const handleCorralSuccess = (corral: any) => {
   console.log('Corral creado/actualizado:', corral)
-  refreshCorrales()
+  // refreshCorrales()
+  animalDropRef.value?.refresh?.()
+  deleteCorralModalRef.value?.refresh?.()
 }
 
 const handleDragStart = (animal: any) => { }
