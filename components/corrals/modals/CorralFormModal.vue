@@ -4,7 +4,7 @@
     <UButton color="primary" variant="subtle" icon="i-heroicons-plus" />
 
     <template #body>
-      <UForm :state="form" @submit="onSubmit">
+      <UForm :state="form" @submit.prevent="onSubmit">
         <div class="space-y-4 pt-2">
           <h3 class="text-base font-semibold leading-6">
             Nuevo Corral
@@ -107,6 +107,7 @@ watch(() => props.modelValue, (open) => {
 })
 
 const onSubmit = async () => {
+  if (loading.value) return 
   loading.value = true
   try {
     const url = '/api/corrales/corrales'
@@ -128,6 +129,8 @@ const onSubmit = async () => {
 
       emit('success', data.value as unknown as CorralAPI)
       emit('update:modelValue', false)
+
+      resetForm()
     }
   } catch (error: any) {
     console.error('Error saving corral:', error)
