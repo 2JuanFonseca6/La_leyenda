@@ -1,11 +1,11 @@
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <div class="p-4">
       <AnimalDrag ref="animalDragRef" :assignedAnimals="assignedAnimalIds" @animalDragStart="handleDragStart"
         @unassignAnimal="handleUnassignAnimal" />
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <div class="p-4">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold mb-4">Corrales</h2>
         <div class="flex items-center gap-2">

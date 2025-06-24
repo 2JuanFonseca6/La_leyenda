@@ -178,7 +178,7 @@ const emit = defineEmits<{
 <template>
   <UModal v-model:open="open" title="Eliminar Corrales" description="Seleccione los corrales que desea eliminar">
 
-    <UButton color="neutral" variant="subtle" icon="i-heroicons-trash" />
+    <UButton color="primary" variant="subtle" icon="i-heroicons-trash" />
     <template #body>
       <div v-if="isLoading" class="flex justify-center py-8">
         <USkeleton class="h-8 w-full mb-2" v-for="i in 5" :key="i" />
