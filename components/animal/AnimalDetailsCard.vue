@@ -25,9 +25,7 @@
         class="absolute top-2 right-2 print:hidden"
       />
     </div>
-    <div>
-      <br />
-    </div>
+    
     <input
       type="file"
       ref="fileInput"
@@ -45,6 +43,7 @@
         label="Cambiar imagen"
       />
     </div>
+    <div class="mt-8 border-t pt-6"></div>
     <template #header>
       <div class="flex justify-between items-center">
         <h1 class="text-2xl">
