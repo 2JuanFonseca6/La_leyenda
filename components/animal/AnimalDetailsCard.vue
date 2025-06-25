@@ -1,8 +1,23 @@
 <template>
   <UCard
-    class="shadow-lg print:shadow-none print:w-full print:mt-[-55px]"
+       class="shadow-lg print:shadow-none print:w-full print:mt-[-55px]"
     :class="{ 'print:hidden': !show }"
   >
+    <div v-if="animal.imagen_url" class="mt-4 flex items-center gap-4">
+      <img
+        :src="animal.imagen_url"
+        alt="Imagen del animal"
+        class="max-w-xs rounded"
+      />
+      <UButton
+        v-if="userRole === 'admin'"
+        icon="i-heroicons-trash"
+        color="error"
+        @click="deleteImage"
+        :loading="isDeletingImage"
+        class="print:hidden"
+      />
+    </div>
     <template #header>
       <div class="flex justify-between items-center">
         <h1 class="text-2xl">
@@ -124,10 +139,14 @@
       v-else="userRole === 'admin'"
       :schema="schema"
       :state="formData"
+      :model-value="formData"
+      @update:model-value="(value: Record<string, any>) => Object.assign(formData, value)"
       @submit="handleSubmit"
       class="space-y-6"
     >
+    
       <div class="grid md:grid-cols-2 gap-6">
+        
         <!-- Columna Izquierda -->
         <div class="space-y-4">
           <UFormField
@@ -320,6 +339,7 @@ const handleSaleCreated = () => {
 // Reactive variables
 const isEditing = ref(false);
 const isSubmitting = ref(false);
+const isDeletingImage = ref(false);
 
 const formData = reactive<{
   id_animal: string;
@@ -390,6 +410,54 @@ const cancelEditing = () => {
         : undefined,
     fecha_fallecimiento: props.animal.fecha_fallecimiento?.split("T")[0] || "",
   });
+};
+
+const deleteImage = async () => {
+  isDeletingImage.value = true;
+  try {
+    const response = await $fetch(
+      `/api/animal/specific/${props.animal.id_animal}/image`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    if (!response?.success) {
+      throw new Error("Error al eliminar la imagen");
+    }
+
+    props.animal.imagen_url = null;
+    
+    toast.add({
+      title: "Imagen eliminada",
+      description: "La imagen del animal se ha eliminado correctamente",
+      color: "success",
+      icon: "i-heroicons-check-circle"
+    });
+  } catch (error: unknown) {
+    console.error("Error al eliminar imagen:", error);
+    let message = "Error desconocido al eliminar la imagen";
+    
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (
+      typeof error === "object" &&
+      error !== null &&
+      "data" in error &&
+      typeof (error as any).data?.message === "string"
+    ) {
+      message = (error as any).data.message;
+    }
+
+    toast.add({
+      title: "Error al eliminar imagen",
+      description: message,
+      color: "error",
+      icon: "i-heroicons-exclamation-circle"
+    });
+  } finally {
+    isDeletingImage.value = false;
+  }
 };
 
 const handleSubmit = async () => {

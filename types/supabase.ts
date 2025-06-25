@@ -17,6 +17,7 @@ export type Database = {
           id_animal: string
           id_corral: string | null
           id_reproduccion: number | null
+          imagen_url: string | null
           peso_actual: number
           peso_inicial: number
           raza: string
@@ -29,6 +30,7 @@ export type Database = {
           id_animal: string
           id_corral?: string | null
           id_reproduccion?: number | null
+          imagen_url?: string | null
           peso_actual: number
           peso_inicial: number
           raza: string
@@ -41,6 +43,7 @@ export type Database = {
           id_animal?: string
           id_corral?: string | null
           id_reproduccion?: number | null
+          imagen_url?: string | null
           peso_actual?: number
           peso_inicial?: number
           raza?: string

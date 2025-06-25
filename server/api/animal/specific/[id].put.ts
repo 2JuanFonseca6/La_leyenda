@@ -9,6 +9,7 @@ type AnimalUpdate = Database["public"]["Tables"]["animals"]["Update"];
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
   const user = await serverSupabaseUser(event);
+
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event) => {
   // Usa el tipo correcto para el cuerpo
   const body = await readBody<Partial<AnimalUpdate>>(event);
 
-  // Extrae el id_animal del body
+  // Extrae el id_animal de los parámetros
   const id_animal = event.context.params?.id;
 
   if (!id_animal) {
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Construye el objeto de actualización con el tipo correcto
+  // Construye el objeto de actualización
   const updateData: AnimalUpdate = {
     fecha_nacimiento: body.fecha_nacimiento,
     fecha_fallecimiento: body.fecha_fallecimiento,
@@ -39,6 +40,7 @@ export default defineEventHandler(async (event) => {
     estado_salud: body.estado_salud,
     peso_inicial: body.peso_inicial,
     id_reproduccion: body.id_reproduccion,
+    imagen_url: body.imagen_url, // ← 🔁 aquí está la corrección
   };
 
   // Filtra campos undefined

@@ -100,12 +100,16 @@
               @select="formState.id_reproduccion = $event.id_reproduccion" />
           </div>
         </UFormField>
+        <UFormField name="image" class="col-span-1 sm:col-span-2">
+          <template #label>
+            <span>Imagen del Animal</span>
+          </template>
+          <UInput type="file" @change="handleFileChange" accept="image/*" class="cursor-pointer" />
+        </UFormField>
 
         <!-- Botones de acción ocupan toda la fila -->
         <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end gap-4 mt-2">
-          <UButton type="button" variant="ghost" @click="closeModal">
-            Cancelar
-          </UButton>
+          <UButton type="button" variant="ghost" @click="closeModal">Cancelar</UButton>
           <UButton type="submit" color="primary"> Guardar Animal </UButton>
         </div>
       </UForm>
@@ -131,7 +135,6 @@ const estadoSaludOptions = computed(() =>
   Constants.public.Enums.estado_salud.map((value) => ({ label: value, value }))
 );
 
-// Schema de validación con Zod
 const schema = z.object({
   id_animal: z.string().min(1, "El ID es requerido"),
   raza: z.string().min(1, "La raza es requerida"),
@@ -146,7 +149,9 @@ type FormState = Omit<
 > & {
   tipo_animal?: Database["public"]["Enums"]["tipo_animal"];
   estado_salud?: Database["public"]["Enums"]["estado_salud"];
+  imagen_url?: string | null;
 };
+
 const formState = reactive<FormState>({
   id_animal: "",
   tipo_animal: undefined,
@@ -157,7 +162,17 @@ const formState = reactive<FormState>({
   estado_salud: undefined,
   fecha_fallecimiento: undefined,
   id_reproduccion: undefined,
+  imagen_url: undefined,
 });
+
+const selectedFile = ref<File | null>(null);
+
+const handleFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    selectedFile.value = input.files[0];
+  }
+};
 
 const tipoAnimal = computed({
   get: () => formState.tipo_animal,
@@ -199,12 +214,38 @@ const resetForm = () => {
     estado_salud: undefined,
     fecha_fallecimiento: undefined,
     id_reproduccion: undefined,
+    imagen_url: undefined,
   });
+  selectedFile.value = null;
 };
 
 const handleSubmit = async () => {
   try {
-    const { error } = await supabase.from("animals").insert(formState).single();
+    let imageUrl = undefined;
+
+    if (selectedFile.value) {
+      const fileExt = selectedFile.value.name.split('.').pop();
+      const fileName = `${Date.now()}-${formState.id_animal}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('animal-images')
+        .upload(fileName, selectedFile.value);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('animal-images')
+        .getPublicUrl(fileName);
+
+      imageUrl = publicUrl;
+    }
+
+    const animalData = {
+      ...formState,
+      imagen_url: imageUrl,
+    };
+
+    const { error } = await supabase.from("animals").insert(animalData).single();
 
     if (error) throw error;
 

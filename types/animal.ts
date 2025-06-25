@@ -19,6 +19,7 @@ export interface Animal {
   peso_inicial: number;
   id_reproduccion: string | null;
   fecha_fallecimiento: string | null;
+  imagen_url?: string | null;
 }
 
 export interface Venta {
