@@ -1,21 +1,48 @@
 <template>
   <UCard
-       class="shadow-lg print:shadow-none print:w-full print:mt-[-55px]"
+    class="shadow-lg print:shadow-none print:w-full print:mt-[-55px]"
     :class="{ 'print:hidden': !show }"
   >
-    <div v-if="animal.imagen_url" class="mt-4 flex items-center gap-4">
-      <img
-        :src="animal.imagen_url"
-        alt="Imagen del animal"
-        class="max-w-xs rounded"
-      />
+    <div class="w-full flex justify-center relative group">
+      <div
+        class="rounded border border-gray-300 overflow-hidden max-h-64 w-fit"
+        :class="{ 'cursor-pointer': isEditing }"
+        @click="isEditing ? fileInput?.click() : null"
+      >
+        <img
+          :src="animal.imagen_url || undefined"
+          alt="Imagen del animal"
+          class="transition-transform duration-300 ease-in-out object-contain max-h-64 group-hover:scale-110"
+        />
+      </div>
+
       <UButton
         v-if="userRole === 'admin'"
         icon="i-heroicons-trash"
         color="error"
-        @click="deleteImage"
+        @click.stop="deleteImage"
         :loading="isDeletingImage"
-        class="print:hidden"
+        class="absolute top-2 right-2 print:hidden"
+      />
+    </div>
+    <div>
+      <br />
+    </div>
+    <input
+      type="file"
+      ref="fileInput"
+      accept="image/*"
+      class="hidden"
+      @change="handleImageUpload"
+    />
+    <div class="my-4">
+      <UButton
+        v-if="userRole === 'admin' && !isEditing"
+        @click="fileInput?.click()"
+        :loading="isUploadingImage"
+        icon="i-heroicons-photo"
+        color="primary"
+        label="Cambiar imagen"
       />
     </div>
     <template #header>
@@ -144,9 +171,7 @@
       @submit="handleSubmit"
       class="space-y-6"
     >
-    
       <div class="grid md:grid-cols-2 gap-6">
-        
         <!-- Columna Izquierda -->
         <div class="space-y-4">
           <UFormField
@@ -271,6 +296,7 @@ import type { Animal } from "~/types/animal";
 import type { Venta } from "~/types/animal";
 import { z } from "zod";
 const isDrawerOpen = ref(false);
+const isPreviewOpen = ref(false);
 
 const schema = z.object({
   fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
@@ -340,6 +366,65 @@ const handleSaleCreated = () => {
 const isEditing = ref(false);
 const isSubmitting = ref(false);
 const isDeletingImage = ref(false);
+const isUploadingImage = ref(false);
+const fileInput = ref<HTMLInputElement>();
+
+const handleImageUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+
+  if (!file) return;
+
+  isUploadingImage.value = true;
+  try {
+    // 1. Subir imagen a Supabase Storage
+    const formData = new FormData();
+    formData.append("file", file);
+
+    interface UploadResponse {
+      url: string;
+    }
+
+    const uploadResponse = await $fetch<UploadResponse>("/api/storage/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadResponse?.url) {
+      throw new Error("No se pudo subir la imagen");
+    }
+
+    // 2. Actualizar el animal con la nueva URL de imagen
+    const updateResponse = await $fetch(
+      `/api/animal/specific/${props.animal.id_animal}`,
+      {
+        method: "PUT",
+        body: {
+          ...props.animal,
+          imagen_url: uploadResponse.url,
+        },
+      }
+    );
+
+    // 3. Actualizar estado local
+    emit("updated", {
+      ...props.animal,
+      imagen_url: uploadResponse.url,
+    });
+
+    toast.add({
+      title: "Imagen actualizada",
+      description: "La imagen del animal se ha actualizado correctamente",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
+  } catch (error) {
+    // Manejo de errores
+  } finally {
+    isUploadingImage.value = false;
+    if (fileInput.value) fileInput.value.value = "";
+  }
+};
 
 const formData = reactive<{
   id_animal: string;
@@ -418,7 +503,7 @@ const deleteImage = async () => {
     const response = await $fetch(
       `/api/animal/specific/${props.animal.id_animal}/image`,
       {
-        method: "DELETE"
+        method: "DELETE",
       }
     );
 
@@ -427,17 +512,17 @@ const deleteImage = async () => {
     }
 
     props.animal.imagen_url = null;
-    
+
     toast.add({
       title: "Imagen eliminada",
       description: "La imagen del animal se ha eliminado correctamente",
       color: "success",
-      icon: "i-heroicons-check-circle"
+      icon: "i-heroicons-check-circle",
     });
   } catch (error: unknown) {
     console.error("Error al eliminar imagen:", error);
     let message = "Error desconocido al eliminar la imagen";
-    
+
     if (error instanceof Error) {
       message = error.message;
     } else if (
@@ -453,7 +538,7 @@ const deleteImage = async () => {
       title: "Error al eliminar imagen",
       description: message,
       color: "error",
-      icon: "i-heroicons-exclamation-circle"
+      icon: "i-heroicons-exclamation-circle",
     });
   } finally {
     isDeletingImage.value = false;
