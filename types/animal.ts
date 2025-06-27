@@ -37,3 +37,63 @@ export interface HistorialSalud {
   descripcion: string;
   observaciones: string | null;
 }
+
+// =====================================================
+// TIPOS ACTUALIZADOS PARA PAJILLAS (ESTRUCTURA REAL)
+// =====================================================
+
+export interface InventarioPajilla {
+  id: string;
+  toro_id: string; // TEXT - Referencia al toro del que proviene la pajilla
+  codigo_pajilla: string;
+  cantidad_total: number;
+  cantidad_disponible: number;
+  fecha_ingreso: string;
+  fecha_vencimiento?: string;
+  proveedor?: string;
+  precio_unitario?: number;
+  notas?: string;
+  created_at: string;
+  updated_at: string;
+  animal?: Animal; // Información del animal (toro) - agregada por el endpoint
+}
+
+export interface HistorialPajilla {
+  id: string;
+  pajilla_id: string;
+  tipo_operacion: 'uso' | 'restock';
+  cantidad: number;
+  fecha_operacion: string;
+  usuario_id?: string;
+  animal_destino_id?: string; // TEXT - Animal donde se usó la pajilla
+  observaciones?: string;
+  created_at: string;
+}
+
+export interface PajillaConHistorial extends InventarioPajilla {
+  historial: HistorialPajilla[];
+}
+
+// Tipos para formularios
+export interface CreatePajillaData {
+  toro_id: string;
+  codigo_pajilla: string;
+  cantidad_total: number;
+  fecha_vencimiento?: string;
+  proveedor?: string;
+  precio_unitario?: number;
+  notas?: string;
+}
+
+export interface UsePajillaData {
+  pajilla_id: string;
+  cantidad: number;
+  animal_destino_id?: string;
+  observaciones?: string;
+}
+
+export interface RestockPajillaData {
+  pajilla_id: string;
+  cantidad: number;
+  observaciones?: string;
+}

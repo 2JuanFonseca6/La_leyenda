@@ -1,9 +1,9 @@
 <template>
-  <div class="vue-flow-container h-[500px] w-full border rounded-lg">
+  <div class="vue-flow-container h-[500px] w-full border rounded-lg print:h-[300px] print:border-0 print:rounded-none">
     <VueFlow v-model:nodes="nodes" v-model:edges="edges" :fit-view-on-init="true" :max-zoom="1.5" :min-zoom="0.5"
-      :node-drag-threshold="0">
-      <Background :gap="35" :size="1" />
-      <Controls />
+      :node-drag-threshold="0" class="print:scale-75 print:transform print:origin-top-left">
+      <Background :gap="35" :size="1" class="print:hidden" />
+      <Controls class="print:hidden" />
     </VueFlow>
   </div>
 </template>
@@ -13,17 +13,10 @@ import { VueFlow, Position } from '@vue-flow/core'
 import { Background, Controls } from '@vue-flow/additional-components'
 import '@vue-flow/core/dist/style.css'
 import type { Edge, Node } from '@vue-flow/core'
-
-interface TreeNode {
-  id: string
-  raza: string
-  tipo_animal: string
-  madre?: TreeNode
-  padre?: TreeNode
-}
+import type { GenealogyTreeNode } from '~/types/animal'
 
 const props = defineProps<{
-  treeData?: TreeNode
+  treeData?: GenealogyTreeNode
 }>()
 
 const nodes = ref<Node[]>([])
@@ -32,7 +25,7 @@ const edges = ref<Edge[]>([])
 const positionCache = new Map()
 
 // Nuevo parámetro: isFocalNode. True para el nodo principal (TERNERO), false para sus padres (VACA, TORO).
-const buildTree = (nodeData: TreeNode | undefined, x: number = 0, y: number = 0, isFocalNode: boolean = true) => {
+const buildTree = (nodeData: GenealogyTreeNode | undefined, x: number = 0, y: number = 0, isFocalNode: boolean = true) => {
   if (!nodeData || positionCache.has(nodeData.id)) return
 
   const horizontalSpacing = 200

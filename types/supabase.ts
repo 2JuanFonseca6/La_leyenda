@@ -356,6 +356,37 @@ export type Database = {
           },
         ]
       }
+      pajillas: {
+        Row: {
+          id: number
+          pajilla: string
+          stock: number
+          animal_id: string | null
+          fecha_uso: string | null
+          descripcion: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          pajilla: string
+          stock: number
+          animal_id?: string | null
+          fecha_uso?: string | null
+          descripcion?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          pajilla?: string
+          stock?: number
+          animal_id?: string | null
+          fecha_uso?: string | null
+          descripcion?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vacunas: {
         Row: {
           animal_id: string | null

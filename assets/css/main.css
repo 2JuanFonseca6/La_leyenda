@@ -53,4 +53,165 @@
     height: auto !important;
     overflow: visible !important;
   }
+
+  /* Print header with logo - Optimized for single page */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #262626;
+    margin-bottom: 15px;
+    page-break-after: avoid;
+    width: 100%;
+  }
+
+  .print-header .logo {
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .print-header .logo img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .print-header .title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #262626;
+    text-align: center;
+    flex-grow: 1;
+    margin: 0 15px;
+  }
+
+  .print-header .date {
+    font-size: 12px;
+    color: #737373;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Hide elements that shouldn't print */
+  .print-header {
+    display: none;
+  }
+
+  /* Show print header only when printing */
+  .print-header.print-only {
+    display: flex !important;
+  }
+
+  /* Optimized page margins for single page */
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+
+  /* Compact spacing for printed content */
+  .space-y-8 > * + * {
+    margin-top: 1rem;
+  }
+
+  /* Optimize card spacing */
+  .shadow-lg {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Reduce padding in cards */
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  /* Compact grid layouts */
+  .grid {
+    gap: 0.75rem !important;
+  }
+
+  /* Smaller text for better fit */
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-lg {
+    font-size: 1rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  /* Optimize image size in AnimalDetailsCard */
+  .max-h-64 {
+    max-height: 120px !important;
+  }
+
+  /* Reduce margins between sections */
+  .mt-8 {
+    margin-top: 1rem !important;
+  }
+
+  .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Compact form fields */
+  .space-y-4 > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  /* Hide unnecessary elements in print */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure text is readable */
+  * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+
+  /* Genealogy tree optimization for print */
+  .vue-flow-container {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .vue-flow-container .vue-flow__node {
+    background: white !important;
+    border: 1px solid #374151 !important;
+    color: #000 !important;
+    font-size: 12px !important;
+    padding: 8px !important;
+  }
+
+  .vue-flow-container .vue-flow__edge {
+    stroke: #374151 !important;
+    stroke-width: 2px !important;
+  }
+
+  .vue-flow-container .vue-flow__edge-label {
+    background: white !important;
+    border: 1px solid #374151 !important;
+    color: #000 !important;
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+  }
+
+  /* Hide interactive elements in print */
+  .vue-flow__controls {
+    display: none !important;
+  }
+
+  .vue-flow__background {
+    display: none !important;
+  }
 }

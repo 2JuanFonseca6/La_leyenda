@@ -1,23 +1,23 @@
 <template>
   <UCard
-    class="shadow-lg print:shadow-none print:w-full print:mt-[-55px]"
+    class="shadow-lg print:shadow-none print:w-full print:mt-[-55px] print:border print:border-gray-300"
     :class="{ 'print:hidden': !show }"
   >
-    <div class="w-full flex justify-center relative group">
+    <div class="w-full flex justify-center relative group print:flex-col print:items-center">
       <div
-        class="rounded border border-gray-300 overflow-hidden max-h-64 w-fit"
+        class="rounded border border-gray-300 overflow-hidden max-h-64 w-fit print:max-h-32 print:border-0"
         :class="{ 'cursor-pointer': isEditing }"
         @click="isEditing ? fileInput?.click() : null"
       >
         <img
           :src="animal.imagen_url || undefined"
           alt="Imagen del animal"
-          class="transition-transform duration-300 ease-in-out object-contain max-h-64 group-hover:scale-110"
+          class="transition-transform duration-300 ease-in-out object-contain max-h-64 group-hover:scale-110 print:max-h-32 print:scale-100"
         />
       </div>
 
       <UButton
-        v-if="userRole === 'admin'"
+        v-if="userRole === 'admin' && isEditing"
         icon="i-heroicons-trash"
         color="error"
         @click.stop="deleteImage"
@@ -33,7 +33,7 @@
       class="hidden"
       @change="handleImageUpload"
     />
-    <div class="my-4">
+    <div class="my-4 print:my-2">
       <UButton
         v-if="userRole === 'admin' && !isEditing"
         @click="fileInput?.click()"
@@ -41,12 +41,13 @@
         icon="i-heroicons-photo"
         color="primary"
         label="Cambiar imagen"
+        class="print:hidden"
       />
     </div>
-    <div class="mt-8 border-t pt-6"></div>
+    <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2"></div>
     <template #header>
-      <div class="flex justify-between items-center">
-        <h1 class="text-2xl">
+      <div class="flex justify-between items-center print:flex-col print:items-start print:gap-2">
+        <h1 class="text-2xl print:text-xl">
           Animal:
           <span class="font-bold font-mono">{{ animal.id_animal }}</span>
         </h1>
@@ -60,61 +61,61 @@
     </template>
 
     <!-- Modo Visualización -->
-    <div v-if="!isEditing">
-      <div class="grid md:grid-cols-2 gap-6 print:grid print:grid-cols-2">
+    <div v-if="!isEditing" class="print:space-y-2">
+      <div class="grid md:grid-cols-2 gap-6 print:grid print:grid-cols-2 print:gap-4">
         <!-- Columna Izquierda -->
-        <div class="space-y-4">
+        <div class="space-y-4 print:space-y-2">
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Fecha de Nacimiento</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{ new Date(animal.fecha_nacimiento).toLocaleDateString() }}
             </p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Raza</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{ animal.raza }}
             </p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Tipo</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{ animal.tipo_animal }}
             </p>
           </div>
         </div>
 
         <!-- Columna Derecha -->
-        <div class="space-y-4">
+        <div class="space-y-4 print:space-y-2">
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Peso Actual</label
             >
-            <p class="text-2xl font-semibold">{{ animal.peso_actual }} kg</p>
+            <p class="text-2xl font-semibold print:text-lg">{{ animal.peso_actual }} kg</p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Estado de Salud</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{ animal.estado_salud }}
             </p>
           </div>
 
-          <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+          <div v-if="userRole === 'admin'">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >En Venta</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{
                 hasSaleRecord
                   ? "Con información de venta"
@@ -126,29 +127,29 @@
       </div>
 
       <!-- Sección Adicional -->
-      <div class="mt-8 border-t pt-6">
-        <div class="grid grid-cols-3 gap-4 text-center">
+      <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
+        <div class="grid grid-cols-3 gap-4 text-center print:gap-2">
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Peso Inicial</label
             >
-            <p class="text-lg font-semibold">{{ animal.peso_inicial }} kg</p>
+            <p class="text-lg font-semibold print:text-sm">{{ animal.peso_inicial }} kg</p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >ID Reproducción</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{ animal.id_reproduccion || "N/A" }}
             </p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)]"
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >Fecha Fallecimiento</label
             >
-            <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold print:text-sm">
               {{
                 animal.fecha_fallecimiento
                   ? new Date(animal.fecha_fallecimiento).toLocaleDateString()
@@ -221,7 +222,7 @@
             <UFormMessage />
           </UFormField>
 
-          <UFormField label="En Venta" name="venta">
+          <UFormField v-if="userRole === 'admin'" label="En Venta" name="venta">
             <div>
               <template v-if="hasSaleRecord">
                 <p class="font-semibold">

@@ -1,50 +1,71 @@
 import type { Database } from "~/types/supabase";
-import type { Session } from "@supabase/supabase-js";
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const client = useSupabaseClient<Database>();
-  const toast = useToast();
+  // Skip authentication check for public routes
+  const publicRoutes = ['/login', '/callback', '/about', '/']
+  if (publicRoutes.includes(to.path)) {
+    return
+  }
 
-  // Get authenticated user
-  let user = null;
+  // Check if Supabase is properly configured
+  const supabaseUrl = process.env.NUXT_SUPABASE_URL
+  const supabaseKey = process.env.NUXT_SUPABASE_KEY
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('Supabase environment variables not configured. Please check SUPABASE_SETUP.md')
+    // Allow access but show warning
+    return
+  }
+
+  const client = useSupabaseClient<Database>();
 
   try {
     const {
-      data: { user: supabaseUser },
+      data: { user },
       error,
     } = await client.auth.getUser();
-    if (error) throw error;
-    user = supabaseUser;
-  } catch (error) {
-    console.error("Error fetching user:", error);
-  }
+    
+    if (error) {
+      console.error("Supabase auth error:", error);
+      // Only redirect if it's not a session missing error (which is expected when not logged in)
+      if (!error.message?.includes('Auth session missing')) {
+        console.error("Unexpected auth error:", error);
+      }
+    }
+    
+    // If no user and route requires auth, redirect to login
+    if (!user && to.meta.requiresAuth) {
+      return navigateTo("/login");
+    }
 
-  // Redirect if authentication is required
-  if (!user && to.meta.requiresAuth) {
-    return navigateTo("/login");
-  }
+    // Role-based access control
+    if (user && to.meta.requiredRole) {
+      try {
+        const { data: profile, error: profileError } = await client
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
 
-  // Role-based access control
-  if (user && to.meta.requiredRole) {
-    try {
-      const { data: profile, error } = await client
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return navigateTo("/");
+        }
 
-      if (error) throw error;
+        const userProfile = profile as Profile;
 
-      const userProfile = profile as Profile;
-
-      if (to.meta.requiredRole !== userProfile.role) {
-        toast.add({ title: "Acceso no autorizado", color: "error", icon: "i-heroicons-exclamation-circle" });
+        if (to.meta.requiredRole !== userProfile.role) {
+          const toast = useToast();
+          toast.add({ title: "Acceso no autorizado", color: "error", icon: "i-heroicons-exclamation-circle" });
+          return navigateTo("/");
+        }
+      } catch (error) {
+        console.error("Error in role check:", error);
         return navigateTo("/");
       }
-    } catch (error) {
-      toast.add({ title: "Error cargando perfil", color: "error", icon: "i-heroicons-exclamation-circle" });
-      console.error("Error fetching profile:", error);
-      return navigateTo("/");
     }
+  } catch (error) {
+    console.error("Unexpected error in auth middleware:", error);
+    // Don't redirect on unexpected errors, just log them
   }
 });

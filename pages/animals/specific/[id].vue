@@ -3,8 +3,11 @@ import AnimalSearch from '~/components/animal/AnimalSearch.vue'
 import BreadNav from '~/components/navigation/BreadNav.vue';
 import SaleInfoCard from '~/components/animal/SaleInfoCard.vue'
 import HealthHistoryCard from '~/components/animal/HealthHistoryCard.vue'
+import PrintHeader from '~/components/PrintHeader.vue'
+import GenealogyTree from '~/components/animal/GenealogyTree.vue'
+import GenealogyTreePrint from '~/components/animal/GenealogyTreePrint.vue'
 import type { BreadcrumbItem } from '@nuxt/ui'
-import type { GenealogyResponse, Venta, Animal, HistorialSalud } from '~/types/animal'
+import type { GenealogyResponse, Venta, Animal, HistorialSalud, GenealogyTreeNode } from '~/types/animal'
 import { useUserRole } from '~/composables/arestricted'
 
 const { userRole } = useUserRole();
@@ -109,7 +112,7 @@ const transformGenealogyData = (apiData: any): GenealogyResponse => {
     }
   }
 
-  const transformAnimalToNode = (animalItem: Animal): TreeNode => ({
+  const transformAnimalToNode = (animalItem: Animal): GenealogyTreeNode => ({
     id: animalItem.id_animal,
     raza: animalItem.raza,
     tipo_animal: animalItem.tipo_animal,
@@ -130,9 +133,10 @@ const transformGenealogyData = (apiData: any): GenealogyResponse => {
 const showPrintOptions = ref(false)
 const printSections = reactive({
   genealogy: true,
-  venta: true,
+  venta: userRole.value === 'admin',
   detalles: true,
-  salud: true
+  salud: true,
+  genealogia: true
 })
 
 const printReport = () => {
@@ -169,6 +173,16 @@ const handleVentaUpdated = () => {
   })
 }
 
+const handleVentaDeleted = () => {
+  refresh() // Recargar los datos del animal
+  toast.add({
+    title: 'Venta eliminada',
+    description: 'La información de venta se ha eliminado correctamente',
+    color: 'success',
+    icon: 'i-heroicons-check-circle'
+  })
+}
+
 // En la sección de métodos del componente padre
 const handleHealthUpdated = () => {
   refresh()
@@ -183,6 +197,8 @@ const handleHealthUpdated = () => {
 
 <template>
   <div class="space-y-8">
+    <!-- Encabezado de impresión -->
+    <PrintHeader :title="`Animal ${id} - Detalles`" />
 
     <BreadNav :items="breadcrumbItems" class="print:hidden" />
 
@@ -208,8 +224,9 @@ const handleHealthUpdated = () => {
       </div>
       <div v-if="showPrintOptions" class="flex flex-col md:flex-row gap-4 mb-6 print:hidden">
         <UCheckbox v-model="printSections.detalles" label="Detalle del animal" />
-        <UCheckbox v-model="printSections.venta" label="Información de venta" />
+        <UCheckbox v-if="userRole === 'admin'" v-model="printSections.venta" label="Información de venta" />
         <UCheckbox v-model="printSections.salud" label="Historial de salud" />
+        <UCheckbox v-model="printSections.genealogia" label="Árbol genealógico" />
       </div>
 
       <!-- Sección Detalles -->
@@ -218,11 +235,11 @@ const handleHealthUpdated = () => {
 
       <!-- Sección Venta -->
       <template v-if="animal?.venta">
-        <SaleInfoCard :venta="animal.venta" :show="printSections.venta" @updated="handleVentaUpdated" />
+        <SaleInfoCard :venta="animal.venta" :show="printSections.venta" @updated="handleVentaUpdated" @deleted="handleVentaDeleted" />
         <UButton v-if="showPrintOptions && userRole === 'admin'" icon="i-heroicons-pencil-square" label="Editar Venta"
           @click="$router.push(`/sales/edit/${animal.venta.id_venta}`)" class="mt-4 print:hidden" />
       </template>
-      <UAlert v-else title="Sin información de venta" description="Este animal no tiene datos de venta registrados."
+      <UAlert v-else-if="userRole === 'admin'" title="Sin información de venta" description="Este animal no tiene datos de venta registrados."
         icon="i-heroicons-exclamation-circle" color="warning" class="mt-8" />
 
       <!-- Sección Historial de Salud -->
@@ -235,12 +252,22 @@ const handleHealthUpdated = () => {
       </div>
 
       <template v-else>
-        <div class="print:hidden">
-          <h2 v-if="genealogy" class="text-2xl font-semibold mt-8"> Árbol Genealógico </h2>
-          <GenealogyTree v-if="genealogy" :tree-data="genealogy" class="mt-8" />
-          <UAlert v-else title="Sin registro genealógico"
+        <div class="print:block" :class="{ 'print:hidden': !printSections.genealogia }">
+          <h2 v-if="genealogy" class="text-2xl font-semibold mt-8 print:text-lg print:mt-4"> Árbol Genealógico </h2>
+          
+          <!-- Árbol interactivo para pantalla -->
+          <div class="print:hidden">
+            <GenealogyTree v-if="genealogy" :tree-data="genealogy" class="mt-8" />
+          </div>
+          
+          <!-- Árbol compacto para impresión -->
+          <div class="hidden print:block">
+            <GenealogyTreePrint v-if="genealogy" :tree-data="genealogy" />
+          </div>
+          
+          <UAlert v-if="!genealogy" title="Sin registro genealógico"
             description="No se encontraron datos de parentesco para este animal." icon="i-heroicons-information-circle"
-            color="warning" class="mt-8" />
+            color="warning" class="mt-8 print:text-sm" />
         </div>
       </template>
 

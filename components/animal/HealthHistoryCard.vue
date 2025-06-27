@@ -1,25 +1,25 @@
 <!-- components/animal/HealthHistoryCard.vue -->
 <template>
-  <UCard class="mt-8 shadow-md print:shadow-none" :class="{ 'print:hidden': !show }">
+  <UCard class="mt-8 shadow-md print:shadow-none print:mt-4 print:border print:border-gray-300" :class="{ 'print:hidden': !show }">
     <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-bold">Historial de Salud</h2>
+      <div class="flex justify-between items-center print:flex-col print:items-start print:gap-2">
+        <h2 class="text-xl font-bold print:text-lg">Historial de Salud</h2>
         <UButton v-if="userRole === 'admin'" icon="i-heroicons-plus" @click="openCreateModal"
           class="print:hidden bg-[var(--color-custom-50)] text-[var(--color-custom-500)] dark:bg-[var(--color-custom-500)] dark:text-[var(--color-custom-50)] hover:text-[var(--color-custom-50)] dark:hover:text-[var(--color-custom-500)] rounded-full p-2" />
       </div>
     </template>
 
-    <div v-if="historialSalud?.length" class="max-h-96 overflow-y-auto space-y-4 pr-2">
-      <div v-for="registro in historialSalud" :key="registro.id_historial" class="border-b pb-4 last:border-b-0">
-        <div class="flex justify-between items-start">
-          <div class="space-y-1">
-            <p class="font-semibold">{{ registro.descripcion }}</p>
-            <p class="text-sm text-gray-500" v-if="registro.observaciones">
+    <div v-if="historialSalud?.length" class="max-h-96 overflow-y-auto space-y-4 pr-2 print:max-h-none print:space-y-2 print:pr-0">
+      <div v-for="registro in historialSalud" :key="registro.id_historial" class="border-b pb-4 last:border-b-0 print:pb-2 print:border-b-gray-200">
+        <div class="flex justify-between items-start print:flex-col print:gap-1">
+          <div class="space-y-1 print:space-y-0">
+            <p class="font-semibold print:text-sm">{{ registro.descripcion }}</p>
+            <p class="text-sm text-gray-500 print:text-xs" v-if="registro.observaciones">
               {{ registro.observaciones }}
             </p>
           </div>
-          <div class="flex items-center gap-2 shrink-0 ml-4">
-            <p class="text-sm text-gray-500">
+          <div class="flex items-center gap-2 shrink-0 ml-4 print:ml-0 print:gap-1">
+            <p class="text-sm text-gray-500 print:text-xs">
               {{ new Date(registro.fecha_evento).toLocaleDateString() }}
             </p>
             <div v-if="userRole === 'admin'" class="flex gap-1 print:hidden">
@@ -34,7 +34,7 @@
     </div>
     <UAlert v-if="!historialSalud.length" title="Sin registros de salud"
       description="No se encontró historial de salud para este animal." icon="i-heroicons-information-circle"
-      color="warning" class="mb-4" />
+      color="warning" class="mb-4 print:text-sm" />
 
     <!-- Modal de Edición/Creación -->
     <UModal v-model:open="isModalOpen" :title="modalTitle"

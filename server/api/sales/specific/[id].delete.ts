@@ -1,4 +1,4 @@
-// server/api/sales/[id].delete.ts
+// server/api/sales/specific/[id].delete.ts
 import { serverSupabaseClient } from '#supabase/server'
 import type { Database } from '~/types/supabase'
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const { error } = await client
     .from('ventas')
     .delete()
-    .eq('id_animal', id)
+    .eq('animal_id', id)
 
   if (error) {
     console.error('Error al eliminar la venta:', error)

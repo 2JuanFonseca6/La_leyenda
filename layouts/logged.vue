@@ -36,6 +36,12 @@ const items = computed<ContextMenuItem[]>(() => {
       href: '/stock',
     },
     {
+      label: 'Pajillas',
+      icon: 'i-healthicons-syringe-outline',
+      type: 'link',
+      href: '/pajillas',
+    },
+    {
       label: 'Ajustes',
       icon: 'i-heroicons-cog',
       type: 'link',
