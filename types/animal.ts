@@ -38,6 +38,13 @@ export interface HistorialSalud {
   observaciones: string | null;
 }
 
+export interface HistorialPeso {
+  id: number;
+  animal_id: string;
+  peso: number;
+  fecha_registro: string;
+}
+
 // =====================================================
 // TIPOS ACTUALIZADOS PARA PAJILLAS (ESTRUCTURA REAL)
 // =====================================================

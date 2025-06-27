@@ -53,6 +53,10 @@
     <div v-if="error" class="mt-4 text-red-500">
       Error al cargar gráficos: {{ error.message }}
     </div>
+
+    <div class="mt-10">
+      <AnimalWeightTimeline />
+    </div>
   </div>
 </template>
 
@@ -70,6 +74,7 @@ import {
 } from 'chart.js'
 import type { ChartOptions, ChartData } from 'chart.js'
 import { useFetch } from '#app'
+import { AnimalWeightTimeline } from './index'
 
 ChartJS.register(
   CategoryScale,

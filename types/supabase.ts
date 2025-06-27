@@ -450,6 +450,33 @@ export type Database = {
             referencedColumns: ["id_animal"]
           },
         ]
+      },
+      historial_peso: {
+        Row: {
+          id: number
+          animal_id: string
+          peso: number
+          fecha_registro: string
+        }
+        Insert: {
+          animal_id: string
+          peso: number
+          fecha_registro?: string
+        }
+        Update: {
+          animal_id?: string
+          peso?: number
+          fecha_registro?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historial_peso_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animals"
+            referencedColumns: ["id_animal"]
+          }
+        ]
       }
     }
     Views: {

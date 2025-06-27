@@ -90,6 +90,7 @@
     </div>
   </UCard>
 
+
   <!-- MODAL DE CONFIRMACIÓN -->
   <UModal v-model:open="isOpen" title="Eliminar Animal"
     description="¿Estás seguro de que deseas eliminar este registro?" :dismissible="false">
@@ -114,16 +115,39 @@
       </div>
     </template>
   </UModal>
+
+  <!-- MODAL NUEVO PESO -->
+  <UModal v-model:open="isModalOpen" title="Registrar Nuevo Peso" :dismissible="false">
+    <template #body>
+      <UForm @submit="handleSubmit" class="space-y-4">
+        <UFormField label="Peso (kg)" name="peso" required>
+          <UInput v-model.number="nuevoPeso" type="number" min="1" step="0.1" placeholder="Ej: 350.5" />
+        </UFormField>
+        <UFormField label="Fecha" name="fecha">
+          <UInput v-model="nuevaFecha" type="date" />
+        </UFormField>
+        <div class="flex justify-end gap-3 mt-4">
+          <UButton type="button" @click="isModalOpen = false">Cancelar</UButton>
+          <UButton type="submit" color="primary" :loading="isSaving">Guardar</UButton>
+        </div>
+      </UForm>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { resolveComponent } from 'vue'
+import type { HistorialPeso } from '~/types/animal'
+import Chart from 'chart.js/auto'
 
 // Componentes de UI
 const UCard = resolveComponent('UCard')
 const UButton = resolveComponent('UButton')
 const UModal = resolveComponent('UModal')
+const UForm = resolveComponent('UForm')
+const UFormField = resolveComponent('UFormField')
+const UInput = resolveComponent('UInput')
 
 // Definición de la interfaz Animal
 interface Animal {
@@ -150,6 +174,13 @@ const emit = defineEmits<{
 const toast = useToast()
 const isOpen = ref(false)
 const isDeleting = ref(false)
+const isModalOpen = ref(false)
+const nuevoPeso = ref<number | null>(null)
+const nuevaFecha = ref<string>("")
+const isSaving = ref(false)
+const historialPeso = ref<HistorialPeso[]>([])
+const chartRef = ref<HTMLCanvasElement | null>(null)
+let chartInstance: Chart | null = null
 
 // Función para confirmar eliminación vía API y emitir evento
 async function confirmDelete() {
@@ -193,4 +224,83 @@ async function confirmDelete() {
     isDeleting.value = false
   }
 }
+
+const fetchHistorialPeso = async () => {
+  const { historial_peso } = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`)
+  historialPeso.value = historial_peso || []
+}
+
+const renderChart = () => {
+  if (!chartRef.value) return
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+  if (!historialPeso.value.length) return
+  chartInstance = new Chart(chartRef.value, {
+    type: 'line',
+    data: {
+      labels: historialPeso.value.map(h => new Date(h.fecha_registro).toLocaleDateString()),
+      datasets: [
+        {
+          label: 'Peso (kg)',
+          data: historialPeso.value.map(h => h.peso),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.1)',
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        title: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Fecha' } },
+        y: { title: { display: true, text: 'Peso (kg)' }, beginAtZero: true }
+      }
+    }
+  })
+}
+
+const handleSubmit = async (e: Event) => {
+  e.preventDefault()
+  if (!nuevoPeso.value || nuevoPeso.value <= 0) {
+    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
+    return
+  }
+  isSaving.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'POST',
+      body: {
+        peso: nuevoPeso.value,
+        fecha_registro: nuevaFecha.value || undefined
+      }
+    })
+    isModalOpen.value = false
+    nuevoPeso.value = null
+    nuevaFecha.value = ""
+    await fetchHistorialPeso()
+    await nextTick()
+    renderChart()
+    toast.add({ title: 'Peso registrado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isSaving.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchHistorialPeso()
+  await nextTick()
+  renderChart()
+})
+
+watch(historialPeso, () => {
+  renderChart()
+})
 </script>

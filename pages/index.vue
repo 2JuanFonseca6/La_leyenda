@@ -37,6 +37,7 @@
           <MetricsCards v-if="currentView === 'metrics'" />
           <StadisticCards v-if="currentView === 'charts'" />
           <SalesCharts v-if="currentView === 'sales'" />
+          <AnimalWeightTimeline v-if="currentView === 'health'" />
         </div>
       </Transition>
     </div>
@@ -46,13 +47,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { BreadcrumbItem } from "@nuxt/ui";
+import { AnimalWeightTimeline } from '~/components/dashboard'
 
 definePageMeta({ layout: "logged" });
 
 const views = [
   { id: 'metrics', label: 'Métricas', icon: 'i-heroicons-chart-bar-square' },
   { id: 'charts', label: 'Gráficos', icon: 'i-heroicons-chart-pie' },
-  { id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' }
+  { id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' },
+  { id: 'health', label: 'Salud', icon: 'i-healthicons-cardiogram-outline-24px' }
 ];
 
 const currentView = ref('metrics');

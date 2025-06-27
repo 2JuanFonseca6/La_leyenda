@@ -159,11 +159,94 @@
           </div>
         </div>
       </div>
+
+      <!-- GRAFICO DE EVOLUCIÓN DE PESO -->
+      <div class="mt-10">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-lg font-bold">Evolución de Peso</h4>
+          <UButton color="primary" icon="i-heroicons-plus" @click="isModalOpen = true">Nuevo Peso</UButton>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
+          <canvas ref="chartRef" height="120" style="max-width:100%"></canvas>
+          <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
+        </div>
+      </div>
+
+      <!-- Tabla de historial de peso -->
+      <div v-if="historialPeso.length" class="mt-4">
+        <h5 class="font-semibold mb-2">Historial de Pesos</h5>
+        <table class="min-w-full text-sm border rounded overflow-hidden">
+          <thead>
+            <tr class="bg-gray-100 dark:bg-gray-800">
+              <th class="px-2 py-1">Fecha</th>
+              <th class="px-2 py-1">Peso (kg)</th>
+              <th class="px-2 py-1">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="peso in historialPeso" :key="peso.id" class="border-b">
+              <td class="px-2 py-1">{{ new Date(peso.fecha_registro).toLocaleDateString() }}</td>
+              <td class="px-2 py-1">{{ peso.peso }}</td>
+              <td class="px-2 py-1 flex gap-2">
+                <UButton size="xs" color="primary" icon="i-heroicons-pencil" @click="openEditPeso(peso)">Editar</UButton>
+                <UButton size="xs" color="error" icon="i-heroicons-trash" @click="confirmDeletePeso(peso)">Eliminar</UButton>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MODAL NUEVO PESO -->
+      <UModal v-model:open="isModalOpen" title="Registrar Nuevo Peso" :dismissible="false">
+        <template #body>
+          <UForm :state="formPeso" @submit="handleSubmitPeso" class="space-y-4">
+            <UFormField label="Peso (kg)" name="peso" required>
+              <UInput v-model.number="formPeso.peso" type="number" placeholder="Ej: 350.5" />
+            </UFormField>
+            <UFormField label="Fecha" name="fecha">
+              <UInput v-model="formPeso.fecha" type="date" />
+            </UFormField>
+            <div class="flex justify-end gap-3 mt-4">
+              <UButton type="button" @click="isModalOpen = false">Cancelar</UButton>
+              <UButton type="submit" color="primary" :loading="isSaving">Guardar</UButton>
+            </div>
+          </UForm>
+        </template>
+      </UModal>
+
+      <!-- MODAL EDITAR PESO -->
+      <UModal v-model:open="isEditModalOpen" title="Editar Peso" :dismissible="false">
+        <template #body>
+          <UForm :state="editPesoForm" @submit="handleEditPeso" class="space-y-4">
+            <UFormField label="Peso (kg)" name="peso" required>
+              <UInput v-model.number="editPesoForm.peso" type="number" placeholder="Ej: 350.5" />
+            </UFormField>
+            <UFormField label="Fecha" name="fecha">
+              <UInput v-model="editPesoForm.fecha" type="date" />
+            </UFormField>
+            <div class="flex justify-end gap-3 mt-4">
+              <UButton type="button" @click="isEditModalOpen = false">Cancelar</UButton>
+              <UButton type="submit" color="primary" :loading="isSavingEdit">Guardar</UButton>
+            </div>
+          </UForm>
+        </template>
+      </UModal>
+
+      <!-- MODAL CONFIRMAR ELIMINACIÓN -->
+      <UModal v-model:open="isDeleteModalOpen" title="Eliminar Peso" :dismissible="false">
+        <template #body>
+          <p>¿Seguro que deseas eliminar este registro de peso?</p>
+          <div class="flex justify-end gap-3 mt-4">
+            <UButton type="button" @click="isDeleteModalOpen = false">Cancelar</UButton>
+            <UButton color="error" :loading="isDeleting" @click="handleDeletePeso">Eliminar</UButton>
+          </div>
+        </template>
+      </UModal>
     </div>
 
     <!-- Modo Edición -->
     <UForm
-      v-else="userRole === 'admin'"
+      v-else-if="userRole === 'admin'"
       :schema="schema"
       :state="formData"
       :model-value="formData"
@@ -295,6 +378,10 @@ import { useUserRole } from "~/composables/arestricted";
 import type { Animal } from "~/types/animal";
 import type { Venta } from "~/types/animal";
 import { z } from "zod";
+import { ref, onMounted, watch, nextTick } from 'vue'
+import type { HistorialPeso } from '~/types/animal'
+import Chart from 'chart.js/auto'
+
 const isDrawerOpen = ref(false);
 const isPreviewOpen = ref(false);
 
@@ -618,4 +705,158 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
+
+const isModalOpen = ref(false)
+const formPeso = reactive({ peso: null as number | null, fecha: "" })
+const isSaving = ref(false)
+const historialPeso = ref<HistorialPeso[]>([])
+const chartRef = ref<HTMLCanvasElement | null>(null)
+let chartInstance: Chart | null = null
+
+const fetchHistorialPeso = async () => {
+  const { historial_peso } = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`)
+  historialPeso.value = historial_peso || []
+}
+
+const renderChart = () => {
+  if (!chartRef.value) return
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+  if (!historialPeso.value.length) return
+  chartInstance = new Chart(chartRef.value, {
+    type: 'line',
+    data: {
+      labels: historialPeso.value.map(h => new Date(h.fecha_registro).toLocaleDateString()),
+      datasets: [
+        {
+          label: 'Peso (kg)',
+          data: historialPeso.value.map(h => h.peso),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.1)',
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        title: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Fecha' } },
+        y: { title: { display: true, text: 'Peso (kg)' }, beginAtZero: true }
+      }
+    }
+  })
+}
+
+const handleSubmitPeso = async (e: Event) => {
+  e.preventDefault()
+  if (!formPeso.peso || formPeso.peso <= 0) {
+    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
+    return
+  }
+  isSaving.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'POST',
+      body: {
+        peso: formPeso.peso,
+        fecha_registro: formPeso.fecha || undefined
+      }
+    })
+    isModalOpen.value = false
+    formPeso.peso = null
+    formPeso.fecha = ""
+    await fetchHistorialPeso()
+    await nextTick()
+    renderChart()
+    toast.add({ title: 'Peso registrado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isSaving.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchHistorialPeso()
+  await nextTick()
+  renderChart()
+})
+
+watch(historialPeso, () => {
+  renderChart()
+})
+
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const isSavingEdit = ref(false)
+const isDeleting = ref(false)
+const editPesoForm = reactive({ id: null as number | null, peso: null as number | null, fecha: "" })
+let pesoToDelete: HistorialPeso | null = null
+
+function openEditPeso(peso: HistorialPeso) {
+  editPesoForm.id = peso.id
+  editPesoForm.peso = peso.peso
+  editPesoForm.fecha = peso.fecha_registro.split('T')[0]
+  isEditModalOpen.value = true
+}
+
+async function handleEditPeso(e: Event) {
+  e.preventDefault()
+  if (!editPesoForm.peso || editPesoForm.peso <= 0) {
+    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
+    return
+  }
+  isSavingEdit.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'put',
+      body: {
+        id: editPesoForm.id,
+        peso: editPesoForm.peso,
+        fecha_registro: editPesoForm.fecha
+      }
+    })
+    isEditModalOpen.value = false
+    await fetchHistorialPeso()
+    await nextTick()
+    renderChart()
+    toast.add({ title: 'Peso actualizado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isSavingEdit.value = false
+  }
+}
+
+function confirmDeletePeso(peso: HistorialPeso) {
+  pesoToDelete = peso
+  isDeleteModalOpen.value = true
+}
+
+async function handleDeletePeso() {
+  if (!pesoToDelete) return
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'delete',
+      body: { id: pesoToDelete.id }
+    })
+    isDeleteModalOpen.value = false
+    pesoToDelete = null
+    await fetchHistorialPeso()
+    await nextTick()
+    renderChart()
+    toast.add({ title: 'Peso eliminado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isDeleting.value = false
+  }
+}
 </script>
