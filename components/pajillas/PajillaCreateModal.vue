@@ -75,11 +75,14 @@
 import { z } from 'zod';
 import type { TablesInsert } from '~/types/supabase';
 import type { Database } from '~/types/supabase';
+import { useUserRole } from '~/composables/arestricted';
 
 const isOpen = ref(false);
 const isDrawerOpen = ref(false);
 const supabase = useSupabaseClient<Database>();
 const emit = defineEmits(['close', 'created']);
+
+const { canCreate } = useUserRole();
 
 const schema = z.object({
   pajilla: z.string().min(1, 'El código es requerido'),
@@ -139,6 +142,15 @@ const handleSubmit = async () => {
 };
 
 const openModal = () => {
+  if (!canCreate.value) {
+    useToast().add({
+      title: 'Acceso denegado',
+      description: 'No tienes permisos para crear pajillas',
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'error',
+    });
+    return;
+  }
   isOpen.value = true;
 };
 

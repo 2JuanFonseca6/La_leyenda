@@ -1,5 +1,5 @@
 // composables/useUserRole.ts
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
 
 export const useUserRole = () => {
@@ -20,7 +20,21 @@ export const useUserRole = () => {
     }
   });
 
+  // Propiedades de permisos computadas
+  const isAdmin = computed(() => userRole.value === 'admin')
+  const isUser = computed(() => userRole.value === 'user')
+  const canEdit = computed(() => isAdmin.value)
+  const canDelete = computed(() => isAdmin.value)
+  const canCreate = computed(() => isAdmin.value)
+  const canView = computed(() => isAdmin.value || isUser.value)
+
   return {
     userRole,
+    isAdmin,
+    isUser,
+    canEdit,
+    canDelete,
+    canCreate,
+    canView,
   };
 };

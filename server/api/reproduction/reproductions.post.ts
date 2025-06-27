@@ -1,9 +1,27 @@
 // server/api/reproduction/reproductions.post.ts
-import { serverSupabaseClient } from "#supabase/server";
+import { serverSupabaseClient, serverSupabaseUser } from "#supabase/server";
 import { Database } from "~/types/supabase";
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
+  const user = await serverSupabaseUser(event);
+  
+  // Verificar que el usuario esté autenticado
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'No autorizado' })
+  }
+
+  // Verificar que el usuario sea admin
+  const { data: profile } = await client
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.role !== 'admin') {
+    throw createError({ statusCode: 403, statusMessage: 'Acceso denegado. Se requieren permisos de administrador.' })
+  }
+
   const body = await readBody(event);
 
   try {

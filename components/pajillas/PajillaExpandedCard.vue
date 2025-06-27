@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useUserRole } from '~/composables/arestricted'
 
-const { userRole } = useUserRole()
+const { canEdit, canDelete } = useUserRole()
 
 // Debug log para verificar el rol
-console.log('User role in PajillaExpandedCard:', userRole.value)
+console.log('User permissions in PajillaExpandedCard:', { canEdit: canEdit.value, canDelete: canDelete.value })
 
 interface Pajilla {
   id: number
@@ -141,12 +141,13 @@ const handleDelete = async () => {
         <h3 class="text-lg font-semibold">Detalles de la Pajilla</h3>
         <div class="flex gap-2">
           <UButton 
-            v-if="!isEditing" 
+            v-if="!isEditing && canEdit" 
             icon="i-heroicons-pencil-square" 
             color="primary" 
             @click="isEditing = true" 
           />
           <UButton 
+            v-if="canDelete"
             icon="i-heroicons-trash" 
             color="error" 
             @click="handleDelete"

@@ -5,8 +5,9 @@ import { h, resolveComponent } from 'vue'
 import type { Row, Table } from '@tanstack/table-core'
 import type { Database } from '~/types/supabase'
 import { useUserRole } from '~/composables/arestricted'
+import GenealogySearch from './GenealogySearch.vue'
 
-const { userRole } = useUserRole();
+const { canEdit, canDelete } = useUserRole();
 
 interface TableComponent {
   tableApi: Table<Reproduction>
@@ -15,7 +16,6 @@ interface TableComponent {
 const table = ref<TableComponent | null>(null)
 
 const UButton = resolveComponent('UButton')
-const UCheckbox = resolveComponent('UCheckbox')
 
 type Reproduction = {
   id_reproduccion: number
@@ -29,13 +29,8 @@ type Reproduction = {
 const data = ref<Reproduction[]>([])
 const total = ref(0)
 const isPending = ref(false)
-
-const isSingleSelected = computed(() => selectedIds.value.length === 1)
-const selectedReproduction = computed(() => {
-  if (selectedIds.value.length === 0) return null
-  return data.value.find(rep => rep.id_reproduccion === selectedIds.value[0]) || null
-})
-const editModal = ref<{ openModal: () => void } | null>(null)
+const expanded = ref({})
+const genealogySearchTerm = ref<string>('')
 
 const pagination = ref({
   pageIndex: 1,
@@ -63,24 +58,40 @@ watch([() => pagination.value.pageIndex, () => pagination.value.pageSize], fetch
 
 fetchReproducciones()
 
+function onGenealogySearch(searchValue: string) {
+  genealogySearchTerm.value = searchValue.trim()
+}
+
+const filteredData = computed(() => {
+  const term = genealogySearchTerm.value.trim().toLowerCase()
+  if (!term) return data.value
+  return data.value.filter(rep =>
+    rep.id_reproduccion.toString().toLowerCase().includes(term) ||
+    rep.madre_id.toLowerCase().includes(term) ||
+    (rep.padre_id ?? '').toLowerCase().includes(term) ||
+    rep.raza.toLowerCase().includes(term) ||
+    (rep.tipo_concepcion ?? '').toLowerCase().includes(term)
+  )
+})
+
 const columns: TableColumn<Reproduction>[] = [
   {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'aria-label': 'Select all'
-      }),
+    id: 'expand',
     cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': 'Select row'
-      })
+      h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        icon: 'i-lucide-chevron-down',
+        square: true,
+        'aria-label': 'Expand',
+        ui: {
+          leadingIcon: [
+            'transition-transform',
+            row.getIsExpanded() ? 'duration-200 rotate-180' : '',
+          ],
+        },
+        onClick: () => row.toggleExpanded(),
+      }),
   },
   // Nueva columna ID
   {
@@ -126,23 +137,7 @@ const columns: TableColumn<Reproduction>[] = [
   }
 ]
 
-const displayColumns = computed(() => {
-  if (userRole.value === 'admin') return columns
-  return columns.filter(col => col.id !== 'select')
-})
-
-// Eliminamos la referencia a expanded
-const selectedIds = ref<number[]>([])
-
-watch(
-  () => table.value?.tableApi?.getSelectedRowModel().rows,
-  (rows) => {
-    selectedIds.value = rows?.map((row) => row.original.id_reproduccion) || []
-  }
-)
-
 const refreshTable = () => {
-  table.value?.tableApi?.resetRowSelection()
   fetchReproducciones()
 }
 
@@ -153,30 +148,36 @@ defineExpose({
 </script>
 
 <template>
+  <GenealogySearch @search="onGenealogySearch" />
   <div class="w-full space-y-4 pb-4">
     <div class="flex justify-end gap-3">
-      <ReproductionCreateModal v-if="userRole === 'admin'" @saved="refreshTable" />
-
-      <UButton v-if="selectedReproduction && userRole === 'admin'" color="primary" icon="i-heroicons-pencil-square"
-        @click="editModal?.openModal?.()" class="rounded-full">
-      </UButton>
-
-      <EditReproduction v-if="selectedReproduction && userRole === 'admin'" ref="editModal" :reproduction="selectedReproduction"
-        @saved="refreshTable" />
+      <ReproductionCreateModal v-if="canEdit" @saved="refreshTable" />
     </div>
 
-    <DeleteReproductions v-if="selectedIds.length > 0 && userRole === 'admin'" :selected-ids="selectedIds" @deleted="refreshTable" />
-
-    <UTable ref="table" :data="data" :columns="displayColumns" :loading="isPending" class="flex-1" />
-
-    <div v-if="userRole === 'admin'" class="px-4 py-3.5 border-t border-accented text-sm text-muted">
-      {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} de
-      {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} filas seleccionadas.
-    </div>
+    <UTable 
+      ref="table" 
+      v-model:expanded="expanded"
+      :data="filteredData" 
+      :columns="columns" 
+      :loading="isPending" 
+      class="flex-1" 
+    >
+      <template #expanded="{ row }">
+        <GenealogyExpandedCard 
+          :reproduction="row.original" 
+          @updated="refreshTable" 
+          @close="row.toggleExpanded()"
+        />
+      </template>
+    </UTable>
 
     <div class="flex justify-center border-t border-default pt-4">
-      <UPagination v-model:page="pagination.pageIndex" :items-per-page="pagination.pageSize" :total="total"
-        @update:page="(newPage: number) => pagination.pageIndex = newPage" />
+      <UPagination 
+        v-model:page="pagination.pageIndex" 
+        :items-per-page="pagination.pageSize" 
+        :total="total"
+        @update:page="(newPage: number) => pagination.pageIndex = newPage" 
+      />
     </div>
   </div>
 </template>

@@ -12,35 +12,51 @@
         </div>
 
         <!-- Tabla de animales -->
-        <UTable ref="table" v-model:row-selection="rowSelection" v-model:global-filter="globalFilter" :data="animals"
-          :columns="columns" :loading="pending" />
+        <UTable 
+          ref="table" 
+          v-model:row-selection="rowSelection" 
+          v-model:global-filter="globalFilter" 
+          :data="animals"
+          :columns="columns" 
+          :loading="pending" 
+        />
 
         <!-- Pie: contador y paginación -->
         <div class="px-4 py-3.5 border-t border-accented text-sm text-muted flex justify-between items-center">
           <div>
             {{ selectedRows.length }} de {{ total }} animal(es) seleccionada(s)
           </div>
-          <UPagination :page="page" :page-size="pageSize" :total="total" @update:page="onPageChange"
-            @update:page-size="onPageSizeChange" />
+          <UPagination 
+            v-model:page="page" 
+            v-model:page-size="pageSize" 
+            :total="total" 
+          />
         </div>
 
         <!-- Botón de acción -->
-        <UButton v-if="selectedRows.length === 1" label="Seleccionar animal" color="primary" @click="onSelectAnimal" />
+        <div class="p-4">
+          <UButton 
+            v-if="selectedRows.length === 1" 
+            label="Seleccionar animal" 
+            color="primary" 
+            @click="onSelectAnimal" 
+            class="w-full"
+          />
+        </div>
       </div>
     </template>
   </UDrawer>
 </template>
 
 <script setup lang="ts">
-import { h, resolveComponent, computed, ref } from 'vue'
-import { useFetch } from '#app'
+import { h, resolveComponent, computed, ref, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Database } from '~/types/supabase'
 
 // Props y emits para v-model y evento select
 const props = defineProps<{
   modelValue: boolean,
-  allowedTypes?: string[]
+  allowedTypes?: Database['public']['Enums']['tipo_animal'][]
 }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
@@ -58,22 +74,41 @@ type Animal = Database['public']['Tables']['animals']['Row']
 
 // Componentes UI
 const UCheckbox = resolveComponent('UCheckbox')
-const UPagination = resolveComponent('UPagination')
 
 // Estado reactivo
 const page = ref(1)
 const pageSize = ref(10)
 const globalFilter = ref('')
 const rowSelection = ref<Record<string, boolean>>({})
+const animals = ref<Animal[]>([])
+const total = ref(0)
+const pending = ref(false)
 
-// Fetch datos de animales
-const { data, pending } = useFetch<{
-  animals: Animal[]
-  total: number
-}>(() => `/api/animal/animals?page=${page.value}&pageSize=${pageSize.value}`)
+// Función para cargar datos
+const fetchAnimals = async () => {
+  pending.value = true
+  try {
+    const response = await $fetch<{
+      animals: Animal[]
+      total: number
+    }>(`/api/animal/animals?page=${page.value}&pageSize=${pageSize.value}`)
+    
+    animals.value = response.animals
+    total.value = response.total
+  } catch (error) {
+    console.error('Error fetching animals:', error)
+  } finally {
+    pending.value = false
+  }
+}
 
-const animals = computed(() => data.value?.animals || [])
-const total = computed(() => data.value?.total || 0)
+// Observar cambios en paginación
+watch([page, pageSize], () => {
+  fetchAnimals()
+})
+
+// Cargar datos iniciales
+fetchAnimals()
 
 // Columnas de la tabla
 const columns: TableColumn<Animal>[] = [
@@ -102,20 +137,14 @@ const table = ref<any>(null)
 
 // Filas seleccionadas completas
 const selectedRows = computed<Animal[]>(() => {
-  return table.value?.tableApi
+  if (!table.value?.tableApi) return []
+  
+  return table.value.tableApi
     .getFilteredSelectedRowModel()
     .rows
-    .map((r: any) => r.original) || []
+    .map((r: any) => r.original)
+    .filter((item: Animal) => item !== null) || []
 })
-
-// Paginación
-function onPageChange(newPage: number) {
-  page.value = newPage
-}
-function onPageSizeChange(newSize: number) {
-  pageSize.value = newSize
-  page.value = 1
-}
 
 // Al pulsar: emite el objeto completo y cierra
 function onSelectAnimal() {
@@ -123,7 +152,7 @@ function onSelectAnimal() {
   if (!item) return
 
   // Si hay restricciones, validar el tipo
-  if (props.allowedTypes?.length && !props.allowedTypes.includes(item.tipo_animal)) {
+  if (props.allowedTypes?.length && item.tipo_animal && !props.allowedTypes.includes(item.tipo_animal)) {
     useToast().add({
       title: "Tipo de animal inválido",
       description: `Este animal (${item.tipo_animal}) no puede ser seleccionado.`,

@@ -5,7 +5,9 @@ import { h, resolveComponent } from 'vue'
 import type { Table } from '@tanstack/table-core'
 import { useUserRole } from '~/composables/arestricted'
 
-const { userRole } = useUserRole()
+const props = defineProps<{ search?: string }>()
+
+const { canCreate } = useUserRole()
 
 type Pajilla = {
   id: number
@@ -297,6 +299,16 @@ const refreshTable = () => {
   fetchPajillas()
 }
 
+const filteredData = computed(() => {
+  const term = props.search?.toLowerCase() || ''
+  if (!term) return data.value
+  return data.value.filter(pajilla =>
+    pajilla.pajilla.toLowerCase().includes(term) ||
+    (pajilla.animal_id ?? '').toLowerCase().includes(term) ||
+    (pajilla.descripcion ?? '').toLowerCase().includes(term)
+  )
+})
+
 defineExpose({
   fetchPajillas,
   refresh,
@@ -338,7 +350,7 @@ defineExpose({
         <p class="text-sm text-muted">Gestiona el inventario de pajillas disponibles</p>
       </div>
       <UButton
-        v-if="userRole === 'admin'"
+        v-if="canCreate"
         icon="i-heroicons-plus-20-solid"
         @click="() => emit('add')"
         title="Agregar nueva pajilla"
@@ -350,7 +362,7 @@ defineExpose({
       v-model:expanded="expanded"
       v-model:sorting="sorting"
       ref="table"
-      :data="data"
+      :data="filteredData"
       :columns="columns"
       :loading="isPending"
       class="flex-1"
