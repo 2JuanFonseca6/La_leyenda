@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import AnimalSearch from '~/components/animal/AnimalSearch.vue'
+ <script setup lang="ts">
 import BreadNav from '~/components/navigation/BreadNav.vue';
 import SaleInfoCard from '~/components/animal/SaleInfoCard.vue'
 import HealthHistoryCard from '~/components/animal/HealthHistoryCard.vue'
@@ -201,9 +200,6 @@ const handleHealthUpdated = () => {
     <PrintHeader :title="`Animal ${id} - Detalles`" />
 
     <BreadNav :items="breadcrumbItems" class="print:hidden" />
-
-    <AnimalSearch class="print:hidden" />
-
 
     <div v-if="pending" class="text-center p-8">
       <p class="mt-4 text-[var(--color-custom-300)]">Cargando información del animal...</p>

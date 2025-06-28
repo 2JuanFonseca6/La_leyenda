@@ -163,40 +163,75 @@
       <!-- GRAFICO DE EVOLUCIÓN DE PESO -->
       <div class="mt-10">
         <div class="flex items-center justify-between mb-2">
-          <h4 class="text-lg font-bold">Evolución de Peso</h4>
-          <UButton color="primary" icon="i-heroicons-plus" @click="isModalOpen = true">Nuevo Peso</UButton>
+          <div>
+            <h4 class="text-lg font-bold">Evolución de Peso</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Las flechas muestran el cambio en kilogramos entre mediciones</p>
+          </div>
+          <div class="flex gap-2">
+            <UButton color="primary" icon="i-heroicons-plus" @click="isModalOpen = true">Nuevo Peso</UButton>
+            <UButton
+              :icon="showChart ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showChart = !showChart"
+              size="sm"
+              color="neutral"
+              :title="showChart ? 'Ocultar gráfica' : 'Mostrar gráfica'"
+            />
+          </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-          <canvas ref="chartRef" height="120" style="max-width:100%"></canvas>
+        <div v-if="showChart" class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
+          <canvas ref="chartRef" height="120" style="max-width:100%;"></canvas>
           <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
+          <div v-else class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div class="flex items-center gap-4 justify-center">
+              <div class="flex items-center gap-1">
+                <span class="text-green-500">⬆️</span>
+                <span>Ganancia de peso</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="text-red-500">⬇️</span>
+                <span>Pérdida de peso</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Tabla de historial de peso -->
       <div v-if="historialPeso.length" class="mt-4">
-        <h5 class="font-semibold mb-2">Historial de Pesos</h5>
-        <table class="min-w-full text-sm border rounded overflow-hidden">
-          <thead>
-            <tr class="bg-gray-100 dark:bg-gray-800">
-              <th class="px-2 py-1">Fecha</th>
-              <th class="px-2 py-1">Peso (kg)</th>
-              <th class="px-2 py-1">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="peso in historialPeso" :key="peso.id" class="border-b">
-              <td class="px-2 py-1">{{ new Date(peso.fecha_registro).toLocaleDateString() }}</td>
-              <td class="px-2 py-1">{{ peso.peso }}</td>
-              <td class="px-2 py-1 flex gap-2">
-                <UButton size="xs" color="primary" icon="i-heroicons-pencil" @click="openEditPeso(peso)">Editar</UButton>
-                <UButton size="xs" color="error" icon="i-heroicons-trash" @click="confirmDeletePeso(peso)">Eliminar</UButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="flex items-center justify-between mb-2">
+          <h5 class="font-semibold">Historial de Pesos</h5>
+          <UButton
+            :icon="showHistorial ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+            @click="showHistorial = !showHistorial"
+            size="sm"
+            color="neutral"
+            :title="showHistorial ? 'Ocultar historial' : 'Mostrar historial'"
+          />
+        </div>
+        <div v-if="showHistorial">
+          <table class="min-w-full text-sm border rounded overflow-hidden">
+            <thead>
+              <tr class="bg-gray-100 dark:bg-gray-800">
+                <th class="px-2 py-1">Fecha</th>
+                <th class="px-2 py-1">Peso (kg)</th>
+                <th class="px-2 py-1">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="peso in historialPeso" :key="peso.id" class="border-b">
+                <td class="px-2 py-1">{{ new Date(peso.fecha_registro).toLocaleDateString() }}</td>
+                <td class="px-2 py-1">{{ peso.peso }}</td>
+                <td class="px-2 py-1 flex gap-2">
+                  <UButton size="xs" color="primary" icon="i-heroicons-pencil" @click="openEditPeso(peso)">Editar</UButton>
+                  <UButton size="xs" color="error" icon="i-heroicons-trash" @click="confirmDeletePeso(peso)">Eliminar</UButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- MODAL NUEVO PESO -->
+      <!-- MODAL     PESO -->
       <UModal v-model:open="isModalOpen" title="Registrar Nuevo Peso" :dismissible="false">
         <template #body>
           <UForm :state="formPeso" @submit="handleSubmitPeso" class="space-y-4">
@@ -263,12 +298,10 @@
             required
           >
             <UInput type="date" v-model="formData.fecha_nacimiento" />
-            <UFormMessage />
           </UFormField>
 
           <UFormField label="Raza" name="raza" required>
             <UInput v-model="formData.raza" />
-            <UFormMessage />
           </UFormField>
 
           <UFormField label="Tipo de Animal" name="tipo_animal" required>
@@ -277,7 +310,6 @@
               :items="['NOVILLO', 'TERNERO', 'TERNERA', 'VACA', 'TORO']"
               class="w-3xs"
             />
-            <UFormMessage />
           </UFormField>
         </div>
 
@@ -285,7 +317,6 @@
         <div class="space-y-4">
           <UFormField label="Peso Actual (kg)" name="peso_actual" required>
             <UInput type="number" step="0.1" v-model="formData.peso_actual" />
-            <UFormMessage />
           </UFormField>
 
           <UFormField label="Estado de Salud" name="estado_salud" required>
@@ -302,7 +333,6 @@
               ]"
               class="w-3xs"
             />
-            <UFormMessage />
           </UFormField>
 
           <UFormField v-if="userRole === 'admin'" label="En Venta" name="venta">
@@ -338,12 +368,10 @@
       >
         <UFormField label="Peso Inicial (kg)" name="peso_inicial">
           <UInput type="number" step="0.1" v-model="formData.peso_inicial" />
-          <UFormMessage />
         </UFormField>
 
         <UFormField label="ID Reproducción" name="id_reproduccion">
           <UInput v-model="formData.id_reproduccion" />
-          <UFormMessage />
           <DrawerGenealogy
             v-model:modelValue="isDrawerOpen"
             @select="formData.id_reproduccion = $event.id_reproduccion"
@@ -352,7 +380,6 @@
 
         <UFormField label="Fecha Fallecimiento" name="fecha_fallecimiento">
           <UInput type="date" v-model="formData.fecha_fallecimiento" />
-          <UFormMessage />
         </UFormField>
       </div>
 
@@ -456,63 +483,15 @@ const isDeletingImage = ref(false);
 const isUploadingImage = ref(false);
 const fileInput = ref<HTMLInputElement>();
 
-const handleImageUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
+const showChart = ref(true)
+const showHistorial = ref(true)
+const chartRef = ref<HTMLCanvasElement>()
+const historialPeso = ref<HistorialPeso[]>([])
+const isModalOpen = ref(false)
+const isSaving = ref(false)
+const formPeso = reactive({ peso: null as number | null, fecha: "" })
 
-  if (!file) return;
-
-  isUploadingImage.value = true;
-  try {
-    // 1. Subir imagen a Supabase Storage
-    const formData = new FormData();
-    formData.append("file", file);
-
-    interface UploadResponse {
-      url: string;
-    }
-
-    const uploadResponse = await $fetch<UploadResponse>("/api/storage/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!uploadResponse?.url) {
-      throw new Error("No se pudo subir la imagen");
-    }
-
-    // 2. Actualizar el animal con la nueva URL de imagen
-    const updateResponse = await $fetch(
-      `/api/animal/specific/${props.animal.id_animal}`,
-      {
-        method: "PUT",
-        body: {
-          ...props.animal,
-          imagen_url: uploadResponse.url,
-        },
-      }
-    );
-
-    // 3. Actualizar estado local
-    emit("updated", {
-      ...props.animal,
-      imagen_url: uploadResponse.url,
-    });
-
-    toast.add({
-      title: "Imagen actualizada",
-      description: "La imagen del animal se ha actualizado correctamente",
-      color: "success",
-      icon: "i-heroicons-check-circle",
-    });
-  } catch (error) {
-    // Manejo de errores
-  } finally {
-    isUploadingImage.value = false;
-    if (fileInput.value) fileInput.value.value = "";
-  }
-};
-
+// Form data for editing
 const formData = reactive<{
   id_animal: string;
   fecha_nacimiento: string;
@@ -560,19 +539,393 @@ const formData = reactive<{
   fecha_fallecimiento: props.animal.fecha_fallecimiento?.split("T")[0] || "",
 });
 
+let chartInstance: Chart | null = null
+
+const fetchHistorialPeso = async () => {
+  try {
+    const { historial_peso } = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`)
+    historialPeso.value = historial_peso || []
+  } catch (error) {
+    console.error('Error fetching weight history:', error)
+    historialPeso.value = []
+  }
+}
+
+const renderChart = () => {
+  if (!chartRef.value) return
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+  if (!historialPeso.value.length) return
+
+  // Calcular los cambios en kilogramos y porcentajes
+  const changes = historialPeso.value.map((h, i, arr) => {
+    if (i === 0) return null
+    const prev = arr[i - 1].peso
+    const curr = h.peso
+    const changeKg = curr - prev
+    const changePercent = ((curr - prev) / prev) * 100
+    return { kg: changeKg, percent: changePercent }
+  })
+
+  chartInstance = new Chart(chartRef.value, {
+    type: 'line',
+    data: {
+      labels: historialPeso.value.map(h => new Date(h.fecha_registro).toLocaleDateString()),
+      datasets: [
+        {
+          label: 'Peso (kg)',
+          data: historialPeso.value.map(h => h.peso),
+          borderColor: '#059669',
+          backgroundColor: 'rgba(5, 150, 105, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#059669',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointHoverBackgroundColor: '#059669',
+          pointHoverBorderColor: '#ffffff',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      layout: {
+        padding: {
+          top: 10,
+          bottom: 10,
+          left: 10,
+          right: 10
+        }
+      },
+      plugins: {
+        legend: { 
+          display: true,
+          labels: {
+            font: {
+              size: 12,
+              weight: 'bold'
+            },
+            padding: 10
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: { 
+          title: { 
+            display: true, 
+            text: 'Fecha',
+            font: {
+              size: 12,
+              weight: 'bold'
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        },
+        y: { 
+          title: { 
+            display: true, 
+            text: 'Peso (kg)',
+            font: {
+              size: 12,
+              weight: 'bold'
+            }
+          }, 
+          beginAtZero: false,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  })
+
+  // Dibujar las flechas y kilogramos después de que el chart se renderice completamente
+  setTimeout(() => {
+    if (!chartInstance || !chartRef.value) return
+    
+    const ctx = chartRef.value.getContext('2d')
+    if (!ctx) return
+    
+    ctx.save()
+    
+    // Obtener los metadatos del dataset
+    const meta = chartInstance.getDatasetMeta(0)
+    if (!meta || !meta.data) return
+    
+    meta.data.forEach((point: any, i: number) => {
+      if (i === 0) return // Saltar el primer punto
+      const change = changes[i]
+      if (change == null) return
+      
+      // Determinar si es ganancia o pérdida
+      const isUp = change.kg > 0
+      const color = isUp ? '#22c55e' : '#ef4444'
+      const arrow = isUp ? '⬆️' : '⬇️'
+      
+      // Configurar el contexto para dibujar
+      ctx.font = 'bold 12px Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'bottom'
+      ctx.fillStyle = color
+      
+      // Posición: encima si sube, debajo si baja
+      const offsetY = isUp ? -25 : 30
+      
+      // Dibujar flecha
+      ctx.fillText(arrow, point.x, point.y + offsetY)
+      
+      // Dibujar kilogramos
+      ctx.font = 'bold 10px Arial, sans-serif'
+      ctx.textBaseline = isUp ? 'bottom' : 'top'
+      const kgText = `${isUp ? '+' : ''}${change.kg.toFixed(1)} kg`
+      ctx.fillText(kgText, point.x, point.y + offsetY + (isUp ? -18 : 18))
+      
+      // Dibujar porcentaje en tamaño más pequeño
+      ctx.font = '9px Arial, sans-serif'
+      ctx.fillStyle = isUp ? '#16a34a' : '#dc2626'
+      const percentText = `(${isUp ? '+' : ''}${change.percent.toFixed(1)}%)`
+      ctx.fillText(percentText, point.x, point.y + offsetY + (isUp ? -32 : 32))
+    })
+    
+    ctx.restore()
+  }, 200) // Aumentar el timeout para asegurar que el chart esté completamente renderizado
+}
+
+const handleSubmitPeso = async (e: Event) => {
+  e.preventDefault()
+  if (!formPeso.peso || formPeso.peso <= 0) {
+    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
+    return
+  }
+  isSaving.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'POST',
+      body: {
+        peso: formPeso.peso,
+        fecha_registro: formPeso.fecha || undefined
+      }
+    })
+    isModalOpen.value = false
+    formPeso.peso = null
+    formPeso.fecha = ""
+    await fetchHistorialPeso()
+    await nextTick()
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+    toast.add({ title: 'Peso registrado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isSaving.value = false
+  }
+}
+
+onMounted(async () => {
+  try {
+    await fetchHistorialPeso()
+    await nextTick()
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+  } catch (error) {
+    console.error('Error initializing chart:', error)
+  }
+})
+
+watch([historialPeso, isEditing, showChart], () => {
+  nextTick(() => {
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+  })
+}, { deep: true })
+
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const isSavingEdit = ref(false)
+const isDeleting = ref(false)
+const editPesoForm = reactive({ id: null as number | null, peso: null as number | null, fecha: "" })
+let pesoToDelete: HistorialPeso | null = null
+
+function openEditPeso(peso: HistorialPeso) {
+  editPesoForm.id = peso.id
+  editPesoForm.peso = peso.peso
+  editPesoForm.fecha = peso.fecha_registro.split('T')[0]
+  isEditModalOpen.value = true
+}
+
+async function handleEditPeso(e: Event) {
+  e.preventDefault()
+  if (!editPesoForm.peso || editPesoForm.peso <= 0) {
+    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
+    return
+  }
+  isSavingEdit.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'put',
+      body: {
+        id: editPesoForm.id,
+        peso: editPesoForm.peso,
+        fecha_registro: editPesoForm.fecha
+      }
+    })
+    isEditModalOpen.value = false
+    await fetchHistorialPeso()
+    await nextTick()
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+    toast.add({ title: 'Peso actualizado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isSavingEdit.value = false
+  }
+}
+
+function confirmDeletePeso(peso: HistorialPeso) {
+  pesoToDelete = peso
+  isDeleteModalOpen.value = true
+}
+
+async function handleDeletePeso() {
+  if (!pesoToDelete) return
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'delete',
+      body: { id: pesoToDelete.id }
+    })
+    isDeleteModalOpen.value = false
+    pesoToDelete = null
+    await fetchHistorialPeso()
+    await nextTick()
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+    toast.add({ title: 'Peso eliminado', color: 'success' })
+  } catch (error: any) {
+    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const handleImageUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  isUploadingImage.value = true;
+  try {
+    // 1. Subir imagen a Supabase Storage
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
+
+    interface UploadResponse {
+      url: string;
+    }
+
+    const uploadResponse = await $fetch<UploadResponse>("/api/storage/upload", {
+      method: "POST",
+      body: uploadFormData,
+    });
+
+    if (!uploadResponse?.url) {
+      throw new Error("No se pudo subir la imagen");
+    }
+
+    // 2. Actualizar el animal con la nueva URL de imagen
+    const updateResponse = await $fetch(
+      `/api/animal/specific/${props.animal.id_animal}`,
+      {
+        method: "PUT",
+        body: {
+          ...props.animal,
+          imagen_url: uploadResponse.url,
+        },
+      }
+    );
+
+    // 3. Actualizar estado local
+    emit("updated", {
+      ...props.animal,
+      imagen_url: uploadResponse.url,
+    });
+
+    toast.add({
+      title: "Imagen actualizada",
+      description: "La imagen del animal se ha actualizado correctamente",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
+  } catch (error) {
+    // Manejo de errores
+  } finally {
+    isUploadingImage.value = false;
+    if (fileInput.value) fileInput.value.value = "";
+  }
+};
+
 const enableEditing = () => {
   isEditing.value = true;
 };
 
 const cancelEditing = () => {
   isEditing.value = false;
+  // Reset form data to original values
   Object.assign(formData, {
     id_animal: props.animal.id_animal,
     fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
     raza: props.animal.raza,
-    tipo_animal: props.animal.tipo_animal,
+    tipo_animal: props.animal.tipo_animal as
+      | "NOVILLO"
+      | "TERNERO"
+      | "TERNERA"
+      | "VACA"
+      | "TORO",
     peso_actual: props.animal.peso_actual,
-    estado_salud: props.animal.estado_salud,
+    estado_salud: props.animal.estado_salud as
+      | "EXCELENTE"
+      | "BUENO"
+      | "REGULAR"
+      | "MALO"
+      | "CRITICO"
+      | "RECUPERACION"
+      | "OBSERVACION",
     venta: props.animal.venta,
     peso_inicial: props.animal.peso_inicial,
     id_reproduccion:
@@ -696,7 +1049,7 @@ const handleSubmit = async () => {
     }
 
     toast.add({
-      title: "Error al actualizar",
+      title: "Error en actualización",
       description: message,
       color: "error",
       icon: "i-heroicons-exclamation-circle",
@@ -705,158 +1058,4 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
-
-const isModalOpen = ref(false)
-const formPeso = reactive({ peso: null as number | null, fecha: "" })
-const isSaving = ref(false)
-const historialPeso = ref<HistorialPeso[]>([])
-const chartRef = ref<HTMLCanvasElement | null>(null)
-let chartInstance: Chart | null = null
-
-const fetchHistorialPeso = async () => {
-  const { historial_peso } = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`)
-  historialPeso.value = historial_peso || []
-}
-
-const renderChart = () => {
-  if (!chartRef.value) return
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-  if (!historialPeso.value.length) return
-  chartInstance = new Chart(chartRef.value, {
-    type: 'line',
-    data: {
-      labels: historialPeso.value.map(h => new Date(h.fecha_registro).toLocaleDateString()),
-      datasets: [
-        {
-          label: 'Peso (kg)',
-          data: historialPeso.value.map(h => h.peso),
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37,99,235,0.1)',
-          fill: true,
-          tension: 0.3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true },
-        title: { display: false }
-      },
-      scales: {
-        x: { title: { display: true, text: 'Fecha' } },
-        y: { title: { display: true, text: 'Peso (kg)' }, beginAtZero: true }
-      }
-    }
-  })
-}
-
-const handleSubmitPeso = async (e: Event) => {
-  e.preventDefault()
-  if (!formPeso.peso || formPeso.peso <= 0) {
-    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
-    return
-  }
-  isSaving.value = true
-  try {
-    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
-      method: 'POST',
-      body: {
-        peso: formPeso.peso,
-        fecha_registro: formPeso.fecha || undefined
-      }
-    })
-    isModalOpen.value = false
-    formPeso.peso = null
-    formPeso.fecha = ""
-    await fetchHistorialPeso()
-    await nextTick()
-    renderChart()
-    toast.add({ title: 'Peso registrado', color: 'success' })
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
-  } finally {
-    isSaving.value = false
-  }
-}
-
-onMounted(async () => {
-  await fetchHistorialPeso()
-  await nextTick()
-  renderChart()
-})
-
-watch(historialPeso, () => {
-  renderChart()
-})
-
-const isEditModalOpen = ref(false)
-const isDeleteModalOpen = ref(false)
-const isSavingEdit = ref(false)
-const isDeleting = ref(false)
-const editPesoForm = reactive({ id: null as number | null, peso: null as number | null, fecha: "" })
-let pesoToDelete: HistorialPeso | null = null
-
-function openEditPeso(peso: HistorialPeso) {
-  editPesoForm.id = peso.id
-  editPesoForm.peso = peso.peso
-  editPesoForm.fecha = peso.fecha_registro.split('T')[0]
-  isEditModalOpen.value = true
-}
-
-async function handleEditPeso(e: Event) {
-  e.preventDefault()
-  if (!editPesoForm.peso || editPesoForm.peso <= 0) {
-    toast.add({ title: 'Error', description: 'El peso debe ser mayor a 0', color: 'error' })
-    return
-  }
-  isSavingEdit.value = true
-  try {
-    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
-      method: 'put',
-      body: {
-        id: editPesoForm.id,
-        peso: editPesoForm.peso,
-        fecha_registro: editPesoForm.fecha
-      }
-    })
-    isEditModalOpen.value = false
-    await fetchHistorialPeso()
-    await nextTick()
-    renderChart()
-    toast.add({ title: 'Peso actualizado', color: 'success' })
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
-  } finally {
-    isSavingEdit.value = false
-  }
-}
-
-function confirmDeletePeso(peso: HistorialPeso) {
-  pesoToDelete = peso
-  isDeleteModalOpen.value = true
-}
-
-async function handleDeletePeso() {
-  if (!pesoToDelete) return
-  isDeleting.value = true
-  try {
-    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
-      method: 'delete',
-      body: { id: pesoToDelete.id }
-    })
-    isDeleteModalOpen.value = false
-    pesoToDelete = null
-    await fetchHistorialPeso()
-    await nextTick()
-    renderChart()
-    toast.add({ title: 'Peso eliminado', color: 'success' })
-  } catch (error: any) {
-    toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
-  } finally {
-    isDeleting.value = false
-  }
-}
 </script>
