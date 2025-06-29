@@ -179,20 +179,10 @@
           </div>
         </div>
         <div v-if="showChart" class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-          <canvas ref="chartRef" height="120" style="max-width:100%;"></canvas>
-          <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
-          <div v-else class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            <div class="flex items-center gap-4 justify-center">
-              <div class="flex items-center gap-1">
-                <span class="text-green-500">⬆️</span>
-                <span>Ganancia de peso</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="text-red-500">⬇️</span>
-                <span>Pérdida de peso</span>
-              </div>
-            </div>
+          <div ref="chartContainerRef" class="w-full h-[320px] overflow-x-auto">
+            <canvas ref="chartRef" :style="chartCanvasStyle"></canvas>
           </div>
+          <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
         </div>
       </div>
 
@@ -405,9 +395,10 @@ import { useUserRole } from "~/composables/arestricted";
 import type { Animal } from "~/types/animal";
 import type { Venta } from "~/types/animal";
 import { z } from "zod";
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, onBeforeUnmount, computed } from 'vue'
 import type { HistorialPeso } from '~/types/animal'
 import Chart from 'chart.js/auto'
+import { ref as vueRef } from 'vue'
 
 const isDrawerOpen = ref(false);
 const isPreviewOpen = ref(false);
@@ -541,6 +532,19 @@ const formData = reactive<{
 
 let chartInstance: Chart | null = null
 
+const chartContainerRef = ref<HTMLDivElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
+
+// Responsive: detectar si es móvil
+const isMobile = vueRef(false)
+function updateIsMobile() {
+  isMobile.value = window.innerWidth < 640
+}
+if (typeof window !== 'undefined') {
+  updateIsMobile()
+  window.addEventListener('resize', updateIsMobile)
+}
+
 const fetchHistorialPeso = async () => {
   try {
     const { historial_peso } = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`)
@@ -551,12 +555,192 @@ const fetchHistorialPeso = async () => {
   }
 }
 
-const renderChart = () => {
-  if (!chartRef.value) return
-  if (chartInstance) {
-    chartInstance.destroy()
+// Estilo dinámico para el canvas: ancho fijo en móvil con muchos puntos, 100% en otros casos
+const chartCanvasStyle = computed(() => {
+  if (isMobile.value && historialPeso.value.length > 6) {
+    const width = historialPeso.value.length * 120;
+    return `min-width: ${width}px; width: ${width}px; height: 100%;`;
   }
-  if (!historialPeso.value.length) return
+  return 'width: 100%; height: 100%;';
+});
+
+// Variables de configuración para Chart.js (deben estar antes de usarse)
+const chartPadding = computed(() => isMobile.value ? 30 : 40);
+const legendFont = computed(() => isMobile.value ? 10 : 12);
+const labelPadding = computed(() => isMobile.value ? 4 : 10);
+const axisFont = computed(() => isMobile.value ? 9 : 12);
+
+// Variables de fuente y radio para el plugin y dataset
+const fontArrow = isMobile.value ? 14 : 18;
+const fontKg = isMobile.value ? 10 : 14;
+const fontPercent = isMobile.value ? 9 : 12;
+const pointRadius = isMobile.value ? 4 : 6;
+const pointHoverRadius = isMobile.value ? 6 : 8;
+
+const renderChart = () => {
+  if (!chartRef.value) return;
+  if (chartInstance) chartInstance.destroy();
+  if (!historialPeso.value.length) return;
+
+  let chartOptions;
+  if (isMobile.value && historialPeso.value.length > 6) {
+    const width = historialPeso.value.length * 120;
+    chartRef.value.width = width;
+    chartRef.value.style.width = `${width}px`;
+    chartRef.value.style.minWidth = `${width}px`;
+    chartOptions = {
+      responsive: false,
+      layout: {
+        padding: {
+          top: chartPadding.value,
+          bottom: chartPadding.value,
+          left: 0,
+          right: 0
+        }
+      },
+      plugins: {
+        legend: { 
+          display: true,
+          labels: {
+            font: {
+              size: legendFont.value,
+              weight: 'bold' as const
+            },
+            padding: labelPadding.value
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: { 
+          title: { 
+            display: true, 
+            text: 'Fecha',
+            font: {
+              size: axisFont.value,
+              weight: 'bold' as const
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: axisFont.value
+            },
+            maxRotation: isMobile.value ? 45 : 0,
+            minRotation: isMobile.value ? 30 : 0,
+            autoSkip: true,
+            maxTicksLimit: isMobile.value ? 4 : 8
+          },
+          offset: false,
+        },
+        y: { 
+          title: { 
+            display: true, 
+            text: 'Peso (kg)',
+            font: {
+              size: axisFont.value,
+              weight: 'bold' as const
+            }
+          }, 
+          beginAtZero: false,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: axisFont.value
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index' as const
+      }
+    };
+  } else {
+    const width = chartContainerRef.value?.offsetWidth || 320;
+    chartRef.value.width = width;
+    chartRef.value.style.width = '100%';
+    chartRef.value.style.minWidth = '';
+    chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: chartPadding.value,
+          bottom: chartPadding.value,
+          left: 0,
+          right: 0
+        }
+      },
+      plugins: {
+        legend: { 
+          display: true,
+          labels: {
+            font: {
+              size: legendFont.value,
+              weight: 'bold' as const
+            },
+            padding: labelPadding.value
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: { 
+          title: { 
+            display: true, 
+            text: 'Fecha',
+            font: {
+              size: axisFont.value,
+              weight: 'bold' as const
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: axisFont.value
+            },
+            maxRotation: isMobile.value ? 45 : 0,
+            minRotation: isMobile.value ? 30 : 0,
+            autoSkip: true,
+            maxTicksLimit: isMobile.value ? 4 : 8
+          },
+          offset: false,
+        },
+        y: { 
+          title: { 
+            display: true, 
+            text: 'Peso (kg)',
+            font: {
+              size: axisFont.value,
+              weight: 'bold' as const
+            }
+          }, 
+          beginAtZero: false,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: axisFont.value
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index' as const
+      }
+    };
+  }
+  chartRef.value.height = 320;
+  chartRef.value.style.height = '100%';
 
   // Calcular los cambios en kilogramos y porcentajes
   const changes = historialPeso.value.map((h, i, arr) => {
@@ -567,6 +751,43 @@ const renderChart = () => {
     const changePercent = ((curr - prev) / prev) * 100
     return { kg: changeKg, percent: changePercent }
   })
+
+  // Plugin para dibujar flechas y porcentajes
+  const arrowPlugin = {
+    id: 'arrowPlugin',
+    afterDatasetsDraw(chart: any) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data) return;
+      ctx.save();
+      meta.data.forEach((point: any, i: number) => {
+        if (i === 0) return;
+        const change = changes[i];
+        if (!change) return;
+        const isUp = change.kg > 0;
+        const color = isUp ? '#22c55e' : '#ef4444';
+        const arrow = isUp ? '⬆️' : '⬇️';
+        // Flecha
+        ctx.font = `bold ${fontArrow}px Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = color;
+        const offsetY = isUp ? -25 : 30;
+        ctx.fillText(arrow, point.x, point.y + offsetY);
+        // Kg
+        ctx.font = `bold ${fontKg}px Arial, sans-serif`;
+        ctx.textBaseline = isUp ? 'bottom' : 'top';
+        const kgText = `${isUp ? '+' : ''}${change.kg.toFixed(1)} kg`;
+        ctx.fillText(kgText, point.x, point.y + offsetY + (isUp ? -18 : 18));
+        // Porcentaje
+        ctx.font = `${fontPercent}px Arial, sans-serif`;
+        ctx.fillStyle = isUp ? '#16a34a' : '#dc2626';
+        const percentText = `(${isUp ? '+' : ''}${change.percent.toFixed(1)}%)`;
+        ctx.fillText(percentText, point.x, point.y + offsetY + (isUp ? -32 : 32));
+      });
+      ctx.restore();
+    }
+  };
 
   chartInstance = new Chart(chartRef.value, {
     type: 'line',
@@ -583,132 +804,17 @@ const renderChart = () => {
           pointBackgroundColor: '#ffffff',
           pointBorderColor: '#059669',
           pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
+          pointRadius: pointRadius,
+          pointHoverRadius: pointHoverRadius,
           pointHoverBackgroundColor: '#059669',
           pointHoverBorderColor: '#ffffff',
+          clip: false,
         }
       ]
     },
-    options: {
-      responsive: true,
-      layout: {
-        padding: {
-          top: 10,
-          bottom: 10,
-          left: 10,
-          right: 10
-        }
-      },
-      plugins: {
-        legend: { 
-          display: true,
-          labels: {
-            font: {
-              size: 12,
-              weight: 'bold'
-            },
-            padding: 10
-          }
-        },
-        title: { display: false }
-      },
-      scales: {
-        x: { 
-          title: { 
-            display: true, 
-            text: 'Fecha',
-            font: {
-              size: 12,
-              weight: 'bold'
-            }
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.1)'
-          },
-          ticks: {
-            font: {
-              size: 10
-            }
-          }
-        },
-        y: { 
-          title: { 
-            display: true, 
-            text: 'Peso (kg)',
-            font: {
-              size: 12,
-              weight: 'bold'
-            }
-          }, 
-          beginAtZero: false,
-          grid: {
-            color: 'rgba(0, 0, 0, 0.1)'
-          },
-          ticks: {
-            font: {
-              size: 10
-            }
-          }
-        }
-      },
-      interaction: {
-        intersect: false,
-        mode: 'index'
-      }
-    }
+    options: chartOptions,
+    plugins: [arrowPlugin]
   })
-
-  // Dibujar las flechas y kilogramos después de que el chart se renderice completamente
-  setTimeout(() => {
-    if (!chartInstance || !chartRef.value) return
-    
-    const ctx = chartRef.value.getContext('2d')
-    if (!ctx) return
-    
-    ctx.save()
-    
-    // Obtener los metadatos del dataset
-    const meta = chartInstance.getDatasetMeta(0)
-    if (!meta || !meta.data) return
-    
-    meta.data.forEach((point: any, i: number) => {
-      if (i === 0) return // Saltar el primer punto
-      const change = changes[i]
-      if (change == null) return
-      
-      // Determinar si es ganancia o pérdida
-      const isUp = change.kg > 0
-      const color = isUp ? '#22c55e' : '#ef4444'
-      const arrow = isUp ? '⬆️' : '⬇️'
-      
-      // Configurar el contexto para dibujar
-      ctx.font = 'bold 12px Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'bottom'
-      ctx.fillStyle = color
-      
-      // Posición: encima si sube, debajo si baja
-      const offsetY = isUp ? -25 : 30
-      
-      // Dibujar flecha
-      ctx.fillText(arrow, point.x, point.y + offsetY)
-      
-      // Dibujar kilogramos
-      ctx.font = 'bold 10px Arial, sans-serif'
-      ctx.textBaseline = isUp ? 'bottom' : 'top'
-      const kgText = `${isUp ? '+' : ''}${change.kg.toFixed(1)} kg`
-      ctx.fillText(kgText, point.x, point.y + offsetY + (isUp ? -18 : 18))
-      
-      // Dibujar porcentaje en tamaño más pequeño
-      ctx.font = '9px Arial, sans-serif'
-      ctx.fillStyle = isUp ? '#16a34a' : '#dc2626'
-      const percentText = `(${isUp ? '+' : ''}${change.percent.toFixed(1)}%)`
-      ctx.fillText(percentText, point.x, point.y + offsetY + (isUp ? -32 : 32))
-    })
-    
-    ctx.restore()
-  }, 200) // Aumentar el timeout para asegurar que el chart esté completamente renderizado
 }
 
 const handleSubmitPeso = async (e: Event) => {
@@ -752,6 +858,12 @@ onMounted(async () => {
       setTimeout(() => {
         renderChart()
       }, 100)
+    }
+    if (chartContainerRef.value) {
+      resizeObserver = new ResizeObserver(() => {
+        renderChart()
+      })
+      resizeObserver.observe(chartContainerRef.value)
     }
   } catch (error) {
     console.error('Error initializing chart:', error)
@@ -1058,4 +1170,16 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
+
+onBeforeUnmount(() => {
+  if (resizeObserver && chartContainerRef.value) {
+    resizeObserver.disconnect()
+  }
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsMobile)
+  }
+})
 </script>
