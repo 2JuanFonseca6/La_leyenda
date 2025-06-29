@@ -179,8 +179,10 @@
           </div>
         </div>
         <div v-if="showChart" class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-          <div ref="chartContainerRef" class="w-full h-[320px] overflow-x-auto">
-            <canvas ref="chartRef" :style="chartCanvasStyle"></canvas>
+          <div ref="chartContainerRef" class="w-full h-[320px] overflow-x-auto overflow-y-hidden scrollbar-hide">
+            <div class="chart-wrapper" :class="{ 'mobile-scroll': isMobile && historialPeso.length > 6 }">
+              <canvas ref="chartRef" :style="chartCanvasStyle"></canvas>
+            </div>
           </div>
           <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
         </div>
@@ -555,11 +557,22 @@ const fetchHistorialPeso = async () => {
   }
 }
 
-// Estilo dinámico para el canvas: ancho fijo en móvil con muchos puntos, 100% en otros casos
+// Estilo dinámico para el canvas: ancho fijo con scroll horizontal si hay muchos puntos, en cualquier dispositivo
 const chartCanvasStyle = computed(() => {
-  if (isMobile.value && historialPeso.value.length > 6) {
-    const width = historialPeso.value.length * 120;
-    return `min-width: ${width}px; width: ${width}px; height: 100%;`;
+  if (historialPeso.value.length > 12) {
+    const minWidth = Math.max(historialPeso.value.length * 120, 400); // 120px por punto
+    if (chartRef.value) {
+      chartRef.value.width = minWidth;
+      chartRef.value.style.width = `${minWidth}px`;
+      chartRef.value.style.minWidth = `${minWidth}px`;
+      chartRef.value.height = chartContainerRef.value?.offsetHeight || 320;
+      chartRef.value.style.height = '100%';
+    }
+    return `min-width: ${minWidth}px; width: ${minWidth}px; height: 100%;`;
+  }
+  if (chartRef.value && chartContainerRef.value) {
+    chartRef.value.height = chartContainerRef.value.offsetHeight;
+    chartRef.value.style.height = '100%';
   }
   return 'width: 100%; height: 100%;';
 });
@@ -571,11 +584,42 @@ const labelPadding = computed(() => isMobile.value ? 4 : 10);
 const axisFont = computed(() => isMobile.value ? 9 : 12);
 
 // Variables de fuente y radio para el plugin y dataset
-const fontArrow = isMobile.value ? 14 : 18;
-const fontKg = isMobile.value ? 10 : 14;
-const fontPercent = isMobile.value ? 9 : 12;
-const pointRadius = isMobile.value ? 4 : 6;
-const pointHoverRadius = isMobile.value ? 6 : 8;
+const fontArrow = isMobile.value ? 12 : 18;
+const fontKg = isMobile.value ? 8 : 14;
+const fontPercent = isMobile.value ? 7 : 12;
+const pointRadius = isMobile.value ? 3 : 6;
+const pointHoverRadius = isMobile.value ? 5 : 8;
+
+// Función para mejorar la experiencia de scroll en móvil
+const initMobileScroll = () => {
+  if (isMobile.value && chartContainerRef.value) {
+    const container = chartContainerRef.value;
+    
+    // Agregar indicador de scroll
+    const scrollIndicator = document.createElement('div');
+    scrollIndicator.className = 'scroll-indicator';
+    scrollIndicator.innerHTML = `
+      <div class="scroll-arrow left">‹</div>
+      <div class="scroll-arrow right">›</div>
+    `;
+    container.appendChild(scrollIndicator);
+    
+    // Mostrar/ocultar flechas según posición
+    const updateScrollArrows = () => {
+      const leftArrow = scrollIndicator.querySelector('.left') as HTMLElement;
+      const rightArrow = scrollIndicator.querySelector('.right') as HTMLElement;
+      
+      if (leftArrow && rightArrow) {
+        leftArrow.style.opacity = container.scrollLeft > 0 ? '1' : '0';
+        rightArrow.style.opacity = 
+          container.scrollLeft < (container.scrollWidth - container.clientWidth) ? '1' : '0';
+      }
+    };
+    
+    container.addEventListener('scroll', updateScrollArrows);
+    updateScrollArrows();
+  }
+};
 
 const renderChart = () => {
   if (!chartRef.value) return;
@@ -584,18 +628,18 @@ const renderChart = () => {
 
   let chartOptions;
   if (isMobile.value && historialPeso.value.length > 6) {
-    const width = historialPeso.value.length * 120;
-    chartRef.value.width = width;
-    chartRef.value.style.width = `${width}px`;
-    chartRef.value.style.minWidth = `${width}px`;
+    const minWidth = Math.max(historialPeso.value.length * 120, 400);
+    chartRef.value.width = minWidth;
+    chartRef.value.style.width = `${minWidth}px`;
+    chartRef.value.style.minWidth = `${minWidth}px`;
     chartOptions = {
       responsive: false,
       layout: {
         padding: {
-          top: chartPadding.value,
-          bottom: chartPadding.value,
-          left: 0,
-          right: 0
+          top: 20,
+          bottom: 20,
+          left: 10,
+          right: 10
         }
       },
       plugins: {
@@ -603,10 +647,10 @@ const renderChart = () => {
           display: true,
           labels: {
             font: {
-              size: legendFont.value,
+              size: 10,
               weight: 'bold' as const
             },
-            padding: labelPadding.value
+            padding: 8
           }
         },
         title: { display: false }
@@ -617,7 +661,7 @@ const renderChart = () => {
             display: true, 
             text: 'Fecha',
             font: {
-              size: axisFont.value,
+              size: 10,
               weight: 'bold' as const
             }
           },
@@ -626,12 +670,12 @@ const renderChart = () => {
           },
           ticks: {
             font: {
-              size: axisFont.value
+              size: 9
             },
-            maxRotation: isMobile.value ? 45 : 0,
-            minRotation: isMobile.value ? 30 : 0,
-            autoSkip: true,
-            maxTicksLimit: isMobile.value ? 4 : 8
+            maxRotation: 45,
+            minRotation: 30,
+            autoSkip: false, // Mostrar todas las fechas
+            maxTicksLimit: undefined
           },
           offset: false,
         },
@@ -640,7 +684,7 @@ const renderChart = () => {
             display: true, 
             text: 'Peso (kg)',
             font: {
-              size: axisFont.value,
+              size: 10,
               weight: 'bold' as const
             }
           }, 
@@ -650,7 +694,7 @@ const renderChart = () => {
           },
           ticks: {
             font: {
-              size: axisFont.value
+              size: 9
             }
           }
         }
@@ -815,6 +859,13 @@ const renderChart = () => {
     options: chartOptions,
     plugins: [arrowPlugin]
   })
+  
+  // Inicializar scroll móvil si es necesario
+  if (isMobile.value && historialPeso.value.length > 6) {
+    setTimeout(() => {
+      initMobileScroll();
+    }, 100);
+  }
 }
 
 const handleSubmitPeso = async (e: Event) => {
@@ -1183,3 +1234,127 @@ onBeforeUnmount(() => {
   }
 })
 </script>
+
+<style scoped>
+/* Estilos para scroll horizontal suave en móvil */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-scroll {
+  min-width: 100%;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+}
+
+/* Mejorar la experiencia táctil en móvil */
+@media (max-width: 640px) {
+  .chart-wrapper {
+    touch-action: pan-x; /* Solo permitir scroll horizontal */
+  }
+  
+  .mobile-scroll {
+    scroll-snap-type: x mandatory;
+  }
+  
+  .mobile-scroll canvas {
+    scroll-snap-align: start;
+  }
+}
+
+/* Indicador visual de scroll */
+.mobile-scroll::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1));
+  border-radius: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Indicadores de scroll personalizados */
+.scroll-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.scroll-arrow.left {
+  left: 10px;
+}
+
+.scroll-arrow.right {
+  right: 10px;
+}
+
+.scroll-arrow:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* Mejorar la experiencia de scroll en dispositivos táctiles */
+@media (max-width: 640px) {
+  .chart-wrapper {
+    touch-action: pan-x; /* Solo permitir scroll horizontal */
+  }
+  
+  .mobile-scroll {
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+  }
+  
+  .mobile-scroll canvas {
+    scroll-snap-align: start;
+  }
+  
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  .mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .mobile-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+</style>
