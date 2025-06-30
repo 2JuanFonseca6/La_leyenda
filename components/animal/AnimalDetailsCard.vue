@@ -401,9 +401,11 @@ import { ref, onMounted, watch, nextTick, onBeforeUnmount, computed } from 'vue'
 import type { HistorialPeso } from '~/types/animal'
 import Chart from 'chart.js/auto'
 import { ref as vueRef } from 'vue'
+import type { Database } from "~/types/supabase";
 
 const isDrawerOpen = ref(false);
 const isPreviewOpen = ref(false);
+const supabase = useSupabaseClient<Database>();
 
 const schema = z.object({
   fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
@@ -1014,21 +1016,22 @@ const handleImageUpload = async (event: Event) => {
 
   isUploadingImage.value = true;
   try {
-    // 1. Subir imagen a Supabase Storage
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file);
+    // 1. Subir imagen a Supabase Storage usando el mismo patrón que AnimalAddModal
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${props.animal.id_animal}.${fileExt}`;
 
-    interface UploadResponse {
-      url: string;
-    }
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('animal-images')
+      .upload(fileName, file);
 
-    const uploadResponse = await $fetch<UploadResponse>("/api/storage/upload", {
-      method: "POST",
-      body: uploadFormData,
-    });
+    if (uploadError) throw uploadError;
 
-    if (!uploadResponse?.url) {
-      throw new Error("No se pudo subir la imagen");
+    const { data: { publicUrl } } = supabase.storage
+      .from('animal-images')
+      .getPublicUrl(fileName);
+
+    if (!publicUrl) {
+      throw new Error("No se pudo obtener la URL pública de la imagen");
     }
 
     // 2. Actualizar el animal con la nueva URL de imagen
@@ -1037,17 +1040,18 @@ const handleImageUpload = async (event: Event) => {
       {
         method: "PUT",
         body: {
-          ...props.animal,
-          imagen_url: uploadResponse.url,
+          imagen_url: publicUrl,
         },
       }
     );
 
+    if (!updateResponse?.animal) {
+      throw new Error("Error al actualizar el animal en la base de datos");
+    }
+
     // 3. Actualizar estado local
-    emit("updated", {
-      ...props.animal,
-      imagen_url: uploadResponse.url,
-    });
+    Object.assign(props.animal, updateResponse.animal);
+    emit("updated", props.animal);
 
     toast.add({
       title: "Imagen actualizada",
@@ -1055,8 +1059,15 @@ const handleImageUpload = async (event: Event) => {
       color: "success",
       icon: "i-heroicons-check-circle",
     });
-  } catch (error) {
-    // Manejo de errores
+  } catch (error: any) {
+    console.error("Error al subir imagen:", error);
+    const errorMessage = error?.message || "Error desconocido al subir la imagen";
+    toast.add({
+      title: "Error al subir imagen",
+      description: errorMessage,
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
   } finally {
     isUploadingImage.value = false;
     if (fileInput.value) fileInput.value.value = "";
