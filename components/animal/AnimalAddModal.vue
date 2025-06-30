@@ -127,9 +127,14 @@ const supabase = useSupabaseClient<Database>();
 const isOpen = ref(false);
 const emit = defineEmits(["close", "created"]);
 
-const tipoAnimalOptions = computed(() =>
-  Constants.public.Enums.tipo_animal.map((value) => ({ label: value, value }))
-);
+const tipoAnimalOptions = [
+  { label: "TERNERO", value: "TERNERO" },
+  { label: "TERNERA", value: "TERNERA" },
+  { label: "NOVILLO", value: "NOVILLO" },
+  { label: "NOVILLA", value: "NOVILLA" },
+  { label: "TORO", value: "TORO" },
+  { label: "VACA", value: "VACA" },
+];
 
 const estadoSaludOptions = computed(() =>
   Constants.public.Enums.estado_salud.map((value) => ({ label: value, value }))

@@ -299,7 +299,7 @@
           <UFormField label="Tipo de Animal" name="tipo_animal" required>
             <USelect
               v-model="formData.tipo_animal"
-              :items="['NOVILLO', 'TERNERO', 'TERNERA', 'VACA', 'TORO']"
+              :items="['TERNERO', 'TERNERA', 'NOVILLO', 'NOVILLA', 'TORO', 'VACA']"
               class="w-3xs"
             />
           </UFormField>
