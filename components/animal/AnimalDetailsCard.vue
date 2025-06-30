@@ -363,11 +363,16 @@
         </UFormField>
 
         <UFormField label="ID Reproducción" name="id_reproduccion">
-          <UInput v-model="formData.id_reproduccion" />
-          <DrawerGenealogy
-            v-model:modelValue="isDrawerOpen"
-            @select="formData.id_reproduccion = $event.id_reproduccion"
-          />
+          <template #default>
+            <div class="flex items-center gap-2">
+              <p>{{ formData.id_reproduccion }}</p>
+              <p v-if="!formData.id_reproduccion">Sin registro seleccionado</p>
+              <DrawerGenealogy
+                v-model:modelValue="isDrawerOpen"
+                @select="formData.id_reproduccion = $event.id_reproduccion"
+              />
+            </div>
+          </template>
         </UFormField>
 
         <UFormField label="Fecha Fallecimiento" name="fecha_fallecimiento">
