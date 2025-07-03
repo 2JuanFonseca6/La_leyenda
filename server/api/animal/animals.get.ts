@@ -58,9 +58,19 @@ export default defineEventHandler(async (event) => {
       .range(rangeFrom, rangeTo);
 
     if (searchTerm) {
-      const searchFilter = `id_animal.ilike.%${searchTerm}%,raza.ilike.%${searchTerm}%,estado_salud.ilike.%${searchTerm}%,tipo_animal.ilike.%${searchTerm}%`; // Añadí tipo_animal
-      countQuery = countQuery.or(searchFilter);
-      dataQuery = dataQuery.or(searchFilter);
+      const safeSearch = String(searchTerm || '').trim();
+      if (safeSearch.length > 0) {
+        const isNumeric = /^\d+$/.test(safeSearch);
+        let searchFilter = `raza.ilike.%${safeSearch}%,estado_salud.ilike.%${safeSearch}%,tipo_animal::text.ilike.%${safeSearch}%`;
+        if (isNumeric) {
+          // Coincidencia exacta en id_animal, usando cast numérico si es necesario
+          searchFilter = `id_animal.eq.${Number(safeSearch)},` + searchFilter;
+        } else {
+          searchFilter = `id_animal.ilike.%${safeSearch}%,` + searchFilter;
+        }
+        countQuery = countQuery.or(searchFilter);
+        dataQuery = dataQuery.or(searchFilter);
+      }
     }
 
     const { count, error: countError } = await countQuery;

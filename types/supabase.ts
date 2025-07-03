@@ -477,6 +477,49 @@ export type Database = {
             referencedColumns: ["id_animal"]
           }
         ]
+      },
+      movimientos_pajilla: {
+        Row: {
+          id: number
+          pajilla_id: number
+          tipo_movimiento: 'ENTRADA' | 'SALIDA'
+          cantidad: number
+          fecha: string
+          animal_id: string | null
+          observaciones: string | null
+        }
+        Insert: {
+          pajilla_id: number
+          tipo_movimiento: 'ENTRADA' | 'SALIDA'
+          cantidad: number
+          fecha: string
+          animal_id?: string | null
+          observaciones?: string | null
+        }
+        Update: {
+          pajilla_id?: number
+          tipo_movimiento?: 'ENTRADA' | 'SALIDA'
+          cantidad?: number
+          fecha?: string
+          animal_id?: string | null
+          observaciones?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historial_pajilla_animal_id_fkey",
+            columns: ["animal_id"],
+            isOneToOne: false,
+            referencedRelation: "animals",
+            referencedColumns: ["id_animal"]
+          },
+          {
+            foreignKeyName: "movimientos_pajilla_pajilla_id_fkey",
+            columns: ["pajilla_id"],
+            isOneToOne: false,
+            referencedRelation: "pajillas",
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

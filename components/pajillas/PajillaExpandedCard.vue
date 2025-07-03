@@ -1,137 +1,239 @@
 <script setup lang="ts">
+import { ref, onMounted, computed, type Ref } from 'vue'
 import { useUserRole } from '~/composables/arestricted'
+import type { InventarioPajilla, MovimientoPajilla } from '~/types/pajillas'
+import SelectVacaDrawer from './SelectVacaDrawer.vue'
 
-const { canEdit, canDelete } = useUserRole()
-
-// Debug log para verificar el rol
-console.log('User permissions in PajillaExpandedCard:', { canEdit: canEdit.value, canDelete: canDelete.value })
-
-interface Pajilla {
-  id: number
-  pajilla: string
-  stock: number
-  animal_id: string | null
-  fecha_uso: string | null
-  descripcion: string | null
-  created_at: string
-  updated_at: string
-}
+const { canEdit } = useUserRole()
 
 const props = defineProps<{
-  pajilla: Pajilla
+  pajilla: InventarioPajilla
 }>()
 
 const emit = defineEmits(['updated'])
 const toast = useToast()
-const isEditing = ref(false)
 const isLoading = ref(false)
+const movimientos = ref<(MovimientoPajilla & { tipo?: string, raza?: string })[]>([])
+const showDrawer = ref(false)
+const showSelectAnimalDrawer = ref(false)
+const selectedAnimals = ref<{ id_animal: string, tipo_animal: string, raza: string }[]>([])
 
-type FormState = {
-  pajilla: string
-  stock: number
-  animal_id: string
-  fecha_uso: string
-  descripcion: string
-}
+// Estados para modales
+const showEditPajillaModal = ref(false)
+const showEditUsoModal = ref(false)
+const usoSeleccionado = ref<any>({})
+const showDeleteConfirm = ref(false)
+const usoAEliminar = ref<{ id: number } | null>(null)
 
-const formState = reactive<FormState>({
-  pajilla: props.pajilla.pajilla,
-  stock: props.pajilla.stock,
-  animal_id: props.pajilla.animal_id || '',
-  fecha_uso: props.pajilla.fecha_uso ? props.pajilla.fecha_uso.split('T')[0] : '',
-  descripcion: props.pajilla.descripcion || ''
+// Formulario para editar pajilla
+const editPajillaForm = ref({
+  pajilla: '',
+  fecha_ingreso: '',
+  stock: 0,
+  descripcion: ''
 })
 
-const validations: {
-  [K in keyof FormState]: Array<(value: FormState[K]) => true | string>
-} = {
-  pajilla: [(value: string) => !!value || 'Campo obligatorio'],
-  stock: [
-    (value: number) => !!value || 'Campo obligatorio',
-    (value: number) => value >= 0 || 'No puede ser negativo'
-  ],
-  animal_id: [(value: string) => true], // Opcional
-  fecha_uso: [(value: string) => true], // Opcional
-  descripcion: [(value: string) => true] // Opcional
+const pajillaLocal: Ref<InventarioPajilla> = ref({ ...props.pajilla })
+
+// Type guard para evitar errores de acceso nulo
+function isAnimal(obj: unknown): obj is { id_animal: string, tipo_animal: string, raza: string } {
+  return !!obj && typeof obj === 'object' && 'id_animal' in obj && 'tipo_animal' in obj && 'raza' in obj
 }
 
-const handleUpdate = async () => {
-  if (!Object.entries(validations).every(([key, rules]) =>
-    (rules as Array<(value: any) => true | string>).every(rule =>
-      rule((formState as any)[key]) === true
-    )
-  )) {
+const selectedAnimalSafe = computed(() => isAnimal(selectedAnimals.value[0]) ? selectedAnimals.value[0] : null)
+
+const fetchMovimientos = async () => {
+  try {
+    const res = await $fetch<{ movimientos: MovimientoPajilla[] }>(`/api/pajillas/${props.pajilla.id}/movimientos`)
+    // Solo mostrar movimientos de salida
+    const salidas = res.movimientos.filter(m => m.tipo_movimiento === 'SALIDA')
+    const animalesIds = salidas.map(m => m.animal_id).filter(Boolean)
+    let animales: Record<string, { tipo_animal: string, raza: string }> = {}
+    if (animalesIds.length > 0) {
+      const animalesRes = await $fetch<{ animals: any[] }>(`/api/animals/batch`, {
+        method: 'POST',
+        body: { ids: animalesIds }
+      })
+      animalesRes.animals.forEach(a => {
+        animales[a.id_animal] = { tipo_animal: a.tipo_animal, raza: a.raza }
+      })
+    }
+    movimientos.value = salidas.map(m => ({
+      ...m,
+      tipo: m.animal_id ? animales[m.animal_id]?.tipo_animal : undefined,
+      raza: m.animal_id ? animales[m.animal_id]?.raza : undefined
+    }))
+  } catch (error) {
     toast.add({
-      title: 'Validación fallida',
-      description: 'Verifica los campos requeridos',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error'
+      title: 'Error',
+      description: 'No se pudo cargar el historial de movimientos',
+      color: 'error',
     })
+  }
+}
+
+onMounted(fetchMovimientos)
+
+// Formulario para registrar salida
+const salidaForm = ref({
+  cantidad: 1,
+  fecha: new Date().toISOString().split('T')[0],
+  animal_id: '',
+  observaciones: ''
+})
+
+const registrarSalida = async () => {
+  if (!salidaForm.value.animal_id || salidaForm.value.cantidad <= 0) {
+    toast.add({ title: 'Datos incompletos', color: 'error' })
     return
   }
-
   isLoading.value = true
   try {
-    const payload = {
-      pajilla: formState.pajilla,
-      stock: formState.stock,
-      animal_id: formState.animal_id || null,
-      fecha_uso: formState.fecha_uso || null,
-      descripcion: formState.descripcion || null
-    }
+    await $fetch('/api/pajillas/movimiento', {
+      method: 'POST',
+      body: {
+        pajilla_id: props.pajilla.id,
+        tipo_movimiento: 'SALIDA',
+        cantidad: salidaForm.value.cantidad,
+        fecha: salidaForm.value.fecha,
+        animal_id: salidaForm.value.animal_id,
+        observaciones: salidaForm.value.observaciones
+      }
+    })
+    toast.add({ title: 'Salida registrada', color: 'success' })
+    showDrawer.value = false
+    fetchMovimientos()
+    emit('updated')
+    selectedAnimals.value = []
+    salidaForm.value.animal_id = ''
+  } catch (error) {
+    toast.add({ title: 'Error al registrar salida', color: 'error' })
+  } finally {
+    isLoading.value = false
+  }
+}
 
+// Añadir función para manejar la selección de animal en edición de uso
+function handleSelectAnimalEdit(animals: { id_animal: string, tipo_animal?: string, raza?: string }[]) {
+  if (animals && animals.length > 0) {
+    usoSeleccionado.value.animal_id = animals[0].id_animal
+  }
+  showSelectAnimalDrawer.value = false
+}
+
+// Corregir handleSelectAnimals para asignar el id al formulario de salida
+function handleSelectAnimals(animals: { id_animal: string, tipo_animal: string, raza: string }[]) {
+  selectedAnimals.value = animals
+  salidaForm.value.animal_id = animals.length > 0 ? animals[0].id_animal : ''
+  showSelectAnimalDrawer.value = false
+}
+
+function openEditPajillaModal() {
+  editPajillaForm.value = {
+    pajilla: pajillaLocal.value.pajilla,
+    fecha_ingreso: pajillaLocal.value.fecha_ingreso.split('T')[0],
+    stock: pajillaLocal.value.stock_inicial ?? pajillaLocal.value.stock,
+    descripcion: pajillaLocal.value.descripcion || ''
+  }
+  showEditPajillaModal.value = true
+}
+
+function openEditUsoModal(uso: any) {
+  usoSeleccionado.value = { ...uso }
+  showEditUsoModal.value = true
+}
+
+// Métodos para editar/eliminar (implementación real después)
+async function fetchPajilla() {
+  const data = await $fetch<InventarioPajilla>(`/api/pajillas/${props.pajilla.id}`)
+  pajillaLocal.value = data
+}
+
+async function editarPajilla() {
+  isLoading.value = true
+  try {
     await $fetch(`/api/pajillas/${props.pajilla.id}`, {
       method: 'PUT',
-      body: payload
+      body: {
+        pajilla: editPajillaForm.value.pajilla,
+        stock: editPajillaForm.value.stock,
+        fecha_ingreso: editPajillaForm.value.fecha_ingreso,
+        descripcion: editPajillaForm.value.descripcion
+      }
     })
-
-    toast.add({
-      title: 'Actualización exitosa',
-      description: 'La pajilla se actualizó correctamente',
-      icon: 'i-heroicons-check-badge',
-      color: 'success'
-    })
-
+    toast.add({ title: 'Pajilla actualizada', color: 'success' })
+    showEditPajillaModal.value = false
+    await fetchPajilla()
     emit('updated')
-    isEditing.value = false
-  } catch (error: any) {
-    toast.add({
-      title: 'Error de actualización',
-      description: error.data?.message || 'Error al guardar los cambios',
-      icon: 'i-heroicons-x-circle',
-      color: 'error'
-    })
+  } catch (error) {
+    toast.add({ title: 'Error al actualizar pajilla', color: 'error' })
   } finally {
     isLoading.value = false
   }
 }
 
-const handleDelete = async () => {
-  if (!confirm('¿Estás seguro de que quieres eliminar esta pajilla?')) return
-
+// Implementar editarUso para guardar cambios
+async function editarUso() {
+  if (!usoSeleccionado.value.animal_id || usoSeleccionado.value.cantidad <= 0) {
+    toast.add({ title: 'Datos incompletos', color: 'error' })
+    return
+  }
   isLoading.value = true
   try {
-    await $fetch(`/api/pajillas/${props.pajilla.id}`, { method: 'DELETE' })
-
-    toast.add({
-      title: 'Eliminación exitosa',
-      description: 'La pajilla se eliminó correctamente',
-      icon: 'i-heroicons-check-badge',
-      color: 'success'
+    await $fetch(`/api/pajillas/movimiento/${usoSeleccionado.value.id}`, {
+      method: 'PUT',
+      body: {
+        cantidad: usoSeleccionado.value.cantidad,
+        fecha: usoSeleccionado.value.fecha,
+        animal_id: usoSeleccionado.value.animal_id,
+        observaciones: usoSeleccionado.value.observaciones
+      }
     })
-
+    toast.add({ title: 'Uso actualizado', color: 'success' })
+    showEditUsoModal.value = false
+    fetchMovimientos()
     emit('updated')
-  } catch (error: any) {
-    toast.add({
-      title: 'Error de eliminación',
-      description: error.data?.message || 'Error al eliminar la pajilla',
-      icon: 'i-heroicons-x-circle',
-      color: 'error'
-    })
+  } catch (error) {
+    toast.add({ title: 'Error al actualizar uso', color: 'error' })
   } finally {
     isLoading.value = false
   }
 }
+
+async function eliminarUso(uso: { id: number }) {
+  if (!uso || !uso.id) return
+  usoAEliminar.value = uso
+  showDeleteConfirm.value = true
+}
+
+async function confirmarEliminarUso() {
+  if (!usoAEliminar.value) return
+  isLoading.value = true
+  try {
+    await $fetch(`/api/pajillas/movimiento/${usoAEliminar.value.id}`, {
+      method: 'DELETE'
+    })
+    toast.add({ title: 'Uso eliminado', color: 'success' })
+    fetchMovimientos()
+    emit('updated')
+  } catch (error) {
+    toast.add({ title: 'Error al eliminar uso', color: 'error' })
+  } finally {
+    isLoading.value = false
+    usoAEliminar.value = null
+    showDeleteConfirm.value = false
+  }
+}
+
+const columns = [
+  { label: 'ID', value: (row: MovimientoPajilla) => row.animal_id },
+  { label: 'Tipo', value: (row: any) => row.tipo || '—' },
+  { label: 'Raza', value: (row: any) => row.raza || '—' },
+  { label: 'Fecha de Uso', value: (row: MovimientoPajilla) => new Date(row.fecha).toLocaleDateString() },
+  { label: 'Cantidad Usada', value: (row: MovimientoPajilla) => row.cantidad },
+  { label: 'Observaciones', value: (row: MovimientoPajilla) => row.observaciones || '—' },
+  { label: 'Acciones', value: (row: any) => row } // Para los botones
+]
 </script>
 
 <template>
@@ -140,94 +242,178 @@ const handleDelete = async () => {
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Detalles de la Pajilla</h3>
         <div class="flex gap-2">
-          <UButton 
-            v-if="!isEditing && canEdit" 
-            icon="i-heroicons-pencil-square" 
-            color="primary" 
-            @click="isEditing = true" 
-          />
-          <UButton 
-            v-if="canDelete"
-            icon="i-heroicons-trash" 
-            color="error" 
-            @click="handleDelete"
-            :loading="isLoading"
-          />
-          <template v-if="isEditing">
-            <UButton icon="i-heroicons-x-mark" color="error" @click="isEditing = false" />
-            <UButton icon="i-heroicons-check" color="success" :loading="isLoading" @click="handleUpdate" />
-          </template>
+          <UButton icon="i-heroicons-pencil-square" color="neutral" variant="soft" class="!text-gray-800 dark:!text-gray-100" @click="openEditPajillaModal" size="sm" title="Editar pajilla" />
         </div>
       </div>
     </template>
 
-    <!-- Responsive grid with more columns -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Campo Código de Pajilla -->
-      <UFormField label="Código de Pajilla" :required="true"
-        :error="validations.pajilla.find(v => typeof v(formState.pajilla) === 'string')?.(formState.pajilla)">
-        <template v-if="isEditing">
-          <UInput v-model="formState.pajilla" placeholder="Ingrese el código de la pajilla" />
-        </template>
-        <template v-else>
-          <p class="py-2 px-3 font-medium text-primary">{{ formState.pajilla }}</p>
-        </template>
-      </UFormField>
-
-      <!-- Campo Stock -->
-      <UFormField label="Stock" :required="true"
-        :error="validations.stock.find(v => typeof v(formState.stock) === 'string')?.(formState.stock)">
-        <template v-if="isEditing">
-          <UInput v-model.number="formState.stock" type="number" min="0" />
-        </template>
-        <template v-else>
-          <UBadge :color="formState.stock > 0 ? 'success' : 'error'" :variant="formState.stock > 0 ? 'subtle' : 'solid'">
-            {{ formState.stock }}
-          </UBadge>
-        </template>
-      </UFormField>
-
-      <!-- Campo Animal ID -->
-      <UFormField label="Animal ID"
-        :error="validations.animal_id.find(v => typeof v(formState.animal_id) === 'string')?.(formState.animal_id)">
-        <template v-if="isEditing">
-          <UInput v-model="formState.animal_id" placeholder="ID del animal (opcional)" />
-        </template>
-        <template v-else>
-          <p class="py-2 px-3">
-            <span v-if="formState.animal_id" class="font-mono text-sm">{{ formState.animal_id }}</span>
-            <span v-else class="text-muted italic">Sin asignar</span>
-          </p>
-        </template>
-      </UFormField>
-
-      <!-- Campo Fecha de Uso -->
-      <UFormField label="Fecha de Uso"
-        :error="validations.fecha_uso.find(v => typeof v(formState.fecha_uso) === 'string')?.(formState.fecha_uso)">
-        <template v-if="isEditing">
-          <UInput v-model="formState.fecha_uso" type="date" />
-        </template>
-        <template v-else>
-          <p class="py-2 px-3">
-            <span v-if="formState.fecha_uso">{{ new Date(formState.fecha_uso).toLocaleDateString() }}</span>
-            <span v-else class="text-muted italic">—</span>
-          </p>
-        </template>
-      </UFormField>
-
-      <!-- Campo Descripción -->
-      <UFormField label="Descripción"
-        :error="validations.descripcion.find(v => typeof v(formState.descripcion) === 'string')?.(formState.descripcion)">
-        <template v-if="isEditing">
-          <UTextarea v-model="formState.descripcion" placeholder="Descripción adicional (opcional)" />
-        </template>
-        <template v-else>
-          <p class="py-2 px-3">
-            <span v-if="formState.descripcion">{{ formState.descripcion }}</span>
-            <span v-else class="text-muted italic">Sin descripción</span>
-          </p>
-        </template>
-      </UFormField>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div><b>Código:</b> {{ pajillaLocal.pajilla }}</div>
+      <div><b>Fecha Ingreso:</b> {{ new Date(pajillaLocal.fecha_ingreso).toLocaleDateString() }}</div>
+      <div><b>Stock Inicial:</b> {{ pajillaLocal.stock_inicial ?? pajillaLocal.stock }}</div>
+      <div><b>Salidas:</b> {{ pajillaLocal.total_salidas }}</div>
+      <div><b>Stock Final:</b> <span :class="pajillaLocal.inventario_final > 0 ? 'text-green-600' : 'text-red-600'">{{ pajillaLocal.inventario_final }}</span></div>
+      <div class="col-span-3"><b>Descripción:</b> {{ pajillaLocal.descripcion || 'Sin descripción' }}</div>
     </div>
+
+    <!-- Botón para abrir el modal de asignación -->
+    <div class="flex justify-end mb-6">
+      <UButton color="primary" @click="showDrawer = true">Asignar</UButton>
+    </div>
+    <!-- Modal de asignación de animal(es) -->
+    <UModal v-model:open="showDrawer" title="Asignar Animal(es) a esta Pajilla" description="Registra la salida de pajilla para uno o más animales" class="max-w-3xl w-full">
+      <template #body>
+        <UForm :state="salidaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="registrarSalida">
+          <UFormField name="cantidad">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Cantidad</span>
+            </template>
+            <UInput v-model.number="salidaForm.cantidad" type="number" min="1" :max="props.pajilla.inventario_final" />
+          </UFormField>
+          <UFormField name="fecha">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Fecha</span>
+            </template>
+            <UInput v-model="salidaForm.fecha" type="date" />
+          </UFormField>
+          <UFormField name="animal">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Animal(es)</span>
+            </template>
+            <UButton color="primary" variant="soft" @click.prevent="showSelectAnimalDrawer = true">Seleccionar Animal(es)</UButton>
+            <div v-if="selectedAnimals.length > 0" class="mt-2">
+              <div v-for="animal in selectedAnimals" :key="animal.id_animal" class="mb-1">
+                <b>ID:</b> {{ animal.id_animal }} | <b>Tipo:</b> {{ animal.tipo_animal }} | <b>Raza:</b> {{ animal.raza }}
+              </div>
+            </div>
+            <div v-else class="mt-2 text-muted italic">Ningún animal seleccionado</div>
+            <SelectVacaDrawer
+              v-model="showSelectAnimalDrawer"
+              @select="handleSelectAnimals"
+            />
+          </UFormField>
+          <UFormField name="observaciones" class="sm:col-span-2">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Observaciones</span>
+            </template>
+            <UTextarea v-model="salidaForm.observaciones" placeholder="Observaciones (opcional)" />
+          </UFormField>
+          <div class="col-span-2 flex justify-end gap-4 mt-4">
+            <UButton type="button" variant="ghost" @click="showDrawer = false">Cancelar</UButton>
+            <UButton type="submit" color="primary" :loading="isLoading">Asignar</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
+
+    <h4 class="font-semibold mb-2">Usos de esta Pajilla</h4>
+    <table class="w-full text-sm mb-4">
+      <thead>
+        <tr>
+          <th v-for="col in columns" :key="col.label" class="text-left p-2">{{ col.label }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="mov in movimientos" :key="mov.id">
+          <td v-for="col in columns" :key="col.label" class="p-2">
+            <template v-if="col.label !== 'Acciones'">
+              {{ col.value(mov) }}
+            </template>
+            <template v-else>
+              <div class="flex gap-2">
+                <UButton color="neutral" variant="soft" size="xs" class="!inline-block !opacity-100 !visible !text-gray-800 dark:!text-gray-100" @click="openEditUsoModal(mov)" title="Editar uso">Editar</UButton>
+                <UButton icon="i-heroicons-trash" color="error" variant="soft" size="xs" @click="eliminarUso(mov)" title="Eliminar uso" />
+              </div>
+            </template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Modales -->
+    <UModal v-model:open="showEditPajillaModal" title="Editar Detalles de la Pajilla" description="Modifica la información de la pajilla" class="max-w-3xl w-full">
+      <template #body>
+        <UForm :state="editPajillaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="editarPajilla">
+          <UFormField name="pajilla">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Código de Pajilla</span>
+            </template>
+            <UInput v-model="editPajillaForm.pajilla" placeholder="Ej: BRA-001-2024" />
+          </UFormField>
+          <UFormField name="stock">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Stock Inicial</span>
+            </template>
+            <UInput v-model.number="editPajillaForm.stock" type="number" min="0" />
+          </UFormField>
+          <UFormField name="fecha_ingreso">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Fecha de Ingreso</span>
+            </template>
+            <UInput v-model="editPajillaForm.fecha_ingreso" type="date" />
+          </UFormField>
+          <UFormField name="descripcion">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Descripción / Observaciones</span>
+            </template>
+            <UTextarea v-model="editPajillaForm.descripcion" placeholder="Observaciones, detalles, etc." />
+          </UFormField>
+          <div class="col-span-2 flex justify-end gap-4 mt-4">
+            <UButton type="button" variant="ghost" @click="showEditPajillaModal = false">Cancelar</UButton>
+            <UButton type="submit" color="primary">Guardar</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
+    <UModal v-model:open="showEditUsoModal" title="Editar Uso de Pajilla" description="Modifica la información del uso de la pajilla" class="max-w-3xl w-full">
+      <template #body>
+        <UForm :state="usoSeleccionado" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="editarUso" v-if="usoSeleccionado">
+          <UFormField name="cantidad">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Cantidad</span>
+            </template>
+            <UInput v-model.number="usoSeleccionado.cantidad" type="number" min="1" />
+          </UFormField>
+          <UFormField name="fecha">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Fecha</span>
+            </template>
+            <UInput v-model="usoSeleccionado.fecha" type="date" />
+          </UFormField>
+          <UFormField name="animal">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Animal</span>
+            </template>
+            <UButton color="primary" variant="soft" @click.prevent="showSelectAnimalDrawer = true">Seleccionar Animal</UButton>
+            <div v-if="usoSeleccionado.animal_id" class="mt-2">
+              <b>ID:</b> {{ usoSeleccionado.animal_id }}
+            </div>
+            <SelectVacaDrawer
+              v-model="showSelectAnimalDrawer"
+              @select="handleSelectAnimalEdit"
+            />
+          </UFormField>
+          <UFormField name="observaciones" class="sm:col-span-2">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Observaciones</span>
+            </template>
+            <UTextarea v-model="usoSeleccionado.observaciones" placeholder="Observaciones (opcional)" />
+          </UFormField>
+          <div class="col-span-2 flex justify-end gap-4 mt-4">
+            <UButton type="button" variant="ghost" @click="showEditUsoModal = false">Cancelar</UButton>
+            <UButton type="submit" color="primary">Guardar</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
+    <UModal v-model:open="showDeleteConfirm" title="Confirmar eliminación" description="¿Estás seguro de que deseas eliminar este uso de pajilla?" class="max-w-md w-full">
+      <template #body>
+        <div class="mb-4">¿Estás seguro de que deseas eliminar este uso de pajilla?</div>
+        <div class="flex justify-end gap-2">
+          <UButton variant="ghost" @click="showDeleteConfirm = false">Cancelar</UButton>
+          <UButton color="error" @click="confirmarEliminarUso" :loading="isLoading">Eliminar</UButton>
+        </div>
+      </template>
+    </UModal>
   </UCard>
 </template> 

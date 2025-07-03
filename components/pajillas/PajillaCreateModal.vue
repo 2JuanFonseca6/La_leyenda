@@ -1,8 +1,8 @@
 <template>
   <UModal
     v-model:open="isOpen"
-    title="Agregar Nueva Pajilla"
-    description="Completa la información de la pajilla"
+    title="Registrar Pajilla"
+    description="Completa los datos para registrar una nueva pajilla"
     class="max-w-3xl w-full"
   >
     <template #body>
@@ -17,48 +17,34 @@
           <UInput v-model="formState.pajilla" placeholder="Ej: BRA-001-2024" />
         </UFormField>
 
-        <!-- Stock -->
-        <UFormField name="stock">
+        <!-- Stock Inicial -->
+        <UFormField name="stock_inicial">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-              Cantidad en Stock
+              Stock Inicial
             </span>
           </template>
-          <UInput v-model.number="formState.stock" type="number" min="0" />
+          <UInput v-model.number="formState.stock_inicial" type="number" min="0" />
         </UFormField>
 
-        <!-- Fecha de uso -->
-        <UFormField name="fecha_uso">
+        <!-- Fecha de Ingreso -->
+        <UFormField name="fecha_ingreso">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-              Fecha de uso
+              Fecha de Ingreso
             </span>
           </template>
-          <UInput v-model="formState.fecha_uso" type="date" />
+          <UInput v-model="formState.fecha_ingreso" type="date" />
         </UFormField>
 
-        <!-- Descripción -->
+        <!-- Descripción/Observaciones -->
         <UFormField name="descripcion">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-              Descripción
+              Descripción / Observaciones
             </span>
           </template>
-          <UTextarea v-model="formState.descripcion" placeholder="Observaciones, detalles del uso, etc." />
-        </UFormField>
-
-        <!-- Selección de Animal -->
-        <UFormField name="animal_id">
-          <template #label>
-            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-              Animal Asociado
-            </span>
-          </template>
-          <div class="flex items-center gap-2">
-            <p v-if="formState.animal_id">{{ formState.animal_id }}</p>
-            <p v-else class="text-gray-500 italic">Sin animal seleccionado</p>
-            <SelectVacaDrawer v-model:modelValue="isDrawerOpen" @select="formState.animal_id = $event.id_animal" />
-          </div>
+          <UTextarea v-model="formState.descripcion" placeholder="Observaciones, detalles, etc." />
         </UFormField>
 
         <!-- Botones -->
@@ -73,38 +59,31 @@
 
 <script setup lang="ts">
 import { z } from 'zod';
-import type { TablesInsert } from '~/types/supabase';
-import type { Database } from '~/types/supabase';
 import { useUserRole } from '~/composables/arestricted';
 
 const isOpen = ref(false);
-const isDrawerOpen = ref(false);
-const supabase = useSupabaseClient<Database>();
 const emit = defineEmits(['close', 'created']);
 
 const { canCreate } = useUserRole();
 
 const schema = z.object({
   pajilla: z.string().min(1, 'El código es requerido'),
-  stock: z.number().min(0, 'Debe ser mayor o igual a 0'),
-  fecha_uso: z.string(),
-  animal_id: z.string().nullable().optional(),
+  stock_inicial: z.number().min(0, 'Debe ser mayor o igual a 0'),
+  fecha_ingreso: z.string(),
   descripcion: z.string().optional(),
 });
 
 type FormState = {
   pajilla: string;
-  stock: number;
-  fecha_uso?: string;
-  animal_id: string | null;
+  stock_inicial: number;
+  fecha_ingreso: string;
   descripcion?: string;
 };
 
 const formState = reactive<FormState>({
   pajilla: '',
-  stock: 0,
-  fecha_uso: new Date().toISOString().split('T')[0],
-  animal_id: null,
+  stock_inicial: 0,
+  fecha_ingreso: new Date().toISOString().split('T')[0],
   descripcion: '',
 });
 
@@ -114,13 +93,11 @@ const handleSubmit = async () => {
       method: 'POST',
       body: {
         pajilla: formState.pajilla,
-        cantidad_total: formState.stock,
-        fecha_uso: formState.fecha_uso,
-        animal_id: formState.animal_id,
+        cantidad_total: formState.stock_inicial,
+        fecha_ingreso: formState.fecha_ingreso,
         descripcion: formState.descripcion
       }
     })
-    
     emit('created');
     closeModal();
     useToast().add({
@@ -163,9 +140,8 @@ const closeModal = () => {
 const resetForm = () => {
   Object.assign(formState, {
     pajilla: '',
-    stock: 0,
-    fecha_uso: new Date().toISOString().split('T')[0],
-    animal_id: null,
+    stock_inicial: 0,
+    fecha_ingreso: new Date().toISOString().split('T')[0],
     descripcion: '',
   });
 };

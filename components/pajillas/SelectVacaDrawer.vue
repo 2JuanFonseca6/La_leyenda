@@ -51,7 +51,7 @@
         <!-- Botón de acción -->
         <div class="flex justify-end gap-2 mt-4">
           <UButton color="neutral" variant="ghost" @click="onCancel">Cancelar</UButton>
-          <UButton color="primary" :disabled="selectedRows.length !== 1" @click="onAccept">Aceptar</UButton>
+          <UButton color="primary" :disabled="selectedRows.length === 0" @click="onAccept">Aceptar</UButton>
         </div>
       </div>
     </template>
@@ -66,7 +66,7 @@ import type { Database } from '~/types/supabase'
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
-  (e: 'select', animal: { id_animal: string; raza: string; tipo_animal: string }): void
+  (e: 'select', animals: { id_animal: string; raza: string; tipo_animal: string }[]): void
 }>()
 
 const drawerOpen = computed({
@@ -93,7 +93,17 @@ type Animal = {
   tipo_animal: string;
 }
 
-const animales = computed(() => data.value?.animals || [])
+const animales = computed(() => {
+  if (data.value?.animals && data.value.animals.length > 0) {
+    return data.value.animals
+  }
+  // Modo prueba: si no hay datos, muestra animales de ejemplo
+  return [
+    { id_animal: 'A001', tipo_animal: 'VACA', raza: 'Holando' },
+    { id_animal: 'A002', tipo_animal: 'TORO', raza: 'Angus' },
+    { id_animal: 'A003', tipo_animal: 'TERNERO', raza: 'Jersey' }
+  ]
+})
 const total    = computed(() => data.value?.total || 0)
 
 const selectedRows = computed<Animal[]>(() => {
@@ -128,9 +138,8 @@ const columns: TableColumn<Animal>[] = [
 ]
 
 function onAccept() {
-  const animal = selectedRows.value[0]
-  if (animal) {
-    emit('select', animal)
+  if (selectedRows.value.length > 0) {
+    emit('select', selectedRows.value)
     drawerOpen.value = false
   }
 }

@@ -4,7 +4,7 @@ import type { Database } from '~/types/supabase'
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event)
   const user = await serverSupabaseUser(event)
-  
+
   // Verificar que el usuario esté autenticado
   if (!user) {
     throw createError({ statusCode: 401, statusMessage: 'No autorizado' })
@@ -22,28 +22,27 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
+  const { pajilla_id, tipo_movimiento, cantidad, fecha, animal_id, observaciones } = body
 
-  const { pajilla, cantidad_total, fecha_ingreso, descripcion } = body
+  if (!pajilla_id || !tipo_movimiento || !cantidad || !fecha) {
+    throw createError({ statusCode: 400, statusMessage: 'Faltan datos obligatorios.' })
+  }
 
-  // 1. Crear la pajilla
-  const { data: newPajilla, error: pajillaError } = await client.from('pajillas').insert({
-    pajilla,
-    stock: cantidad_total, // Este campo puede quedar obsoleto, pero lo dejamos por compatibilidad
-    fecha_ingreso,
-    descripcion
-  }).select('id').single()
+  if (!['ENTRADA', 'SALIDA'].includes(tipo_movimiento)) {
+    throw createError({ statusCode: 400, statusMessage: 'Tipo de movimiento inválido.' })
+  }
 
-  if (pajillaError) throw createError({ statusCode: 500, statusMessage: pajillaError.message })
-
-  // 2. Registrar el movimiento de entrada (stock inicial)
-  const { error: movimientoError } = await client.from('movimientos_pajilla').insert({
-    pajilla_id: newPajilla.id,
-    tipo_movimiento: 'ENTRADA',
-    cantidad: cantidad_total,
-    fecha: fecha_ingreso
+  // Insertar el movimiento
+  const { error } = await client.from('movimientos_pajilla').insert({
+    pajilla_id,
+    tipo_movimiento,
+    cantidad,
+    fecha,
+    animal_id: tipo_movimiento === 'SALIDA' ? animal_id : null,
+    observaciones
   })
 
-  if (movimientoError) throw createError({ statusCode: 500, statusMessage: movimientoError.message })
+  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
   return { success: true }
-})
+}) 

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     // Obtener los datos paginados
     const { data, error } = await client
       .from("pajillas")
-      .select("*")
+      .select("id, pajilla, fecha_ingreso, descripcion, stock")
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1)
 
@@ -31,36 +31,52 @@ export default defineEventHandler(async (event) => {
       return createError({ statusCode: 500, statusMessage: error.message })
     }
 
-    // Obtener estadísticas generales de todas las pajillas
-    const { data: allPajillas, error: statsError } = await client
-      .from("pajillas")
-      .select("stock, animal_id")
+    if (!Array.isArray(data)) {
+      // Si data no es un array, probablemente hubo un error de columnas
+      return createError({ statusCode: 500, statusMessage: "Error: la columna 'fecha_ingreso' no existe en la tabla 'pajillas'." })
+    }
+    const pajillas = data as unknown as Array<{ id: number, pajilla: string, fecha_ingreso: string, descripcion: string, stock: number }>;
 
-    if (statsError) {
-      console.error("Error al obtener estadísticas:", statsError.message)
+    // Para cada pajilla, obtener los movimientos y calcular stock
+    let movimientos: any[] = []
+    let pajillaIds: number[] = []
+    if (pajillas.length > 0) {
+      pajillaIds = pajillas.map(p => p.id)
+      const { data: movs, error: movsError } = await client
+        .from('movimientos_pajilla')
+        .select('pajilla_id, tipo_movimiento, cantidad')
+        .in('pajilla_id', pajillaIds)
+      if (movsError) {
+        console.error('Error al obtener movimientos:', movsError.message)
+        return createError({ statusCode: 500, statusMessage: movsError.message })
+      }
+      movimientos = movs || []
     }
 
-    // Calcular estadísticas generales
-    const stats = {
-      totalStock: 0,
-      availableStock: 0,
-      usedStock: 0,
-      withAnimal: 0,
-      totalItems: count || 0
-    }
+    // Calcular stock y movimientos por pajilla
+    const pajillasConInventario = pajillas.map(p => {
+      const movs = movimientos.filter(m => m.pajilla_id === p.id)
+      const stock_inicial = p.stock
+      const total_entradas = movs.filter(m => m.tipo_movimiento === 'ENTRADA').reduce((sum, m) => sum + m.cantidad, 0)
+      const total_salidas = movs.filter(m => m.tipo_movimiento === 'SALIDA').reduce((sum, m) => sum + m.cantidad, 0)
+      // Stock final es stock_inicial - total_salidas
+      const inventario_final = stock_inicial - total_salidas
+      return {
+        id: p.id,
+        pajilla: p.pajilla,
+        fecha_ingreso: p.fecha_ingreso,
+        descripcion: p.descripcion,
+        stock: p.stock,
+        stock_inicial,
+        total_entradas,
+        total_salidas,
+        inventario_final
+      }
+    })
 
-    if (allPajillas) {
-      stats.totalStock = allPajillas.reduce((sum, item) => sum + (item.stock || 0), 0)
-      stats.availableStock = allPajillas.filter(item => (item.stock || 0) > 0).length
-      stats.usedStock = allPajillas.filter(item => (item.stock || 0) === 0).length
-      stats.withAnimal = allPajillas.filter(item => item.animal_id).length
-    }
-
-    // Return paginated data with total count and general stats
     return {
-      pajillas: data || [],
-      total: count || 0,
-      stats
+      pajillas: pajillasConInventario,
+      total: count || 0
     }
   } catch (error) {
     console.error("Unexpected error in pajillas GET:", error)

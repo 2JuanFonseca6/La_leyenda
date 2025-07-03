@@ -45,8 +45,7 @@ export default defineEventHandler(async (event) => {
       .update({
         pajilla: body.pajilla,
         stock: body.stock,
-        animal_id: body.animal_id,
-        fecha_uso: body.fecha_uso,
+        fecha_ingreso: body.fecha_ingreso,
         descripcion: body.descripcion,
         updated_at: new Date().toISOString()
       })

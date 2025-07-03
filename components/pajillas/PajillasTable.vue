@@ -4,21 +4,17 @@ import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { Table } from '@tanstack/table-core'
 import { useUserRole } from '~/composables/arestricted'
+import type { InventarioPajilla } from '~/types/pajillas'
+import PajillaExpandedCard from './PajillaExpandedCard.vue'
+import { useToast } from '#imports'
+import PajillaEditModal from './PajillaEditModal.vue'
+import PajillaDeleteConfirmModal from './PajillaDeleteConfirmModal.vue'
 
 const props = defineProps<{ search?: string }>()
 
 const { canCreate } = useUserRole()
 
-type Pajilla = {
-  id: number
-  pajilla: string
-  stock: number
-  animal_id: string | null
-  fecha_uso: string | null
-  descripcion: string | null
-  created_at: string
-  updated_at: string
-}
+type Pajilla = InventarioPajilla & { salida_hoy: number }
 
 interface TableComponent {
   tableApi: Table<Pajilla>
@@ -26,20 +22,10 @@ interface TableComponent {
 
 const table = ref<TableComponent | null>(null)
 const UButton = resolveComponent('UButton')
-const UCheckbox = resolveComponent('UCheckbox')
 
 const data = ref<Pajilla[]>([])
 const total = ref(0)
 const isPending = ref(false)
-
-// Estadísticas generales del servidor
-const serverStats = ref({
-  totalStock: 0,
-  availableStock: 0,
-  usedStock: 0,
-  withAnimal: 0,
-  totalItems: 0
-})
 
 const pagination = ref({
   pageIndex: 1,
@@ -47,29 +33,33 @@ const pagination = ref({
 })
 
 const fetchPajillas = async () => {
+  console.log('fetchPajillas called')
   isPending.value = true
   try {
     const params = {
       page: pagination.value.pageIndex,
       pageSize: pagination.value.pageSize
     }
-    const response = await $fetch<{ pajillas: Pajilla[]; total: number; stats: any }>(
-      '/api/pajillas',
-      { params }
-    )
-    if ('pajillas' in response && 'total' in response) {
-      data.value = response.pajillas
-      total.value = response.total
-      if (response.stats) {
-        serverStats.value = response.stats
-      }
-    } else if (Array.isArray(response)) {
-      data.value = response as Pajilla[]
-      total.value = (response as Pajilla[]).length
-    } else {
-      data.value = []
-      total.value = 0
-    }
+    // Fetch inventario y movimientos de hoy
+    const [inventarioRes, movimientosRes] = await Promise.all([
+      $fetch<{ pajillas: InventarioPajilla[]; total: number }>(
+        '/api/pajillas',
+        { params }
+      ),
+      $fetch<{ movimientos: any[] }>(
+        '/api/pajillas/movimientos-hoy',
+        { params: { fecha: new Date().toISOString().split('T')[0] } }
+      )
+    ])
+    // Mapear salida_hoy
+    const movimientosHoy = movimientosRes.movimientos
+    data.value = inventarioRes.pajillas.map(p => {
+      const salida_hoy = movimientosHoy
+        .filter(m => m.pajilla_id === p.id && m.tipo_movimiento === 'SALIDA')
+        .reduce((sum, m) => sum + m.cantidad, 0)
+      return { ...p, salida_hoy }
+    })
+    total.value = inventarioRes.total
   } catch (error) {
     console.error('Error fetching pajillas:', error)
   } finally {
@@ -101,186 +91,71 @@ const columns: TableColumn<Pajilla>[] = [
   },
   {
     accessorKey: 'id',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'ID',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      })
-    },
+    header: 'ID',
     cell: ({ row }) => h('span', { class: 'font-mono text-sm text-muted' }, `#${row.original.id}`)
   },
   {
     accessorKey: 'pajilla',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Código',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      })
-    },
+    header: 'Código',
     cell: ({ row }) => h('span', { class: 'font-medium text-primary font-mono' }, row.original.pajilla)
   },
   {
-    accessorKey: 'stock',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Stock',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      })
-    },
-    cell: ({ row }) =>
-      h(resolveComponent('UBadge'), {
-        color: row.original.stock > 0 ? 'success' : 'error',
-        variant: row.original.stock > 0 ? 'subtle' : 'solid',
-        size: 'sm'
-      }, () => row.original.stock.toLocaleString())
-  },
-  {
-    accessorKey: 'animal_id',
-    header: 'Animal ID',
-    cell: ({ row }) =>
-      row.original.animal_id
-        ? h('span', { class: 'font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded' }, row.original.animal_id)
-        : h('span', { class: 'text-muted italic text-sm' }, '—')
-  },
-  {
-    accessorKey: 'fecha_uso',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Fecha Uso',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      })
-    },
+    accessorKey: 'fecha_ingreso',
+    header: 'Fecha de Ingreso',
     cell: ({ row }) => {
-      if (!row.original.fecha_uso) {
-        return h('span', { class: 'text-muted italic text-sm' }, '—')
-      }
-      const date = new Date(row.original.fecha_uso)
-      const today = new Date()
-      const isPast = date < today
-      const isToday = date.toDateString() === today.toDateString()
-      
-      return h('div', { class: 'flex flex-col' }, [
-        h('span', { 
-          class: `text-sm ${isPast ? 'text-red-600 dark:text-red-400' : isToday ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}` 
-        }, date.toLocaleDateString('es-ES', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric' 
-        })),
-        h('span', { class: 'text-xs text-muted' }, date.toLocaleDateString('es-ES', { 
-          weekday: 'short' 
-        }))
-      ])
+      const date = new Date(row.original.fecha_ingreso)
+      return h('span', { class: 'text-sm' }, date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }))
     }
   },
   {
+    accessorKey: 'stock_inicial',
+    header: 'Stock Inicial',
+    cell: ({ row }) => h('span', { class: 'font-mono text-sm' }, row.original.stock_inicial)
+  },
+  {
+    accessorKey: 'salida_hoy',
+    header: 'Salida (hoy)',
+    cell: ({ row }) => h('span', { class: 'font-mono text-sm text-red-700' }, row.original.salida_hoy)
+  },
+  {
+    accessorKey: 'inventario_final',
+    header: 'Stock Final',
+    cell: ({ row }) => h('span', { class: 'font-mono text-sm', style: `color: ${row.original.inventario_final > 0 ? '#16a34a' : '#dc2626'}` }, row.original.inventario_final)
+  },
+  {
     accessorKey: 'descripcion',
-    header: 'Descripción',
+    header: 'Descripción / Observaciones',
     cell: ({ row }) => {
       if (!row.original.descripcion) {
         return h('span', { class: 'text-muted italic text-sm' }, '—')
       }
       const desc = row.original.descripcion
       const truncated = desc.length > 30 ? desc.substring(0, 30) + '...' : desc
-      return h('span', { 
-        class: 'text-sm',
-        title: desc.length > 30 ? desc : undefined
-      }, truncated)
+      return h('span', { class: 'text-sm', title: desc.length > 30 ? desc : undefined }, truncated)
     }
   },
   {
-    accessorKey: 'created_at',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Creado',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+    id: 'acciones',
+    header: 'Acciones',
+    cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
+      h(UButton, {
+        icon: 'i-heroicons-trash',
+        color: 'error',
+        variant: 'soft',
+        size: 'sm',
+        title: 'Eliminar pajilla',
+        onClick: () => eliminarPajilla(row.original)
       })
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.original.created_at)
-      return h('div', { class: 'flex flex-col' }, [
-        h('span', { class: 'text-sm' }, date.toLocaleDateString('es-ES', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric' 
-        })),
-        h('span', { class: 'text-xs text-muted' }, date.toLocaleTimeString('es-ES', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }))
-      ])
-    }
+    ])
   }
 ]
 
 const selectedIds = ref<number[]>([])
-const expanded = ref({})
+const expanded = ref<Record<string, boolean>>({})
 
-// Configuración de ordenamiento por defecto
 const sorting = ref([
-  { id: 'created_at', desc: true } // Más recientes primero
+  { id: 'fecha_ingreso', desc: true }
 ])
-
-watch(
-  () => table.value?.tableApi?.getSelectedRowModel().rows,
-  (rows) => {
-    selectedIds.value = rows?.map((row) => row.original.id) || []
-  }
-)
-
-const handleDelete = async (id: number) => {
-  try {
-    await $fetch(`/api/pajillas/${id}`, { method: 'DELETE' })
-    fetchPajillas()
-  } catch (error) {
-    console.error('Error deleting pajilla:', error)
-  }
-}
 
 const emit = defineEmits(['edit', 'add'])
 
@@ -293,7 +168,6 @@ const filteredRowsCount = computed(() => {
   return Array.isArray(rows) ? rows.length : 0
 })
 
-// Función para refrescar la tabla
 const refreshTable = () => {
   table.value?.tableApi?.resetRowSelection()
   fetchPajillas()
@@ -304,10 +178,56 @@ const filteredData = computed(() => {
   if (!term) return data.value
   return data.value.filter(pajilla =>
     pajilla.pajilla.toLowerCase().includes(term) ||
-    (pajilla.animal_id ?? '').toLowerCase().includes(term) ||
     (pajilla.descripcion ?? '').toLowerCase().includes(term)
   )
 })
+
+const showEditModal = ref(false)
+const pajillaAEditar = ref<InventarioPajilla | null>(null)
+const showDeleteConfirm = ref(false)
+const pajillaAEliminar = ref<InventarioPajilla | null>(null)
+const isDeleting = ref(false)
+
+function handleEdit(pajilla: InventarioPajilla) {
+  pajillaAEditar.value = pajilla
+  showEditModal.value = true
+}
+
+async function eliminarPajilla(pajilla: InventarioPajilla) {
+  pajillaAEliminar.value = pajilla
+  showDeleteConfirm.value = true
+}
+
+async function confirmarEliminarPajilla() {
+  if (!pajillaAEliminar.value) return
+  isDeleting.value = true
+  const toast = useToast()
+  try {
+    await $fetch(`/api/pajillas/${pajillaAEliminar.value.id}`, { method: 'DELETE' })
+    showDeleteConfirm.value = false
+    pajillaAEliminar.value = null
+    refreshTable()
+    toast.add({ title: 'Pajilla eliminada', color: 'success' })
+  } catch (error) {
+    toast.add({ title: 'Error al eliminar pajilla', color: 'error' })
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+function closeDeleteModal() {
+  showDeleteConfirm.value = false
+}
+
+const resumenGeneral = computed(() => {
+  const pajillas = data.value;
+  return {
+    stockInicial: pajillas.reduce((sum, p) => sum + (p.stock_inicial || 0), 0),
+    salidaHoy: pajillas.reduce((sum, p) => sum + (p.salida_hoy || 0), 0),
+    stockFinal: pajillas.reduce((sum, p) => sum + (p.inventario_final || 0), 0),
+    total: pajillas.length
+  }
+});
 
 defineExpose({
   fetchPajillas,
@@ -319,27 +239,23 @@ defineExpose({
 
 <template>
   <div class="w-full space-y-4 pb-4">
-    <!-- Estadísticas -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <!-- Resumen general -->
+    <div class="grid grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
       <div class="text-center">
-        <div class="text-2xl font-bold text-primary">{{ serverStats.totalItems }}</div>
-        <div class="text-sm text-muted">Total Pajillas</div>
+        <div class="text-lg font-bold text-primary">{{ resumenGeneral.stockInicial }}</div>
+        <div class="text-sm text-muted">Stock Inicial</div>
       </div>
       <div class="text-center">
-        <div class="text-2xl font-bold text-green-600">{{ serverStats.totalStock.toLocaleString() }}</div>
-        <div class="text-sm text-muted">Stock Total</div>
+        <div class="text-lg font-bold text-red-600">{{ resumenGeneral.salidaHoy }}</div>
+        <div class="text-sm text-muted">Salida (hoy)</div>
       </div>
       <div class="text-center">
-        <div class="text-2xl font-bold text-blue-600">{{ serverStats.availableStock }}</div>
-        <div class="text-sm text-muted">Disponibles</div>
+        <div class="text-lg font-bold text-green-600">{{ resumenGeneral.stockFinal }}</div>
+        <div class="text-sm text-muted">Stock Final</div>
       </div>
       <div class="text-center">
-        <div class="text-2xl font-bold text-red-600">{{ serverStats.usedStock }}</div>
-        <div class="text-sm text-muted">Usadas</div>
-      </div>
-      <div class="text-center">
-        <div class="text-2xl font-bold text-purple-600">{{ serverStats.withAnimal }}</div>
-        <div class="text-sm text-muted">Con Animal</div>
+        <div class="text-lg font-bold">{{ resumenGeneral.total }}</div>
+        <div class="text-sm text-muted">Total Toros</div>
       </div>
     </div>
 
@@ -386,5 +302,22 @@ defineExpose({
         @update:page="(newPage: number) => (pagination.pageIndex = newPage)"
       />
     </div>
+
+    <!-- Modal de edición de pajilla -->
+    <PajillaEditModal
+      :open="showEditModal"
+      :pajilla="pajillaAEditar"
+      @updated="() => { showEditModal = false; refreshTable(); }"
+      @close="showEditModal = false"
+    />
+
+    <!-- Modal de confirmación de eliminación de pajilla -->
+    <PajillaDeleteConfirmModal
+      :open="showDeleteConfirm"
+      :pajilla="pajillaAEliminar"
+      :loading="isDeleting"
+      @confirm="confirmarEliminarPajilla"
+      @close="closeDeleteModal"
+    />
   </div>
 </template> 
