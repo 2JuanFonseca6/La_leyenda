@@ -239,26 +239,41 @@ defineExpose({
 
 <template>
   <div class="w-full space-y-4 pb-4">
-    <!-- Resumen general -->
-    <div class="grid grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <div class="text-center">
-        <div class="text-lg font-bold text-primary">{{ resumenGeneral.stockInicial }}</div>
+    <!-- Resumen general mejorado -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-2">
+      <!-- Stock Inicial -->
+      <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="i-lucide-package text-primary text-2xl" />
+          <span class="text-2xl font-extrabold text-primary">{{ resumenGeneral.stockInicial }}</span>
+        </div>
         <div class="text-sm text-muted">Stock Inicial</div>
       </div>
-      <div class="text-center">
-        <div class="text-lg font-bold text-red-600">{{ resumenGeneral.salidaHoy }}</div>
+      <!-- Salida (hoy) -->
+      <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="i-lucide-arrow-up-right text-red-600 text-2xl" />
+          <span class="text-2xl font-extrabold text-red-600">{{ resumenGeneral.salidaHoy }}</span>
+        </div>
         <div class="text-sm text-muted">Salida (hoy)</div>
       </div>
-      <div class="text-center">
-        <div class="text-lg font-bold text-green-600">{{ resumenGeneral.stockFinal }}</div>
+      <!-- Stock Final -->
+      <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="i-lucide-package-check text-green-600 text-2xl" />
+          <span class="text-2xl font-extrabold text-green-600">{{ resumenGeneral.stockFinal }}</span>
+        </div>
         <div class="text-sm text-muted">Stock Final</div>
       </div>
-      <div class="text-center">
-        <div class="text-lg font-bold">{{ resumenGeneral.total }}</div>
+      <!-- Total Toros -->
+      <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="i-lucide-cow text-primary text-2xl" />
+          <span class="text-2xl font-extrabold text-primary">{{ resumenGeneral.total }}</span>
+        </div>
         <div class="text-sm text-muted">Total Toros</div>
       </div>
     </div>
-
     <!-- Botón de agregar -->
     <div class="flex justify-between items-center px-4 py-3.5 border-b border-accented">
       <div>
@@ -272,7 +287,6 @@ defineExpose({
         title="Agregar nueva pajilla"
       />
     </div>
-
     <!-- Tabla -->
     <UTable
       v-model:expanded="expanded"
@@ -287,12 +301,10 @@ defineExpose({
         <PajillaExpandedCard :pajilla="row.original" @updated="refreshTable" />
       </template>
     </UTable>
-
     <!-- Información de paginación -->
     <div class="px-4 py-3.5 border-t border-accented text-sm text-muted">
       {{ filteredRowsCount }} de {{ total }} pajillas
     </div>
-
     <!-- Paginación -->
     <div class="flex justify-center border-t border-default pt-4">
       <UPagination
@@ -302,7 +314,6 @@ defineExpose({
         @update:page="(newPage: number) => (pagination.pageIndex = newPage)"
       />
     </div>
-
     <!-- Modal de edición de pajilla -->
     <PajillaEditModal
       :open="showEditModal"
@@ -310,7 +321,6 @@ defineExpose({
       @updated="() => { showEditModal = false; refreshTable(); }"
       @close="showEditModal = false"
     />
-
     <!-- Modal de confirmación de eliminación de pajilla -->
     <PajillaDeleteConfirmModal
       :open="showDeleteConfirm"
