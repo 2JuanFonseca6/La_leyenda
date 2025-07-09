@@ -20,6 +20,12 @@ export interface Animal {
   id_reproduccion: string | null;
   fecha_fallecimiento: string | null;
   imagen_url?: string | null;
+  // NUEVOS CAMPOS
+  dueño?: string | null;
+  tipo_ganado?: string;
+  andrologico_image_url?: string | null;
+  genomatologico_image_url?: string | null;
+  cantidad_hijos?: number | null;
 }
 
 export interface Venta {

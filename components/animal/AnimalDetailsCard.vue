@@ -3,11 +3,35 @@
     class="shadow-lg print:shadow-none print:w-full print:mt-[-55px] print:border print:border-gray-300"
     :class="{ 'print:hidden': !show }"
   >
+    <!-- Modal de previsualización de imagen -->
+    <UModal v-model:open="isPreviewOpen" title="Previsualización de Imagen" class="max-w-2xl w-full">
+      <template #body>
+        <div class="flex flex-col items-center">
+          <img :src="previewImageUrl" alt="Imagen ampliada" class="max-h-[70vh] rounded shadow mb-4" />
+          <UButton
+            v-if="previewImageUrl"
+            :href="previewImageUrl"
+            download
+            icon="i-heroicons-arrow-down-tray"
+            color="primary"
+            target="_blank"
+          >Descargar Imagen</UButton>
+          <UButton
+            v-if="userRole === 'admin' && previewImageUrl"
+            color="error"
+            icon="i-heroicons-trash"
+            class="mt-4"
+            @click="handleDeletePreviewImage"
+          >Eliminar Imagen</UButton>
+        </div>
+      </template>
+    </UModal>
+
     <div class="w-full flex justify-center relative group print:flex-col print:items-center">
       <div
-        class="rounded border border-gray-300 overflow-hidden max-h-64 w-fit print:max-h-32 print:border-0"
-        :class="{ 'cursor-pointer': isEditing }"
-        @click="isEditing ? fileInput?.click() : null"
+        class="rounded border border-gray-300 overflow-hidden max-h-64 w-fit print:max-h-32 print:border-0 cursor-pointer"
+        :class="{ 'cursor-pointer': animal.imagen_url }"
+        @click="animal.imagen_url ? openPreview(animal.imagen_url, 'main') : null"
       >
         <img
           :src="animal.imagen_url || undefined"
@@ -48,11 +72,10 @@
     <template #header>
       <div class="flex justify-between items-center print:flex-col print:items-start print:gap-2">
         <h1 class="text-2xl print:text-xl">
-          Animal:
-          <span class="font-bold font-mono">{{ animal.id_animal }}</span>
+          {{ animal.raza }}
         </h1>
         <UButton
-          v-if="!isEditing && userRole === 'admin'"
+          v-if="userRole === 'admin'"
           icon="i-heroicons-pencil-square"
           @click="enableEditing"
           class="print:hidden bg-[var(--color-custom-50)] text-[var(--color-custom-500)] dark:bg-[var(--color-custom-500)] dark:text-[var(--color-custom-50)] hover:text-[var(--color-custom-50)] dark:hover:text-[var(--color-custom-500)] rounded-full p-2"
@@ -74,12 +97,11 @@
             </p>
           </div>
 
+          <!-- Raza y Animal ID juntos -->
           <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
-              >Raza</label
-            >
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs">Raza</label>
             <p class="text-lg font-semibold print:text-sm">
-              {{ animal.raza }}
+              {{ animal.raza }}  |  Animal: {{ animal.id_animal }}
             </p>
           </div>
 
@@ -111,7 +133,7 @@
             </p>
           </div>
 
-          <div v-if="userRole === 'admin'">
+          <div v-if="userRole === 'admin'" class="print:hidden">
             <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
               >En Venta</label
             >
@@ -122,6 +144,20 @@
                   : "Sin información de venta disponible"
               }}
             </p>
+            <div v-if="!hasSaleRecord" class="mt-2">
+              <SaleModal
+                :animal-id="animal.id_animal"
+                v-slot="{ open }"
+                @created="handleSaleCreated"
+              >
+                <UButton
+                  @click="open"
+                  class="bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)] hover:text-[var(--color-custom-50)] dark:hover:text-[var(--color-custom-500)]"
+                >
+                  Agregar Información de Venta
+                </UButton>
+              </SaleModal>
+            </div>
           </div>
         </div>
       </div>
@@ -155,6 +191,39 @@
                   ? new Date(animal.fecha_fallecimiento).toLocaleDateString()
                   : "N/A"
               }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- NUEVA SECCIÓN: Información Adicional -->
+      <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
+        <h4 class="text-lg font-bold mb-4">Información Adicional</h4>
+        <div class="grid grid-cols-2 gap-4 print:gap-2">
+          <div>
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
+              >Dueño</label
+            >
+            <p class="text-lg font-semibold print:text-sm">
+              {{ animal.dueño || "N/A" }}
+            </p>
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
+              >Tipo de Ganado</label
+            >
+            <p class="text-lg font-semibold print:text-sm">
+              {{ animal.tipo_ganado || "N/A" }}
+            </p>
+          </div>
+
+          <div v-if="animal.tipo_animal === 'VACA'">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
+              >Cantidad de Hijos</label
+            >
+            <p class="text-lg font-semibold print:text-sm">
+              {{ animal.cantidad_hijos || "0" }}
             </p>
           </div>
         </div>
@@ -233,6 +302,37 @@
         </TransitionGroup>
       </div>
 
+      <!-- EVALUACIONES REPRODUCTIVAS: ANDROLÓGICO Y GENOMATOLÓGICO -->
+      <div class="mt-8 border-t pt-6">
+        <h4 class="text-lg font-bold mb-4">Evaluaciones Reproductivas</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-1 print:gap-2">
+          <!-- Imagen Andrológica -->
+          <div class="flex flex-col items-center print:items-start print:mb-4">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold">Andrológico</label>
+            <img
+              v-if="animal.andrologico_image_url"
+              :src="animal.andrologico_image_url"
+              alt="Imagen Andrológica"
+              class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
+              @click="openPreview(animal.andrologico_image_url, 'andrologico')"
+            />
+            <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
+          </div>
+          <!-- Imagen Genomatológica -->
+          <div class="flex flex-col items-center print:items-start print:mb-4">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold">Genomatológico</label>
+            <img
+              v-if="animal.genomatologico_image_url"
+              :src="animal.genomatologico_image_url"
+              alt="Imagen Genomatológica"
+              class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
+              @click="openPreview(animal.genomatologico_image_url, 'genomatologico')"
+            />
+            <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
+          </div>
+        </div>
+      </div>
+
       <!-- HISTORIAL DE SALUD -->
       <div class="mt-8 border-t pt-6">
         <!-- SECCIÓN ELIMINADA: Historial de Salud -->
@@ -299,128 +399,165 @@
     </div>
 
     <!-- Modo Edición -->
-    <UForm
-      v-else-if="userRole === 'admin'"
-      :schema="schema"
-      :state="formData"
-      :model-value="formData"
-      @update:model-value="(value: Record<string, any>) => Object.assign(formData, value)"
-      @submit="handleSubmit"
-      class="space-y-6"
-    >
-      <div class="grid md:grid-cols-2 gap-6">
-        <!-- Columna Izquierda -->
-        <div class="space-y-4">
-          <UFormField
-            label="Fecha de Nacimiento"
-            name="fecha_nacimiento"
-            required
-          >
-            <UInput type="date" v-model="formData.fecha_nacimiento" />
+    <UModal v-model:open="isEditing" title="Editar Animal" description="Modifica los datos del animal" class="max-w-4xl w-full">
+      <template #body>
+        <UForm :schema="schema" :state="formData" @submit="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- ID Animal (solo lectura) -->
+          <UFormField name="id_animal" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                ID Animal
+              </span>
+            </template>
+            <UInput v-model="formData.id_animal" disabled />
           </UFormField>
 
-          <UFormField label="Raza" name="raza" required>
+          <!-- Tipo de Animal -->
+          <UFormField name="tipo_animal" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Tipo de Animal
+              </span>
+            </template>
+            <USelect v-model="formData.tipo_animal" :items="tipoAnimalOptions" placeholder="Selecciona un tipo" variant="ghost" class="cursor-pointer"/>
+          </UFormField>
+
+          <!-- Raza -->
+          <UFormField name="raza" required class="col-span-1 sm:col-span-2 lg:col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Raza
+              </span>
+            </template>
             <UInput v-model="formData.raza" />
           </UFormField>
 
-          <UFormField label="Tipo de Animal" name="tipo_animal" required>
-            <USelect
-              v-model="formData.tipo_animal"
-              :items="['TERNERO', 'TERNERA', 'NOVILLO', 'NOVILLA', 'TORO', 'VACA']"
-              class="w-3xs"
-            />
-          </UFormField>
-        </div>
-
-        <!-- Columna Derecha -->
-        <div class="space-y-4">
-          <UFormField label="Peso Actual (kg)" name="peso_actual" required>
-            <UInput type="number" step="0.1" v-model="formData.peso_actual" />
+          <!-- Fecha de Nacimiento -->
+          <UFormField name="fecha_nacimiento" required class="col-span-1 sm:col-span-2 lg:col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Fecha de Nacimiento
+              </span>
+            </template>
+            <UInput v-model="formData.fecha_nacimiento" type="date" />
           </UFormField>
 
-          <UFormField label="Estado de Salud" name="estado_salud" required>
-            <USelect
-              v-model="formData.estado_salud"
-              :items="[
-                'EXCELENTE',
-                'BUENO',
-                'REGULAR',
-                'MALO',
-                'CRITICO',
-                'RECUPERACION',
-                'OBSERVACION',
-              ]"
-              class="w-3xs"
-            />
+          <!-- Peso Inicial -->
+          <UFormField name="peso_inicial" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Peso Inicial (kg)
+              </span>
+            </template>
+            <UInput v-model.number="formData.peso_inicial" type="number" step="0.1" />
           </UFormField>
 
-          <UFormField v-if="userRole === 'admin'" label="En Venta" name="venta">
-            <div>
-              <template v-if="hasSaleRecord">
-                <p class="font-semibold">
-                  Este registro ya posee información de venta
-                </p>
-              </template>
-
-              <template v-else>
-                <SaleModal
-                  :animal-id="animal.id_animal"
-                  v-slot="{ open }"
-                  @created="handleSaleCreated"
-                >
-                  <UButton
-                    @click="open"
-                    class="bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] text-[var(--color-custom-500)] dark:text-[var(--color-custom-50)] hover:text-[var(--color-custom-50)] dark:hover:text-[var(--color-custom-500)]"
-                  >
-                    Agregar Información de Venta
-                  </UButton>
-                </SaleModal>
-              </template>
-            </div>
+          <!-- Peso Actual -->
+          <UFormField name="peso_actual" required class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Peso Actual (kg)
+              </span>
+            </template>
+            <UInput v-model.number="formData.peso_actual" type="number" step="0.1" />
           </UFormField>
-        </div>
-      </div>
 
-      <!-- Sección Adicional -->
-      <div
-        class="mt-8 border-t pt-6 block space-y-4 md:grid md:grid-cols-3 md:gap-4"
-      >
-        <UFormField label="Peso Inicial (kg)" name="peso_inicial">
-          <UInput type="number" step="0.1" v-model="formData.peso_inicial" />
-        </UFormField>
+          <!-- Estado de Salud -->
+          <UFormField name="estado_salud" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Estado de Salud
+              </span>
+            </template>
+            <USelect v-model="formData.estado_salud" :items="estadoSaludOptions" placeholder="Selecciona un estado" variant="ghost" class="cursor-pointer"/>
+          </UFormField>
 
-        <UFormField label="ID Reproducción" name="id_reproduccion">
-          <template #default>
+          <!-- Fecha de Fallecimiento -->
+          <UFormField name="fecha_fallecimiento" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Fecha de Fallecimiento
+              </span>
+            </template>
+            <UInput v-model="formData.fecha_fallecimiento" type="date" />
+          </UFormField>
+
+          <!-- ID Reproducción -->
+          <UFormField name="id_reproduccion" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                ID Reproducción
+              </span>
+            </template>
             <div class="flex items-center gap-2">
               <p>{{ formData.id_reproduccion }}</p>
               <p v-if="!formData.id_reproduccion">Sin registro seleccionado</p>
-              <DrawerGenealogy
-                v-model:modelValue="isDrawerOpen"
-                @select="formData.id_reproduccion = $event.id_reproduccion"
-              />
+              <DrawerGenealogy v-model:modelValue="isDrawerOpen" @select="formData.id_reproduccion = $event.id_reproduccion" />
             </div>
-          </template>
-        </UFormField>
+          </UFormField>
 
-        <UFormField label="Fecha Fallecimiento" name="fecha_fallecimiento">
-          <UInput type="date" v-model="formData.fecha_fallecimiento" />
-        </UFormField>
-      </div>
+          <!-- Dueño -->
+          <UFormField name="dueño" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Dueño
+              </span>
+            </template>
+            <UInput v-model="formData.dueño" placeholder="Nombre del dueño" />
+          </UFormField>
 
-      <div class="flex justify-end gap-3 mt-8">
-        <UButton
-          type="button"
-          color="primary"
-          @click="cancelEditing"
-          :disabled="isSubmitting"
-        >
-          Cancelar
-        </UButton>
-        <UButton type="submit" :loading="isSubmitting" :disabled="isSubmitting">
-          Guardar Cambios
-        </UButton>
-      </div>
-    </UForm>
+          <!-- Tipo de Ganado -->
+          <UFormField name="tipo_ganado" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Tipo de Ganado
+              </span>
+            </template>
+            <USelect v-model="formData.tipo_ganado" :items="tipoGanadoOptions" placeholder="Selecciona un tipo" variant="ghost" class="cursor-pointer"/>
+          </UFormField>
+
+          <!-- Cantidad de Hijos (solo para VACA) -->
+          <UFormField v-if="formData.tipo_animal === 'VACA'" name="cantidad_hijos" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+                Cantidad de Hijos
+              </span>
+            </template>
+            <UInput v-model.number="formData.cantidad_hijos" type="number" min="0" step="1" placeholder="0" />
+          </UFormField>
+
+          <!-- Imagen del Animal -->
+          <UFormField name="image" label="Imagen del Animal" class="col-span-1 sm:col-span-2">
+            <template #label>
+              <span class="text-[var(--color-custom-300)] font-semibold">Imagen del Animal</span>
+            </template>
+            <UInput type="file" @change="handleImageUpload" accept="image/*" class="cursor-pointer" />
+          </UFormField>
+
+          <!-- Imagen Andrológica -->
+          <UFormField name="andrologico_image" label="Imagen Andrológica" class="col-span-1 sm:col-span-2">
+            <template #label>
+              <span class="text-[var(--color-custom-300)] font-semibold">Imagen Andrológica</span>
+            </template>
+            <UInput type="file" @change="handleAndrologicoFileChange" accept="image/*" class="cursor-pointer" />
+          </UFormField>
+
+          <!-- Imagen Genomatológica -->
+          <UFormField name="genomatologico_image" label="Imagen Genomatológica" class="col-span-1 sm:col-span-2">
+            <template #label>
+              <span class="text-[var(--color-custom-300)] font-semibold">Imagen Genomatológica</span>
+            </template>
+            <UInput type="file" @change="handleGenomatologicoFileChange" accept="image/*" class="cursor-pointer" />
+          </UFormField>
+
+          <!-- Botones de acción ocupan toda la fila -->
+          <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end gap-4 mt-2">
+            <UButton type="button" variant="ghost" @click="cancelEditing">Cancelar</UButton>
+            <UButton type="submit" color="primary" :loading="isSubmitting">Guardar Cambios</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
   </UCard>
 </template>
 
@@ -437,15 +574,49 @@ import type { Database } from "~/types/supabase";
 
 const isDrawerOpen = ref(false);
 const isPreviewOpen = ref(false);
+const previewImageUrl = ref<string | undefined>(undefined);
+type PreviewImageType = 'main' | 'andrologico' | 'genomatologico' | undefined;
+const previewImageType = ref<PreviewImageType>(undefined);
 const supabase = useSupabaseClient<Database>();
 
+function openPreview(url: string, type: PreviewImageType = 'main') {
+  previewImageUrl.value = url;
+  previewImageType.value = type;
+  isPreviewOpen.value = true;
+}
+
+const tipoGanadoOptions = [
+  { label: "PURO", value: "PURO" },
+  { label: "COMERCIO", value: "COMERCIO" },
+];
+
+const tipoAnimalOptions = [
+  { label: "TERNERO", value: "TERNERO" },
+  { label: "TERNERA", value: "TERNERA" },
+  { label: "NOVILLO", value: "NOVILLO" },
+  { label: "NOVILLA", value: "NOVILLA" },
+  { label: "TORO", value: "TORO" },
+  { label: "VACA", value: "VACA" },
+];
+
+const estadoSaludOptions = [
+  { label: "EXCELENTE", value: "EXCELENTE" },
+  { label: "BUENO", value: "BUENO" },
+  { label: "REGULAR", value: "REGULAR" },
+  { label: "MALO", value: "MALO" },
+  { label: "CRITICO", value: "CRITICO" },
+  { label: "RECUPERACION", value: "RECUPERACION" },
+  { label: "OBSERVACION", value: "OBSERVACION" },
+];
+
 const schema = z.object({
+  id_animal: z.string().optional(), // Solo lectura
   fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
   raza: z
     .string()
     .min(2, "Mínimo 2 caracteres")
     .max(30, "Máximo 50 caracteres"),
-  tipo_animal: z.enum(["NOVILLO", "TERNERO", "TERNERA", "VACA", "TORO"]),
+  tipo_animal: z.enum(["TERNERO", "TERNERA", "NOVILLO", "NOVILLA", "TORO", "VACA"]),
   peso_actual: z.coerce
     .number()
     .positive("Debe ser positivo")
@@ -472,6 +643,10 @@ const schema = z.object({
       z.literal(""),
     ])
     .optional(),
+  // NUEVOS CAMPOS
+  dueño: z.string().optional(),
+  tipo_ganado: z.enum(["PURO", "COMERCIO"]).optional(),
+  cantidad_hijos: z.coerce.number().min(0).optional(),
 });
 
 const { userRole } = useUserRole();
@@ -510,6 +685,8 @@ const isSubmitting = ref(false);
 const isDeletingImage = ref(false);
 const isUploadingImage = ref(false);
 const fileInput = ref<HTMLInputElement>();
+const andrologicoInput = ref<HTMLInputElement | null>(null);
+const genomatologicoInput = ref<HTMLInputElement | null>(null);
 
 const showChart = ref(true)
 const showHistorial = ref(true)
@@ -543,6 +720,10 @@ const formData = reactive<{
   peso_inicial?: number;
   id_reproduccion?: number;
   fecha_fallecimiento?: string;
+  // NUEVOS CAMPOS
+  dueño?: string;
+  tipo_ganado?: "PURO" | "COMERCIO";
+  cantidad_hijos?: number;
 }>({
   id_animal: props.animal.id_animal,
   fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
@@ -570,6 +751,10 @@ const formData = reactive<{
       ? Number(props.animal.id_reproduccion)
       : undefined,
   fecha_fallecimiento: props.animal.fecha_fallecimiento?.split("T")[0] || "",
+  // NUEVOS CAMPOS
+  dueño: props.animal.dueño || "",
+  tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
+  cantidad_hijos: props.animal.cantidad_hijos || undefined,
 });
 
 let chartInstance: Chart | null = null
@@ -1171,12 +1356,136 @@ const handleImageUpload = async (event: Event) => {
   }
 };
 
-const enableEditing = () => {
-  isEditing.value = true;
+const handleAndrologicoFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  isUploadingImage.value = true;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${props.animal.id_animal}-andrologico.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('animal-images')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('animal-images')
+      .getPublicUrl(fileName);
+
+    if (!publicUrl) {
+      throw new Error("No se pudo obtener la URL pública de la imagen");
+    }
+
+    // Actualizar el animal con la nueva URL de imagen andrológica
+    const updateResponse = await $fetch(
+      `/api/animal/specific/${props.animal.id_animal}`,
+      {
+        method: "PUT",
+        body: {
+          andrologico_image_url: publicUrl,
+        },
+      }
+    );
+
+    if (!updateResponse?.animal) {
+      throw new Error("Error al actualizar el animal en la base de datos");
+    }
+
+    // Actualizar estado local
+    Object.assign(props.animal, updateResponse.animal);
+    emit("updated", props.animal);
+
+    toast.add({
+      title: "Imagen andrológica actualizada",
+      description: "La imagen andrológica se ha actualizado correctamente",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
+  } catch (error: any) {
+    console.error("Error al subir imagen andrológica:", error);
+    const errorMessage = error?.message || "Error desconocido al subir la imagen";
+    toast.add({
+      title: "Error al subir imagen andrológica",
+      description: errorMessage,
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
+  } finally {
+    isUploadingImage.value = false;
+    if (target) target.value = "";
+  }
 };
 
-const cancelEditing = () => {
-  isEditing.value = false;
+const handleGenomatologicoFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  isUploadingImage.value = true;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${props.animal.id_animal}-genomatologico.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('animal-images')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('animal-images')
+      .getPublicUrl(fileName);
+
+    if (!publicUrl) {
+      throw new Error("No se pudo obtener la URL pública de la imagen");
+    }
+
+    // Actualizar el animal con la nueva URL de imagen genomatológica
+    const updateResponse = await $fetch(
+      `/api/animal/specific/${props.animal.id_animal}`,
+      {
+        method: "PUT",
+        body: {
+          genomatologico_image_url: publicUrl,
+        },
+      }
+    );
+
+    if (!updateResponse?.animal) {
+      throw new Error("Error al actualizar el animal en la base de datos");
+    }
+
+    // Actualizar estado local
+    Object.assign(props.animal, updateResponse.animal);
+    emit("updated", props.animal);
+
+    toast.add({
+      title: "Imagen genomatológica actualizada",
+      description: "La imagen genomatológica se ha actualizado correctamente",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
+  } catch (error: any) {
+    console.error("Error al subir imagen genomatológica:", error);
+    const errorMessage = error?.message || "Error desconocido al subir la imagen";
+    toast.add({
+      title: "Error al subir imagen genomatológica",
+      description: errorMessage,
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
+  } finally {
+    isUploadingImage.value = false;
+    if (target) target.value = "";
+  }
+};
+
+const enableEditing = () => {
+  isEditing.value = true;
   // Reset form data to original values
   Object.assign(formData, {
     id_animal: props.animal.id_animal,
@@ -1205,7 +1514,15 @@ const cancelEditing = () => {
         ? Number(props.animal.id_reproduccion)
         : undefined,
     fecha_fallecimiento: props.animal.fecha_fallecimiento?.split("T")[0] || "",
+    // NUEVOS CAMPOS
+    dueño: props.animal.dueño || "",
+    tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
+    cantidad_hijos: props.animal.cantidad_hijos || undefined,
   });
+};
+
+const cancelEditing = () => {
+  isEditing.value = false;
 };
 
 const deleteImage = async () => {
@@ -1272,6 +1589,10 @@ const handleSubmit = async () => {
           peso_inicial: formData.peso_inicial,
           id_reproduccion: formData.id_reproduccion,
           fecha_fallecimiento: formData.fecha_fallecimiento || null,
+          // NUEVOS CAMPOS
+          dueño: formData.dueño || null,
+          tipo_ganado: formData.tipo_ganado || null,
+          cantidad_hijos: formData.cantidad_hijos || null,
         },
       }
     );
@@ -1341,6 +1662,56 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', updateIsMobile)
   }
 })
+
+const handleDeletePreviewImage = async () => {
+  if (!previewImageUrl.value || !previewImageType.value) return;
+
+  const fileName = previewImageUrl.value.split('/').pop();
+  if (!fileName) return;
+
+  try {
+    // 1. Eliminar del storage
+    const { error: deleteError } = await supabase.storage
+      .from('animal-images')
+      .remove([fileName]);
+    if (deleteError) throw deleteError;
+
+    // 2. Actualizar la base de datos
+    let body: Record<string, any> = {};
+    if (previewImageType.value === 'main') body.imagen_url = null;
+    if (previewImageType.value === 'andrologico') body.andrologico_image_url = null;
+    if (previewImageType.value === 'genomatologico') body.genomatologico_image_url = null;
+
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}`, {
+      method: 'PUT',
+      body,
+    });
+
+    // 3. Actualizar el estado local
+    if (previewImageType.value === 'main') props.animal.imagen_url = null;
+    if (previewImageType.value === 'andrologico') props.animal.andrologico_image_url = null;
+    if (previewImageType.value === 'genomatologico') props.animal.genomatologico_image_url = null;
+
+    previewImageUrl.value = undefined;
+    previewImageType.value = undefined;
+    isPreviewOpen.value = false;
+    toast.add({
+      title: 'Imagen eliminada',
+      description: 'La imagen se ha eliminado correctamente',
+      color: 'success',
+      icon: 'i-heroicons-check-circle',
+    });
+  } catch (error: any) {
+    console.error('Error al eliminar imagen de previsualización:', error);
+    const errorMessage = error?.message || 'Error desconocido al eliminar la imagen';
+    toast.add({
+      title: 'Error al eliminar imagen',
+      description: errorMessage,
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    });
+  }
+};
 </script>
 
 <style scoped>

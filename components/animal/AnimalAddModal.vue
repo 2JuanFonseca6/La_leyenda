@@ -100,11 +100,59 @@
               @select="formState.id_reproduccion = $event.id_reproduccion" />
           </div>
         </UFormField>
+
+        <!-- Dueño -->
+        <UFormField name="dueño" class="col-span-1">
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Dueño
+            </span>
+          </template>
+          <UInput v-model="formState.dueño" placeholder="Nombre del dueño" />
+        </UFormField>
+
+        <!-- Tipo de Ganado -->
+        <UFormField name="tipo_ganado" class="col-span-1">
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Tipo de Ganado
+            </span>
+          </template>
+          <USelect v-model="formState.tipo_ganado" :items="tipoGanadoOptions" placeholder="Selecciona un tipo" variant="ghost" class="cursor-pointer"/>
+        </UFormField>
+
+        <!-- Cantidad de Hijos (solo para VACA) -->
+        <UFormField v-if="formState.tipo_animal === 'VACA'" name="cantidad_hijos" class="col-span-1">
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
+              Cantidad de Hijos
+            </span>
+          </template>
+          <UInput v-model.number="formState.cantidad_hijos" type="number" min="0" step="1" placeholder="0" />
+        </UFormField>
+
+        <!-- Imagen del Animal -->
         <UFormField name="image" class="col-span-1 sm:col-span-2">
           <template #label>
             <span>Imagen del Animal</span>
           </template>
           <UInput type="file" @change="handleFileChange" accept="image/*" class="cursor-pointer" />
+        </UFormField>
+
+        <!-- Imagen Andrológica -->
+        <UFormField name="andrologico_image" class="col-span-1 sm:col-span-2">
+          <template #label>
+            <span>Imagen Andrológica</span>
+          </template>
+          <UInput type="file" @change="handleAndrologicoFileChange" accept="image/*" class="cursor-pointer" />
+        </UFormField>
+
+        <!-- Imagen Genomatológica -->
+        <UFormField name="genomatologico_image" class="col-span-1 sm:col-span-2">
+          <template #label>
+            <span>Imagen Genomatológica</span>
+          </template>
+          <UInput type="file" @change="handleGenomatologicoFileChange" accept="image/*" class="cursor-pointer" />
         </UFormField>
 
         <!-- Botones de acción ocupan toda la fila -->
@@ -136,6 +184,11 @@ const tipoAnimalOptions = [
   { label: "VACA", value: "VACA" },
 ];
 
+const tipoGanadoOptions = [
+  { label: "PURO", value: "PURO" },
+  { label: "COMERCIO", value: "COMERCIO" },
+];
+
 const estadoSaludOptions = computed(() =>
   Constants.public.Enums.estado_salud.map((value) => ({ label: value, value }))
 );
@@ -155,6 +208,12 @@ type FormState = Omit<
   tipo_animal?: Database["public"]["Enums"]["tipo_animal"];
   estado_salud?: Database["public"]["Enums"]["estado_salud"];
   imagen_url?: string | null;
+  // NUEVOS CAMPOS
+  dueño?: string | null;
+  tipo_ganado?: Database["public"]["Enums"]["tipo_ganado"];
+  andrologico_image_url?: string | null;
+  genomatologico_image_url?: string | null;
+  cantidad_hijos?: number | null;
 };
 
 const formState = reactive<FormState>({
@@ -168,14 +227,36 @@ const formState = reactive<FormState>({
   fecha_fallecimiento: undefined,
   id_reproduccion: undefined,
   imagen_url: undefined,
+  // NUEVOS CAMPOS
+  dueño: undefined,
+  tipo_ganado: undefined,
+  andrologico_image_url: undefined,
+  genomatologico_image_url: undefined,
+  cantidad_hijos: undefined,
 });
 
 const selectedFile = ref<File | null>(null);
+const selectedAndrologicoFile = ref<File | null>(null);
+const selectedGenomatologicoFile = ref<File | null>(null);
 
 const handleFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files && input.files.length > 0) {
     selectedFile.value = input.files[0];
+  }
+};
+
+const handleAndrologicoFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    selectedAndrologicoFile.value = input.files[0];
+  }
+};
+
+const handleGenomatologicoFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    selectedGenomatologicoFile.value = input.files[0];
   }
 };
 
@@ -220,34 +301,61 @@ const resetForm = () => {
     fecha_fallecimiento: undefined,
     id_reproduccion: undefined,
     imagen_url: undefined,
+    // NUEVOS CAMPOS
+    dueño: undefined,
+    tipo_ganado: undefined,
+    andrologico_image_url: undefined,
+    genomatologico_image_url: undefined,
+    cantidad_hijos: undefined,
   });
   selectedFile.value = null;
+  selectedAndrologicoFile.value = null;
+  selectedGenomatologicoFile.value = null;
+};
+
+const uploadImage = async (file: File, fileName: string, bucket: string) => {
+  const fileExt = file.name.split('.').pop();
+  const finalFileName = `${Date.now()}-${fileName}.${fileExt}`;
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(finalFileName, file);
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(finalFileName);
+
+  return publicUrl;
 };
 
 const handleSubmit = async () => {
   try {
     let imageUrl = undefined;
+    let andrologicoImageUrl = undefined;
+    let genomatologicoImageUrl = undefined;
 
+    // Subir imagen principal
     if (selectedFile.value) {
-      const fileExt = selectedFile.value.name.split('.').pop();
-      const fileName = `${Date.now()}-${formState.id_animal}.${fileExt}`;
+      imageUrl = await uploadImage(selectedFile.value, formState.id_animal, 'animal-images');
+    }
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('animal-images')
-        .upload(fileName, selectedFile.value);
+    // Subir imagen andrológica
+    if (selectedAndrologicoFile.value) {
+      andrologicoImageUrl = await uploadImage(selectedAndrologicoFile.value, `${formState.id_animal}-andrologico`, 'animal-images');
+    }
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('animal-images')
-        .getPublicUrl(fileName);
-
-      imageUrl = publicUrl;
+    // Subir imagen genomatológica
+    if (selectedGenomatologicoFile.value) {
+      genomatologicoImageUrl = await uploadImage(selectedGenomatologicoFile.value, `${formState.id_animal}-genomatologico`, 'animal-images');
     }
 
     const animalData = {
       ...formState,
       imagen_url: imageUrl,
+      andrologico_image_url: andrologicoImageUrl,
+      genomatologico_image_url: genomatologicoImageUrl,
     };
 
     const { error } = await supabase.from("animals").insert(animalData).single();

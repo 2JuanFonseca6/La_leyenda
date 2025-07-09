@@ -22,6 +22,12 @@ export type Database = {
           peso_inicial: number
           raza: string
           tipo_animal: Database["public"]["Enums"]["tipo_animal"] | null
+          // NUEVOS CAMPOS
+          dueño: string | null
+          tipo_ganado: Database["public"]["Enums"]["tipo_ganado"] | null
+          andrologico_image_url: string | null
+          genomatologico_image_url: string | null
+          cantidad_hijos: number | null
         }
         Insert: {
           estado_salud?: Database["public"]["Enums"]["estado_salud"] | null
@@ -35,6 +41,12 @@ export type Database = {
           peso_inicial: number
           raza: string
           tipo_animal?: Database["public"]["Enums"]["tipo_animal"] | null
+          // NUEVOS CAMPOS
+          dueño?: string | null
+          tipo_ganado?: Database["public"]["Enums"]["tipo_ganado"] | null
+          andrologico_image_url?: string | null
+          genomatologico_image_url?: string | null
+          cantidad_hijos?: number | null
         }
         Update: {
           estado_salud?: Database["public"]["Enums"]["estado_salud"] | null
@@ -48,6 +60,12 @@ export type Database = {
           peso_inicial?: number
           raza?: string
           tipo_animal?: Database["public"]["Enums"]["tipo_animal"] | null
+          // NUEVOS CAMPOS
+          dueño?: string | null
+          tipo_ganado?: Database["public"]["Enums"]["tipo_ganado"] | null
+          andrologico_image_url?: string | null
+          genomatologico_image_url?: string | null
+          cantidad_hijos?: number | null
         }
         Relationships: [
           {
@@ -594,6 +612,8 @@ export type Database = {
         | "DESTETE"
         | "OTROS"
       user_role: "admin" | "user"
+      // NUEVO ENUM
+      tipo_ganado: "SALDRAN PURO" | "COMERCIO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -729,6 +749,8 @@ export const Constants = {
         "OTROS",
       ],
       user_role: ["admin", "user"],
+      // NUEVO ENUM
+      tipo_ganado: ["SALDRAN PURO", "COMERCIO"],
     },
   },
 } as const

@@ -41,6 +41,12 @@ export default defineEventHandler(async (event) => {
     peso_inicial: body.peso_inicial,
     id_reproduccion: body.id_reproduccion,
     imagen_url: body.imagen_url, // ← 🔁 aquí está la corrección
+    // NUEVOS CAMPOS
+    dueño: body.dueño,
+    tipo_ganado: body.tipo_ganado,
+    andrologico_image_url: body.andrologico_image_url,
+    genomatologico_image_url: body.genomatologico_image_url,
+    cantidad_hijos: body.cantidad_hijos,
   };
 
   // Filtra campos undefined
