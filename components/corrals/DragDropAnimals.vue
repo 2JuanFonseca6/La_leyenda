@@ -7,7 +7,7 @@
 
     <div class="p-4">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold mb-4">Corrales</h2>
+        <h2 class="text-xl font-bold mb-4">Lotes</h2>
         <div class="flex items-center gap-2">
           <DeleteCorralModal ref="deleteCorralModalRef" @corral-deleted="refreshCorrales"/>
           <CorralFormModal v-model="showCorralFormModal" @success="handleCorralSuccess" />

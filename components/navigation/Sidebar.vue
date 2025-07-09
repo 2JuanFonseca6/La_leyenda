@@ -21,9 +21,9 @@
         <NavButtons icon="i-healthicons-animal-cow" text="Animales" to="/animals" />
         <NavButtons icon="i-healthicons-i-exam-multiple-choice" text="Inventario" to="/stock" />
         <NavButtons icon="i-healthicons-syringe-outline" text="Pajillas" to="/stock/pajillas" />
-        <NavButtons icon="i-heroicons-cog" text="Ajustes" to="/settings" />
-        <NavButtons v-if="userRole === 'admin'" icon="i-healthicons-syringe-outline" text="Corrales" to="/corrals" />
+        <NavButtons v-if="userRole === 'admin'" icon="i-heroicons-rectangle-group" text="Lotes" to="/corrals" />
         <NavButtons v-if="userRole === 'admin'" icon="i-heroicons-users-solid" text="Usuarios" to="/profiles" />
+        <NavButtons icon="i-heroicons-cog" text="Ajustes" to="/settings" />
       </div>
 
       <!-- Logout & Theming: solo en escritorio -->

@@ -118,7 +118,7 @@ const deleteSelectedCorrales = async () => {
   if (selectedIds.length === 0) {
     toast.add({
       title: 'Selección requerida',
-      description: 'Por favor seleccione al menos un corral',
+      description: 'Por favor seleccione al menos un lote',
       color: 'warning'
     })
     return
@@ -150,7 +150,7 @@ const deleteSelectedCorrales = async () => {
   if (successCount > 0) {
     toast.add({
       title: 'Éxito',
-      description: `${successCount} corral${successCount > 1 ? 'es' : ''} eliminado${successCount > 1 ? 's' : ''} correctamente`,
+      description: `${successCount} lote${successCount > 1 ? 's' : ''} eliminado${successCount > 1 ? 's' : ''} correctamente`,
       color: 'success'
     })
     emit('corral-deleted')
@@ -159,7 +159,7 @@ const deleteSelectedCorrales = async () => {
   if (errorCount > 0) {
     toast.add({
       title: 'Errores',
-      description: `${errorCount} corral${errorCount > 1 ? 'es' : ''} no pudieron ser eliminados`,
+      description: `${errorCount} lote${errorCount > 1 ? 's' : ''} no pudieron ser eliminados`,
       color: 'error'
     })
   }
@@ -184,7 +184,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Eliminar Corrales" description="Seleccione los corrales que desea eliminar">
+  <UModal v-model:open="open" title="Eliminar Lotes" description="Seleccione los lotes que desea eliminar">
 
     <UButton color="primary" variant="subtle" icon="i-heroicons-trash" />
     <template #body>
@@ -205,14 +205,14 @@ const emit = defineEmits<{
 
         <div class="px-4 py-3.5 border-t border-gray-200 dark:border-gray-800 text-sm text-gray-500 dark:text-gray-400">
           {{Object.keys(rowSelection).filter(id => rowSelection[id]).length}} de
-          {{ data.length }} corral{{ data.length !== 1 ? 'es' : '' }} seleccionado{{Object.keys(rowSelection).filter(id => rowSelection[id]).length !== 1 ? 's' : '' }}
+          {{ data.length }} lote{{ data.length !== 1 ? 's' : '' }} seleccionado{{Object.keys(rowSelection).filter(id => rowSelection[id]).length !== 1 ? 's' : '' }}
         </div>
 
         <div v-if="Object.keys(deleteErrors).length > 0" class="mt-4 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
           <h3 class="font-medium text-red-700 dark:text-red-300">Errores de eliminación:</h3>
           <ul class="mt-2 space-y-1">
             <li v-for="(error, id) in deleteErrors" :key="id" class="text-sm text-red-600 dark:text-red-400">
-              Corral <span class="truncate inline-block align-middle" style="max-width: 73px;">{{ id }}</span>: {{ error
+              Lote <span class="truncate inline-block align-middle" style="max-width: 73px;">{{ id }}</span>: {{ error
               }}
             </li>
           </ul>

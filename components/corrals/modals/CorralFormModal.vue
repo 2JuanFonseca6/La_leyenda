@@ -1,19 +1,19 @@
 <template>
-  <UModal :model-value="props.modelValue" @update:modelValue="emit('update:modelValue', $event)" title="Corral Form"
-    description="Complete los detalles del corral" :overlay="true" :persistent="true">
+  <UModal :model-value="props.modelValue" @update:modelValue="emit('update:modelValue', $event)" title="Lote Form"
+    description="Complete los detalles del lote" :overlay="true" :persistent="true">
     <UButton color="primary" variant="subtle" icon="i-heroicons-plus" />
 
     <template #body>
       <UForm :state="form" @submit="onSubmit">
         <div class="space-y-4 pt-2">
           <h3 class="text-base font-semibold leading-6">
-            Nuevo Corral
+            Nuevo Lote
           </h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <UFormField name="nombre" required>
               <template #label>
                 <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-                  Nombre del Corral
+                  Nombre del Lote
                 </span>
               </template>
               <UInput v-model="form.nombre" @keydown.enter.prevent />
@@ -21,7 +21,7 @@
             <UFormField name="tipo_corral" required>
               <template #label>
                 <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
-                  Tipo de Corral
+                  Tipo de Lote
                 </span>
               </template>
               <USelect v-model="form.tipo_corral" :items="tiposCorralOptions" @keydown.enter.prevent />
@@ -115,7 +115,7 @@ const onSubmit = async () => {
 
     toast.add({
       title: 'Éxito',
-      description: 'Corral creado correctamente',
+      description: 'Lote creado correctamente',
       color: 'success'
     })
 
@@ -124,7 +124,7 @@ const onSubmit = async () => {
     emit('update:modelValue', false)
 
   } catch (err: any) {
-    console.error('Error saving corral:', err)
+    console.error('Error saving lote:', err)
     toast.add({ title: 'Error', description: err.message || 'Error al guardar', color: 'error' })
   } finally {
     loading.value = false

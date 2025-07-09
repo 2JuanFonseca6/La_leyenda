@@ -29,9 +29,9 @@
             </div>
           </div>
 
-          <!-- Lista de animales en el corral -->
+          <!-- Lista de animales en el lote -->
           <div v-if="row.original.animals && row.original.animals.length > 0">
-            <h3 class="font-semibold mb-2">Animales en este corral:</h3>
+            <h3 class="font-semibold mb-2">Animales en este lote:</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               <div v-for="animal in row.original.animals" :key="animal.id_animal" :class="[
                 'bg-gray-100 dark:bg-gray-700 rounded p-2 flex items-center group',
@@ -49,7 +49,7 @@
             </div>
           </div>
           <div v-else class="text-center text-gray-500 py-4">
-            No hay animales en este corral
+            No hay animales en este lote
           </div>
 
           <!-- Card de Historial de Salud -->
@@ -62,7 +62,7 @@
               />
             </template>
             <template v-else>
-              <UAlert title="ID de corral inválido" description="No se puede mostrar el historial porque el ID del corral es inválido." color="error" />
+              <UAlert title="ID de lote inválido" description="No se puede mostrar el historial porque el ID del lote es inválido." color="error" />
             </template>
           </div>
         </div>
@@ -135,11 +135,11 @@ const columns: TableColumn<Corral>[] = [
   },
   {
     accessorKey: 'nombre',
-    header: 'Corral',
+    header: 'Lote',
   },
   {
     accessorKey: 'tipo_corral',
-    header: 'Tipo Corral',
+    header: 'Tipo Lote',
   },
   {
     accessorKey: 'capacidad_maxima',
