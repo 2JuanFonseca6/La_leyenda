@@ -1,7 +1,7 @@
 // server/api/corrales/assign.put.ts
 import { serverSupabaseClient } from "#supabase/server";
 import { createError, readBody } from "h3";
-import { Database } from "~/types/supabase";
+import type { Database } from "~/types/supabase";
 
 export default defineEventHandler(async (event) => {
   console.log("--- HITTING /api/corrales/assign PUT ---");

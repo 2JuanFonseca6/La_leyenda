@@ -51,6 +51,20 @@
           <div v-else class="text-center text-gray-500 py-4">
             No hay animales en este corral
           </div>
+
+          <!-- Card de Historial de Salud -->
+          <div v-if="historialDropdown === row.original.id_corral" class="mt-6">
+            <template v-if="row.original.id_corral && row.original.id_corral.length >= 32">
+              <HealthHistoryCorralCard 
+                :corral-id="row.original.id_corral" 
+                :historial-salud="historialSalud"
+                @updated="handleHistorialUpdated"
+              />
+            </template>
+            <template v-else>
+              <UAlert title="ID de corral inválido" description="No se puede mostrar el historial porque el ID del corral es inválido." color="error" />
+            </template>
+          </div>
         </div>
       </template>
     </UTable>
@@ -62,6 +76,7 @@
 <script lang="ts" setup>
 import { h, resolveComponent, ref, onMounted, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import HealthHistoryCorralCard from './HealthHistoryCorralCard.vue'
 
 type AnimalInCorral = {
   id_animal: string;
@@ -84,14 +99,19 @@ const UButton = resolveComponent('UButton')
 const expanded = ref<Record<number, boolean>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
-const isDragOver = ref<string | null>(null)  // CAMBIADO A STRING
-const dropError = ref<{ corralId: string; message: string } | null>(null)  // CAMBIADO A STRING
+const isDragOver = ref<string | null>(null)
+const dropError = ref<{ corralId: string; message: string } | null>(null)
 
 // Datos desde la API
 const corrales = ref<Corral[]>([])
 const totalCorrales = ref(0)
 const page = ref(1)
 const pageSize = ref(50)
+
+// Estado para controlar el dropdown de historial de salud
+const historialDropdown = ref<string | null>(null)
+const historialSalud = ref<any[]>([])
+const loadingHistorial = ref(false)
 
 // Columnas actualizadas
 const columns: TableColumn<Corral>[] = [
@@ -129,6 +149,20 @@ const columns: TableColumn<Corral>[] = [
     accessorKey: 'animal_count',
     header: 'Animales',
     cell: ({ row }) => h('span', `${row.original.animal_count}/${row.original.capacidad_maxima}`)
+  },
+  {
+    id: 'acciones',
+    header: 'Acciones',
+    cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
+      h(UButton, {
+        icon: 'i-lucide-heart-pulse',
+        color: 'primary',
+        variant: 'soft',
+        size: 'sm',
+        title: 'Historial de Salud',
+        onClick: () => toggleHistorialDropdown(row.original)
+      })
+    ])
   }
 ]
 
@@ -144,7 +178,11 @@ async function fetchCorrales() {
       }
     })
 
-    corrales.value = data
+    // Log para depuración: mostrar los id_corral recibidos
+    console.log('Corrales recibidos:', data.map(c => ({ nombre: c.nombre, id_corral: c.id_corral })))
+
+    // Filtrar solo corrales con UUID válido
+    corrales.value = data.filter(c => typeof c.id_corral === 'string' && c.id_corral.length >= 32)
     totalCorrales.value = total
   } catch (err: any) {
     error.value = `Error cargando corrales: ${err.message}`
@@ -155,6 +193,35 @@ async function fetchCorrales() {
 }
 
 const isAnimalDragging = ref<string | null>(null);
+
+// Función para alternar el historial de salud
+const toggleHistorialDropdown = async (corral: Corral) => {
+  if (historialDropdown.value === corral.id_corral) {
+    historialDropdown.value = null
+  } else {
+    historialDropdown.value = corral.id_corral
+    await cargarHistorialSalud(corral.id_corral)
+  }
+}
+
+// Función para cargar el historial de salud
+const cargarHistorialSalud = async (corralId: string) => {
+  loadingHistorial.value = true
+  try {
+    const response = await $fetch<{ historial: any[] }>(`/api/corrales/salud/${corralId}`)
+    historialSalud.value = response.historial || []
+  } catch (error) {
+    console.error('Error cargando historial de salud:', error)
+    historialSalud.value = []
+  } finally {
+    loadingHistorial.value = false
+  }
+}
+
+// Función para manejar actualizaciones del historial
+const handleHistorialUpdated = async (nuevoHistorial: any[]) => {
+  historialSalud.value = nuevoHistorial
+}
 
 // En el script setup
 const onAnimalDragStart = (event: DragEvent, animalId: string) => {
@@ -170,14 +237,14 @@ document.addEventListener('dragend', () => {
 });
 
 // Manejar drag over
-const onDragOver = (event: DragEvent, corralId: string) => {  // CAMBIADO A STRING
+const onDragOver = (event: DragEvent, corralId: string) => {
   event.preventDefault();
   isDragOver.value = corralId;
   dropError.value = null;
 }
 
 // Manejar drop
-const onDrop = async (event: DragEvent, corralId: string) => {  // CAMBIADO A STRING
+const onDrop = async (event: DragEvent, corralId: string) => {
   event.preventDefault();
   isDragOver.value = null;
 

@@ -188,10 +188,10 @@
         </div>
       </div>
 
-      <!-- Tabla de historial de peso -->
-      <div v-if="historialPeso.length" class="mt-4">
+      <!-- Historial de peso tipo card/fila -->
+      <div v-if="historialPeso.length" class="mt-4 space-y-2">
         <div class="flex items-center justify-between mb-2">
-          <h5 class="font-semibold">Historial de Pesos</h5>
+          <h5 class="font-semibold" style="color: var(--color-custom-300);">Historial de Pesos</h5>
           <UButton
             :icon="showHistorial ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
             @click="showHistorial = !showHistorial"
@@ -200,27 +200,42 @@
             :title="showHistorial ? 'Ocultar historial' : 'Mostrar historial'"
           />
         </div>
-        <div v-if="showHistorial">
-          <table class="min-w-full text-sm border rounded overflow-hidden">
-            <thead>
-              <tr class="bg-gray-100 dark:bg-gray-800">
-                <th class="px-2 py-1">Fecha</th>
-                <th class="px-2 py-1">Peso (kg)</th>
-                <th class="px-2 py-1">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="peso in historialPeso" :key="peso.id" class="border-b">
-                <td class="px-2 py-1">{{ new Date(peso.fecha_registro).toLocaleDateString() }}</td>
-                <td class="px-2 py-1">{{ peso.peso }}</td>
-                <td class="px-2 py-1 flex gap-2">
-                  <UButton size="xs" color="primary" icon="i-heroicons-pencil" @click="openEditPeso(peso)">Editar</UButton>
-                  <UButton size="xs" color="error" icon="i-heroicons-trash" @click="confirmDeletePeso(peso)">Eliminar</UButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <TransitionGroup name="fade" tag="div" v-if="showHistorial">
+          <div
+            v-for="peso in historialPeso"
+            :key="peso.id"
+            class="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg shadow p-4 mb-2 transition border"
+            style="background: var(--color-custom-500); border-color: var(--color-custom-300);"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="text-lg font-bold" style="color: var(--color-custom-50);">{{ peso.peso }} kg</div>
+              <div class="text-sm" style="color: var(--color-custom-200);">{{ new Date(peso.fecha_registro).toLocaleDateString() }}</div>
+            </div>
+            <div class="flex gap-2 mt-2 sm:mt-0">
+              <UButton
+                size="xs"
+                color="primary"
+                icon="i-heroicons-pencil"
+                @click="openEditPeso(peso)"
+                title="Editar"
+                class="rounded-full"
+              />
+              <UButton
+                size="xs"
+                color="error"
+                icon="i-heroicons-trash"
+                @click="confirmDeletePeso(peso)"
+                title="Eliminar"
+                class="rounded-full"
+              />
+            </div>
+          </div>
+        </TransitionGroup>
+      </div>
+
+      <!-- HISTORIAL DE SALUD -->
+      <div class="mt-8 border-t pt-6">
+        <!-- SECCIÓN ELIMINADA: Historial de Salud -->
       </div>
 
       <!-- MODAL     PESO -->
@@ -228,9 +243,15 @@
         <template #body>
           <UForm :state="formPeso" @submit="handleSubmitPeso" class="space-y-4">
             <UFormField label="Peso (kg)" name="peso" required>
+              <template #label>
+                <span style="color: var(--color-custom-300);">Peso (kg)</span>
+              </template>
               <UInput v-model.number="formPeso.peso" type="number" placeholder="Ej: 350.5" />
             </UFormField>
             <UFormField label="Fecha" name="fecha">
+              <template #label>
+                <span style="color: var(--color-custom-300);">Fecha</span>
+              </template>
               <UInput v-model="formPeso.fecha" type="date" />
             </UFormField>
             <div class="flex justify-end gap-3 mt-4">
@@ -246,9 +267,15 @@
         <template #body>
           <UForm :state="editPesoForm" @submit="handleEditPeso" class="space-y-4">
             <UFormField label="Peso (kg)" name="peso" required>
+              <template #label>
+                <span style="color: var(--color-custom-300);">Peso (kg)</span>
+              </template>
               <UInput v-model.number="editPesoForm.peso" type="number" placeholder="Ej: 350.5" />
             </UFormField>
             <UFormField label="Fecha" name="fecha">
+              <template #label>
+                <span style="color: var(--color-custom-300);">Fecha</span>
+              </template>
               <UInput v-model="editPesoForm.fecha" type="date" />
             </UFormField>
             <div class="flex justify-end gap-3 mt-4">
@@ -402,7 +429,7 @@ import { useUserRole } from "~/composables/arestricted";
 import type { Animal } from "~/types/animal";
 import type { Venta } from "~/types/animal";
 import { z } from "zod";
-import { ref, onMounted, watch, nextTick, onBeforeUnmount, computed } from 'vue'
+import { ref, reactive, onMounted, watch, nextTick, onBeforeUnmount, computed } from 'vue'
 import type { HistorialPeso } from '~/types/animal'
 import Chart from 'chart.js/auto'
 import { ref as vueRef } from 'vue'
@@ -470,6 +497,7 @@ const hasSaleRecord = computed(() => props.venta !== null);
 const emit = defineEmits<{
   (e: "updated", updatedAnimal: Animal): void;
   (e: "venta-created"): void;
+  (e: "historial-updated"): void;
 }>();
 
 const handleSaleCreated = () => {
@@ -487,9 +515,14 @@ const showChart = ref(true)
 const showHistorial = ref(true)
 const chartRef = ref<HTMLCanvasElement>()
 const historialPeso = ref<HistorialPeso[]>([])
+
+// Modal and form variables for weight management
 const isModalOpen = ref(false)
 const isSaving = ref(false)
-const formPeso = reactive({ peso: null as number | null, fecha: "" })
+const formPeso = reactive({
+  peso: null as number | null,
+  fecha: ""
+})
 
 // Form data for editing
 const formData = reactive<{
@@ -883,23 +916,30 @@ const handleSubmitPeso = async (e: Event) => {
   }
   isSaving.value = true
   try {
-    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+    const response = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
       method: 'POST',
       body: {
         peso: formPeso.peso,
         fecha_registro: formPeso.fecha || undefined
       }
     })
+    
+    // Agregar el nuevo peso al historial local
+    if (response.historial_peso) {
+      historialPeso.value.push(response.historial_peso)
+    }
+    
     isModalOpen.value = false
     formPeso.peso = null
     formPeso.fecha = ""
-    await fetchHistorialPeso()
-    await nextTick()
+    
+    // Re-renderizar el gráfico si es necesario
     if (showChart.value && historialPeso.value.length > 0) {
       setTimeout(() => {
         renderChart()
       }, 100)
     }
+    
     toast.add({ title: 'Peso registrado', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
@@ -924,7 +964,7 @@ onMounted(async () => {
       resizeObserver.observe(chartContainerRef.value)
     }
   } catch (error) {
-    console.error('Error initializing chart:', error)
+    console.error('Error in onMounted:', error)
   }
 })
 
@@ -960,7 +1000,7 @@ async function handleEditPeso(e: Event) {
   }
   isSavingEdit.value = true
   try {
-    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+    const response = await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
       method: 'put',
       body: {
         id: editPesoForm.id,
@@ -968,14 +1008,24 @@ async function handleEditPeso(e: Event) {
         fecha_registro: editPesoForm.fecha
       }
     })
+    
+    // Actualizar el peso en el historial local
+    if (response.historial_peso) {
+      const index = historialPeso.value.findIndex(p => p.id === editPesoForm.id)
+      if (index !== -1) {
+        historialPeso.value[index] = response.historial_peso
+      }
+    }
+    
     isEditModalOpen.value = false
-    await fetchHistorialPeso()
-    await nextTick()
+    
+    // Re-renderizar el gráfico si es necesario
     if (showChart.value && historialPeso.value.length > 0) {
       setTimeout(() => {
         renderChart()
       }, 100)
     }
+    
     toast.add({ title: 'Peso actualizado', color: 'success' })
   } catch (error: any) {
     toast.add({ title: 'Error', description: error.data?.message || error.message, color: 'error' })
@@ -985,8 +1035,50 @@ async function handleEditPeso(e: Event) {
 }
 
 function confirmDeletePeso(peso: HistorialPeso) {
-  pesoToDelete = peso
-  isDeleteModalOpen.value = true
+  toast.add({
+    title: '¿Eliminar registro de peso?',
+    description: 'Esta acción no se puede deshacer',
+    color: 'error',
+    actions: [{
+      label: 'Confirmar',
+      onClick: () => deletePeso(peso.id),
+      color: 'success'
+    }],
+    duration: 5000,
+    icon: 'i-heroicons-trash'
+  })
+}
+
+const deletePeso = async (id: number) => {
+  try {
+    await $fetch(`/api/animal/specific/${props.animal.id_animal}/peso`, {
+      method: 'DELETE',
+      body: { id }
+    })
+    
+    // Actualizar el historial local
+    historialPeso.value = historialPeso.value.filter(peso => peso.id !== id)
+    
+    // Re-renderizar el gráfico si es necesario
+    if (showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+    
+    toast.add({
+      title: 'Peso eliminado',
+      color: 'success',
+      icon: 'i-heroicons-check-circle'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Error al eliminar',
+      description: error.data?.message || error.message,
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle'
+    })
+  }
 }
 
 async function handleDeletePeso() {

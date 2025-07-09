@@ -1,6 +1,6 @@
 // server/api/corrales/corrales.get.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase";
+import type { Database } from '~/types/supabase'
 import { createError, getHeader, getQuery } from "h3";
 
 export default defineEventHandler(async (event) => {
@@ -119,9 +119,12 @@ export default defineEventHandler(async (event) => {
         animalCount = corral.animal_count || 0;
       }
 
+      // Log para depuración
+      console.log('Procesando corral:', corral.nombre, 'id_corral:', corral.id_corral);
+
       return {
         ...corral,
-        id_corral: corral.id_corral.toString(),
+        id_corral: corral.id_corral, // NO uses .toString()
         animal_count: animalCount,
         // Solo incluir animales si se solicitó
         animals: includeAnimals ? (corral.animals || []) : []

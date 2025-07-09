@@ -8,9 +8,11 @@ import GenealogyTreePrint from '~/components/animal/GenealogyTreePrint.vue'
 import type { BreadcrumbItem } from '@nuxt/ui'
 import type { GenealogyResponse, Venta, Animal, HistorialSalud, GenealogyTreeNode } from '~/types/animal'
 import { useUserRole } from '~/composables/arestricted'
+import { useRouter } from 'vue-router'
 
 const { userRole } = useUserRole();
 
+const router = useRouter()
 const route = useRoute()
 const id = route.params.id
 
@@ -210,7 +212,7 @@ const handleHealthUpdated = () => {
 
     <div v-else-if="animal?.animal" class="max-w-4xl mx-auto p-6 print:max-w-full print:px-0">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
-        <UButton icon="i-heroicons-arrow-left" label="Volver" @click="$router.back()" />
+        <UButton icon="i-heroicons-arrow-left" label="Volver" @click="router.back()" />
         <div class="space-x-2">
           <UButton icon="i-heroicons-adjustments-horizontal"
             :label="showPrintOptions ? 'Ocultar opciones' : 'Seleccionar para imprimir'"
@@ -226,14 +228,14 @@ const handleHealthUpdated = () => {
       </div>
 
       <!-- Sección Detalles -->
-      <AnimalDetailsCard :animal="animal.animal" :venta="animal.venta" :show="printSections.detalles"
+      <AnimalDetailsCard :animal="animal.animal" :venta="animal.venta" :historial-salud="animal.historialSalud" :show="printSections.detalles"
         @updated="handleAnimalUpdated" @venta-created="handleVentaCreated" />
 
       <!-- Sección Venta -->
       <template v-if="animal?.venta">
         <SaleInfoCard :venta="animal.venta" :show="printSections.venta" @updated="handleVentaUpdated" @deleted="handleVentaDeleted" />
         <UButton v-if="showPrintOptions && userRole === 'admin'" icon="i-heroicons-pencil-square" label="Editar Venta"
-          @click="$router.push(`/sales/edit/${animal.venta.id_venta}`)" class="mt-4 print:hidden" />
+          @click="router.push(`/sales/edit/${animal.venta.id_venta}`)" class="mt-4 print:hidden" />
       </template>
       <UAlert v-else-if="userRole === 'admin'" title="Sin información de venta" description="Este animal no tiene datos de venta registrados."
         icon="i-heroicons-exclamation-circle" color="warning" class="mt-8" />

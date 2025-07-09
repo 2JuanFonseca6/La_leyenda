@@ -198,6 +198,40 @@ export type Database = {
           },
         ]
       }
+      historial_salud_corral: {
+        Row: {
+          id: number
+          corral_id: string // uuid
+          fecha_evento: string
+          descripcion: string
+          observaciones: string | null
+          created_at: string
+        }
+        Insert: {
+          corral_id: string
+          fecha_evento: string
+          descripcion: string
+          observaciones?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          corral_id?: string
+          fecha_evento?: string
+          descripcion?: string
+          observaciones?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historial_salud_corral_corral_id_fkey"
+            columns: ["corral_id"]
+            isOneToOne: false
+            referencedRelation: "corrales"
+            referencedColumns: ["id_corral"]
+          }
+        ]
+      },
       inventario: {
         Row: {
           cantidad: number

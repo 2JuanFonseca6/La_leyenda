@@ -1,6 +1,6 @@
 // server/api/corrales/assign/assigned.get.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase";
+import type { Database } from '~/types/supabase'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);

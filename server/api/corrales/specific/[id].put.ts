@@ -1,6 +1,6 @@
 // server/api/corrales/specific/[id].put.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase";
+import type { Database } from '~/types/supabase'
 import { createError, readBody } from "h3";
 
 export default defineEventHandler(async (event) => {
@@ -8,14 +8,14 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const id = getRouterParam(event, 'id');
 
-  if (!id || isNaN(Number(id))) {
+  if (!id || typeof id !== 'string' || id.length < 32) {
     throw createError({
       statusCode: 400,
       statusMessage: "ID de corral inválido",
     });
   }
 
-  const corralId = Number(id);
+  const corralId = id;
 
   const { nombre, tipo_corral, capacidad_maxima, descripcion } = body;
 
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
     const { data: existingCorral, error: fetchError } = await client
       .from("corrales")
       .select("id_corral")
-      .eq("id_corral", corralId.toString())
+      .eq("id_corral", corralId)
       .maybeSingle();
 
     if (fetchError) {
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
       .from("corrales")
       .select("id_corral")
       .eq("nombre", nombre.trim())
-      .neq("id_corral", corralId.toString()) // Excluir el corral actual
+      .neq("id_corral", corralId) // Excluir el corral actual
       .maybeSingle();
 
     if (duplicateError) {
@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
         capacidad_maxima,
         descripcion: descripcion?.trim() || null,
       })
-      .eq("id_corral", corralId.toString())
+      .eq("id_corral", corralId)
       .select()
       .single();
 

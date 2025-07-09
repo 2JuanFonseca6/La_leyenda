@@ -1,13 +1,13 @@
 // server/api/corrales/specific/[id].delete.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase";
+import type { Database } from '~/types/supabase'
 import { createError } from "h3";
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
   const id = getRouterParam(event, 'id');
 
-  if (!id) {
+  if (!id || typeof id !== 'string' || id.length < 32) {
     throw createError({
       statusCode: 400,
       statusMessage: "ID de corral inválido",
