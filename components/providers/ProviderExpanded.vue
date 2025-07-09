@@ -15,6 +15,9 @@ const isEditing = ref(false)
 const isLoading = ref(false)
 const error = ref('')
 
+import { useUserRole } from '~/composables/arestricted'
+const { userRole } = useUserRole()
+
 type FormState = {
   id_proveedor: number
   original_id: number
@@ -66,6 +69,30 @@ const handleUpdate = async () => {
     isLoading.value = false
   }
 }
+
+const handleDelete = async () => {
+  if (!confirm('¿Seguro que deseas eliminar este proveedor? Esta acción no se puede deshacer.')) return
+  isLoading.value = true
+  try {
+    const res = await $fetch('/api/providers/providers', { method: 'DELETE', body: { ids: [props.item.id_proveedor] } })
+    toast.add({
+      title: 'Proveedor eliminado',
+      description: res?.message || 'El proveedor fue eliminado correctamente.',
+      color: 'success',
+      icon: 'i-heroicons-check-circle',
+    })
+    emit('updated')
+  } catch (e: any) {
+    toast.add({
+      title: 'Error al eliminar proveedor',
+      description: e.data?.message || e.message || 'No se pudo eliminar el proveedor. Intenta de nuevo.',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -74,6 +101,7 @@ const handleUpdate = async () => {
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Detalles del Proveedor</h3>
         <div class="flex gap-2">
+          <UButton v-if="userRole === 'admin'" icon="i-heroicons-trash" color="error" @click="handleDelete" :loading="isLoading" title="Eliminar proveedor" />
           <UButton 
             v-if="!isEditing" 
             icon="i-heroicons-pencil-square" 

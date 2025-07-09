@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
     descripcion: body.descripcion,
     cantidad: body.cantidad,
     precio: body.precio,
-    proveedor_id: body.proveedor_id
+    proveedor_id: body.proveedor_id,
+    factura_url: body.factura_url
   };
 
   // Validación básica

@@ -34,11 +34,11 @@
 
           <UFormField name="precio" required>
             <template #label>
-              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Precio Unitario</span>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Valor Total</span>
             </template>
             <UInputNumber v-model="form.precio" :min="1000" :step="100"
                 :format-options="{ useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 2 }"
-                placeholder="Ingrese el monto" variant="ghost" class="border border-[var(--color-custom-300)]" />
+                placeholder="Ingrese el valor total del lote" variant="ghost" class="border border-[var(--color-custom-300)]" />
           </UFormField>
         </div>
 

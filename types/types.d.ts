@@ -8,6 +8,7 @@ declare global {
     cantidad: number
     precio: number
     proveedor_id: string
+    factura_url?: string | null
   }
   
   interface CustomError extends Error {

@@ -258,6 +258,7 @@ export type Database = {
           precio: number
           proveedor_id: string
           tipo: string
+          factura_url: string | null
         }
         Insert: {
           cantidad: number
@@ -266,6 +267,7 @@ export type Database = {
           precio: number
           proveedor_id: string
           tipo: string
+          factura_url?: string | null
         }
         Update: {
           cantidad?: number
@@ -274,6 +276,7 @@ export type Database = {
           precio?: number
           proveedor_id?: string
           tipo?: string
+          factura_url?: string | null
         }
         Relationships: [
           {

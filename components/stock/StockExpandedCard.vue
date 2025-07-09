@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useUserRole } from '~/composables/arestricted'
+import { useSupabaseClient } from '#imports'
+
+const supabase = useSupabaseClient()
 
 const { userRole } = useUserRole()
 
@@ -18,6 +21,7 @@ type FormState = {
   cantidad: number
   precio: number
   proveedor_id: string
+  factura_url?: string | null
 }
 
 const formState = reactive<FormState>({
@@ -25,7 +29,8 @@ const formState = reactive<FormState>({
   descripcion: props.item.descripcion,
   cantidad: props.item.cantidad,
   precio: props.item.precio,
-  proveedor_id: props.item.proveedor_id
+  proveedor_id: props.item.proveedor_id,
+  factura_url: props.item.factura_url ?? undefined
 })
 
 // Tipos de artículos disponibles
@@ -89,14 +94,137 @@ const handleUpdate = async () => {
     isLoading.value = false
   }
 }
+
+const handleDelete = async () => {
+  if (!confirm('¿Seguro que deseas eliminar este producto del inventario? Esta acción no se puede deshacer.')) return
+  isLoading.value = true
+  try {
+    const res = await $fetch('/api/stock/stock', { method: 'DELETE', body: { ids: [props.item.id_inventario] } })
+    toast.add({
+      title: 'Producto eliminado',
+      description: res?.message || 'El producto fue eliminado correctamente del inventario.',
+      color: 'success',
+      icon: 'i-heroicons-check-circle',
+    })
+    emit('updated')
+  } catch (e: any) {
+    toast.add({
+      title: 'Error al eliminar producto',
+      description: e.data?.message || e.message || 'No se pudo eliminar el producto. Intenta de nuevo.',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const facturaInput = ref<HTMLInputElement | null>(null)
+
+const handleFacturaFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+  isLoading.value = true;
+  try {
+    console.log('Iniciando subida de factura...');
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-factura-inventario-${props.item.id_inventario}.${fileExt}`;
+    console.log('Nombre del archivo:', fileName);
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('inventario-image')
+      .upload(fileName, file);
+    
+    if (uploadError) {
+      console.error('Error en upload:', uploadError);
+      throw uploadError;
+    }
+    
+    console.log('Archivo subido exitosamente:', uploadData);
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('inventario-image')
+      .getPublicUrl(fileName);
+    
+    if (!publicUrl) throw new Error('No se pudo obtener la URL pública de la factura');
+    console.log('URL pública obtenida:', publicUrl);
+    
+    // Actualizar en la base de datos
+    console.log('Actualizando base de datos...');
+    await $fetch(`/api/stock/specific/${props.item.id_inventario}`, {
+      method: 'PUT',
+      body: { factura_url: publicUrl },
+    });
+    // Refrescar el registro desde el backend para obtener el valor actualizado
+    const updated = await $fetch(`/api/stock/specific/${props.item.id_inventario}`);
+    formState.factura_url = updated.factura_url ?? undefined;
+    emit('updated');
+    toast.add({
+      title: 'Factura cargada',
+      description: 'La factura se ha guardado correctamente.',
+      color: 'success',
+      icon: 'i-heroicons-check-circle',
+    });
+  } catch (error: any) {
+    console.error('Error completo:', error);
+    toast.add({
+      title: 'Error al subir factura',
+      description: error?.message || 'No se pudo subir la factura.',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    });
+  } finally {
+    isLoading.value = false;
+    if (facturaInput.value) facturaInput.value.value = '';
+  }
+}
+
+const handleDeleteFactura = async () => {
+  if (!formState.factura_url) return;
+  if (!confirm('¿Seguro que deseas eliminar la factura adjunta? Esta acción no se puede deshacer.')) return;
+  isLoading.value = true;
+  try {
+    // Eliminar del storage
+    const fileName = formState.factura_url.split('/').pop();
+    if (fileName) {
+      const { error: deleteError } = await supabase.storage
+        .from('inventario-image')
+        .remove([fileName]);
+      if (deleteError) throw deleteError;
+    }
+    // Actualizar en la base de datos
+    await $fetch(`/api/stock/specific/${props.item.id_inventario}`, {
+      method: 'PUT',
+      body: { factura_url: null },
+    });
+    formState.factura_url = undefined;
+    toast.add({
+      title: 'Factura eliminada',
+      description: 'La factura fue eliminada correctamente.',
+      color: 'success',
+      icon: 'i-heroicons-check-circle',
+    });
+  } catch (error: any) {
+    toast.add({
+      title: 'Error al eliminar factura',
+      description: error?.message || 'No se pudo eliminar la factura.',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
 </script>
 
 <template>
   <UCard class="w-full">
     <template #header>
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">Detalles del Inventario</h3>
+        <h3 class="text-lg font-semibold">Detalles del Producto</h3>
         <div class="flex gap-2">
+          <UButton v-if="userRole === 'admin'" icon="i-heroicons-trash" color="error" @click="handleDelete" :loading="isLoading" title="Eliminar producto" />
           <UButton v-if="!isEditing && userRole === 'admin'" icon="i-heroicons-pencil-square" color="primary" @click="isEditing = true" />
           <template v-else-if="userRole === 'admin'">
             <UButton icon="i-heroicons-x-mark" color="error" @click="isEditing = false" />
@@ -154,13 +282,14 @@ const handleUpdate = async () => {
       </UFormField>
 
       <!-- Campo Precio -->
-      <UFormField label="Precio (COP)" :required="true"
+      <UFormField label="Valor Total (COP)" :required="true"
         :error="validations.precio.find(v => typeof v(formState.precio) === 'string')?.(formState.precio)">
         <template v-if="isEditing">
           <UInput v-model.number="formState.precio" type="number" />
         </template>
         <template v-else>
           <p class="py-2 px-3">{{ formState.precio }}</p>
+          <p v-if="formState.cantidad > 0" class="text-xs text-gray-400 mt-1">Precio Unitario: {{ (formState.precio / formState.cantidad).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}</p>
         </template>
       </UFormField>
 
@@ -173,6 +302,36 @@ const handleUpdate = async () => {
         <template v-else>
           <p class="py-2 px-3">{{ formState.proveedor_id }}</p>
         </template>
+      </UFormField>
+    </div>
+    <!-- Factura debajo de toda la información -->
+    <div class="mt-6">
+      <UFormField label="Factura (imagen o PDF)">
+        <input type="file" ref="facturaInput" accept="image/*,application/pdf" @change="handleFacturaFileChange" class="block mt-2" />
+        <div v-if="formState.factura_url" class="mt-4 flex flex-col items-center gap-4">
+          <template v-if="formState.factura_url.endsWith('.pdf')">
+            <NuxtLink
+              :to="`/ver-pdf?url=${encodeURIComponent(formState.factura_url)}`"
+              target="_blank"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+            >
+              <UIcon name="i-heroicons-document" />
+              Ver/Descargar PDF
+            </NuxtLink>
+          </template>
+          <template v-else>
+            <div class="flex justify-center items-center bg-white border rounded shadow max-w-xs max-h-60 p-2">
+              <img
+                :src="formState.factura_url"
+                alt="Factura"
+                class="object-contain max-h-56 max-w-xs mx-auto"
+                style="background: #fff;"
+              />
+            </div>
+          </template>
+          <UButton color="error" icon="i-heroicons-trash" @click="handleDeleteFactura" :loading="isLoading">Eliminar Factura</UButton>
+        </div>
+        <div v-else class="text-xs text-gray-400 mt-2">No hay factura adjunta</div>
       </UFormField>
     </div>
   </UCard>
