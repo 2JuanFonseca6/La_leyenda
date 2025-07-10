@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, type Ref } from 'vue'
+import { ref, onMounted, computed, type Ref, type ComputedRef } from 'vue'
 import { useUserRole } from '~/composables/arestricted'
 import type { InventarioPajilla, MovimientoPajilla } from '~/types/pajillas'
 import SelectVacaDrawer from './SelectVacaDrawer.vue'
@@ -225,15 +225,16 @@ async function confirmarEliminarUso() {
   }
 }
 
-const columns = [
+const columns: ComputedRef<{ label: string; value: (row: any) => any }[]> = computed(() => [
   { label: 'ID', value: (row: MovimientoPajilla) => row.animal_id },
   { label: 'Tipo', value: (row: any) => row.tipo || '—' },
   { label: 'Raza', value: (row: any) => row.raza || '—' },
   { label: 'Fecha de Uso', value: (row: MovimientoPajilla) => new Date(row.fecha).toLocaleDateString() },
   { label: 'Cantidad Usada', value: (row: MovimientoPajilla) => row.cantidad },
   { label: 'Observaciones', value: (row: MovimientoPajilla) => row.observaciones || '—' },
-  { label: 'Acciones', value: (row: any) => row } // Para los botones
-]
+  // Solo admin ve la columna Acciones
+  ...(canEdit.value ? [{ label: 'Acciones', value: (row: any) => row }] : [])
+])
 </script>
 
 <template>
@@ -242,7 +243,7 @@ const columns = [
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Detalles de la Pajilla</h3>
         <div class="flex gap-2">
-          <UButton icon="i-heroicons-pencil-square" color="neutral" variant="soft" class="!text-gray-800 dark:!text-gray-100" @click="openEditPajillaModal" size="sm" title="Editar pajilla" />
+          <UButton v-if="canEdit" icon="i-heroicons-pencil-square" color="neutral" variant="soft" class="!text-gray-800 dark:!text-gray-100" @click="openEditPajillaModal" size="sm" title="Editar pajilla" />
         </div>
       </div>
     </template>
@@ -257,11 +258,11 @@ const columns = [
     </div>
 
     <!-- Botón para abrir el modal de asignación -->
-    <div class="flex justify-end mb-6">
+    <div class="flex justify-end mb-6" v-if="canEdit">
       <UButton color="primary" @click="showDrawer = true">Asignar</UButton>
     </div>
     <!-- Modal de asignación de animal(es) -->
-    <UModal v-model:open="showDrawer" title="Asignar Animal(es) a esta Pajilla" description="Registra la salida de pajilla para uno o más animales" class="max-w-3xl w-full">
+    <UModal v-if="canEdit" v-model:open="showDrawer" title="Asignar Animal(es) a esta Pajilla" description="Registra la salida de pajilla para uno o más animales" class="max-w-3xl w-full">
       <template #body>
         <UForm :state="salidaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="registrarSalida">
           <UFormField name="cantidad">
@@ -319,7 +320,7 @@ const columns = [
             <template v-if="col.label !== 'Acciones'">
               {{ col.value(mov) }}
             </template>
-            <template v-else>
+            <template v-else-if="canEdit">
               <div class="flex gap-2">
                 <UButton color="neutral" variant="soft" size="xs" class="!inline-block !opacity-100 !visible !text-gray-800 dark:!text-gray-100" @click="openEditUsoModal(mov)" title="Editar uso">Editar</UButton>
                 <UButton icon="i-heroicons-trash" color="error" variant="soft" size="xs" @click="eliminarUso(mov)" title="Eliminar uso" />
@@ -331,7 +332,7 @@ const columns = [
     </table>
 
     <!-- Modales -->
-    <UModal v-model:open="showEditPajillaModal" title="Editar Detalles de la Pajilla" description="Modifica la información de la pajilla" class="max-w-3xl w-full">
+    <UModal v-if="canEdit" v-model:open="showEditPajillaModal" title="Editar Detalles de la Pajilla" description="Modifica la información de la pajilla" class="max-w-3xl w-full">
       <template #body>
         <UForm :state="editPajillaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="editarPajilla">
           <UFormField name="pajilla">
@@ -365,7 +366,7 @@ const columns = [
         </UForm>
       </template>
     </UModal>
-    <UModal v-model:open="showEditUsoModal" title="Editar Uso de Pajilla" description="Modifica la información del uso de la pajilla" class="max-w-3xl w-full">
+    <UModal v-if="canEdit" v-model:open="showEditUsoModal" title="Editar Uso de Pajilla" description="Modifica la información del uso de la pajilla" class="max-w-3xl w-full">
       <template #body>
         <UForm :state="usoSeleccionado" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="editarUso" v-if="usoSeleccionado">
           <UFormField name="cantidad">
@@ -406,7 +407,7 @@ const columns = [
         </UForm>
       </template>
     </UModal>
-    <UModal v-model:open="showDeleteConfirm" title="Confirmar eliminación" description="¿Estás seguro de que deseas eliminar este uso de pajilla?" class="max-w-md w-full">
+    <UModal v-if="canEdit" v-model:open="showDeleteConfirm" title="Confirmar eliminación" description="¿Estás seguro de que deseas eliminar este uso de pajilla?" class="max-w-md w-full">
       <template #body>
         <div class="mb-4">¿Estás seguro de que deseas eliminar este uso de pajilla?</div>
         <div class="flex justify-end gap-2">

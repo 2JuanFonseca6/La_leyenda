@@ -69,9 +69,16 @@ const fetchPajillas = async () => {
 }
 
 watch([() => pagination.value.pageIndex, () => pagination.value.pageSize, () => props.search], fetchPajillas)
+watch(canCreate, () => {
+  table.value?.tableApi?.resetColumnVisibility?.()
+  refreshTable()
+})
 fetchPajillas()
 
-const columns: TableColumn<Pajilla>[] = [
+const tableKey = ref(0)
+watch(canCreate, () => { tableKey.value++ })
+
+const columns = computed<TableColumn<Pajilla>[]>(() => [
   {
     id: 'expand',
     cell: ({ row }) =>
@@ -135,10 +142,11 @@ const columns: TableColumn<Pajilla>[] = [
       return h('span', { class: 'text-sm', title: desc.length > 30 ? desc : undefined }, truncated)
     }
   },
-  {
+  // Solo agregar la columna de acciones si canCreate
+  ...(canCreate.value ? [{
     id: 'acciones',
     header: 'Acciones',
-    cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
+    cell: ({ row }: { row: any }) => h('div', { class: 'flex gap-2' }, [
       h(UButton, {
         icon: 'i-heroicons-trash',
         color: 'error',
@@ -148,8 +156,8 @@ const columns: TableColumn<Pajilla>[] = [
         onClick: () => eliminarPajilla(row.original)
       })
     ])
-  }
-]
+  }] : [])
+])
 
 const selectedIds = ref<number[]>([])
 const expanded = ref<Record<string, boolean>>({})
@@ -292,6 +300,7 @@ defineExpose({
       :columns="columns"
       :loading="isPending"
       class="flex-1"
+      :key="tableKey"
     >
       <template #expanded="{ row }">
         <PajillaExpandedCard :pajilla="row.original" @updated="refreshTable" />
