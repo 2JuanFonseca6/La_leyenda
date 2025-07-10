@@ -1,5 +1,11 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 relative">
+    <!-- Badge de rol de usuario -->
+    <div class="absolute right-4 top-2 z-10">
+      <span class="inline-block rounded-full px-3 py-1 text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">
+        Rol: {{ userRole }}
+      </span>
+    </div>
     <div class="p-4">
       <AnimalDrag ref="animalDragRef" :assignedAnimals="assignedAnimalIds" @animalDragStart="handleDragStart"
         @unassignAnimal="handleUnassignAnimal" />
@@ -8,7 +14,7 @@
     <div class="p-4">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold mb-4">Lotes</h2>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" v-if="userRole === 'admin'">
           <DeleteCorralModal ref="deleteCorralModalRef" @corral-deleted="refreshCorrales"/>
           <CorralFormModal v-model="showCorralFormModal" @success="handleCorralSuccess" />
         </div>
@@ -20,6 +26,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
+import { useUserRole } from '~/composables/arestricted'
+
+const { userRole } = useUserRole()
 
 const animalDragRef = ref()
 const animalDropRef = ref()
@@ -45,10 +54,9 @@ const handleCorralSuccess = (corral: any) => {
 const handleDragStart = (animal: any) => { }
 
 const handleAnimalAssigned = (animalId: string) => {
-  if (!assignedAnimalIds.value.includes(animalId)) {
-    assignedAnimalIds.value.push(animalId)
-  }
+  // Siempre refrescar ambas vistas para reflejar el cambio
   animalDragRef.value?.fetchAnimals?.()
+  refreshCorrales()
 }
 
 const handleUnassignAnimal = async (animalId: string) => {
@@ -61,7 +69,7 @@ const handleUnassignAnimal = async (animalId: string) => {
     assignedAnimalIds.value = assignedAnimalIds.value.filter(id => id !== animalId)
 
     animalDragRef.value?.fetchAnimals?.()
-    animalDropRef.value?.refresh?.()
+    refreshCorrales()
   } catch (error) {
     console.error('Error desasignando animal:', error)
   }

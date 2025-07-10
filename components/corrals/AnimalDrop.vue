@@ -44,7 +44,8 @@
                 </div>
                 <!-- Botón de desasignación -->
                 <UButton icon="i-heroicons-arrows-pointing-out-solid" variant="ghost" size="xs"
-                  class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto" title="Mover animal" />
+                  class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto" title="Mover animal"
+                  @click="$emit('animalAssigned', animal.id_animal)" />
               </div>
             </div>
           </div>
@@ -182,7 +183,12 @@ async function fetchCorrales() {
     console.log('Corrales recibidos:', data.map(c => ({ nombre: c.nombre, id_corral: c.id_corral })))
 
     // Filtrar solo corrales con UUID válido
-    corrales.value = data.filter(c => typeof c.id_corral === 'string' && c.id_corral.length >= 32)
+    corrales.value = data
+      .filter(c => typeof c.id_corral === 'string' && c.id_corral.length >= 32)
+      .map(c => ({
+        ...c,
+        animals: Array.isArray(c.animals) ? c.animals : []
+      }))
     totalCorrales.value = total
   } catch (err: any) {
     error.value = `Error cargando corrales: ${err.message}`

@@ -3,8 +3,10 @@
 import { h, resolveComponent, ref, watch, computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { UButton } from '#components'
+import { useRouter } from 'vue-router'
 
 const UBadge = resolveComponent('UBadge')
+const router = useRouter()
 
 type EstadoSalud =
   | 'EXCELENTE'
@@ -70,7 +72,6 @@ const columns: TableColumn<Animal>[] = [
       const animal = row.original
       const UIcon = resolveComponent('UIcon')
       const isAssigned = props.assignedAnimals?.includes(animal.id_animal)
-
       return h('div', {
         class: `drag-handle flex items-center gap-2 ${isAssigned
           ? 'cursor-not-allowed opacity-50'
@@ -84,9 +85,17 @@ const columns: TableColumn<Animal>[] = [
           ? h(UIcon, { name: 'i-heroicons-lock-closed', class: 'size-5 text-lg' })
           : h(UIcon, { name: 'i-healthicons-animal-cow-outline', class: 'size-5 text-lg' }),
         h('span', {}, animal.id_animal),
-        isAssigned ? h('span', {
-          class: 'text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full ml-2'
-        }, 'Asignado') : null
+        h(
+          resolveComponent('UButton'),
+          {
+            icon: 'i-heroicons-arrow-top-right-on-square',
+            size: 'xs',
+            variant: 'ghost',
+            title: 'Ver detalles',
+            class: 'ml-2',
+            onClick: () => router.push(`/animals/specific/${animal.id_animal}`)
+          }
+        )
       ])
     }
   },
@@ -313,13 +322,8 @@ defineExpose({
       </div>
 
       <!-- Zona de desasignación -->
-      <details class="group">
-        <summary class="flex cursor-pointer list-none items-center justify-between py-2 text-md font-medium">
-          <span>Zona de Desasignación</span>
-          <UIcon name="i-heroicons-chevron-down"
-            class="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
-        </summary>
-
+      <details>
+        <summary class="font-semibold text-primary cursor-pointer select-none mt-4">Animales Asignados</summary>
         <div v-if="props.assignedAnimals && props.assignedAnimals.length > 0"
           class="mt-2 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200 min-h-[100px]"
           :class="[

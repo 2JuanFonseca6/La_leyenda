@@ -60,14 +60,12 @@ export default defineEventHandler(async (event) => {
     if (searchTerm) {
       const safeSearch = String(searchTerm || '').trim();
       if (safeSearch.length > 0) {
-        const isNumeric = /^\d+$/.test(safeSearch);
-        let searchFilter = `raza.ilike.%${safeSearch}%,estado_salud.ilike.%${safeSearch}%,tipo_animal::text.ilike.%${safeSearch}%`;
-        if (isNumeric) {
-          // Coincidencia exacta en id_animal, usando cast numérico si es necesario
-          searchFilter = `id_animal.eq.${Number(safeSearch)},` + searchFilter;
-        } else {
-          searchFilter = `id_animal.ilike.%${safeSearch}%,` + searchFilter;
-        }
+        // Solo buscar en id_animal, raza y estado_salud
+        const searchFilter = [
+          `(id_animal.ilike.%${safeSearch}%)`,
+          `(raza.ilike.%${safeSearch}%)`,
+          `(estado_salud.ilike.%${safeSearch}%)`
+        ].join(',');
         countQuery = countQuery.or(searchFilter);
         dataQuery = dataQuery.or(searchFilter);
       }
