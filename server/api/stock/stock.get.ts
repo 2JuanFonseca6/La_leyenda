@@ -31,11 +31,11 @@ export default defineEventHandler(async (event) => {
   try {
     let countQuery = client
       .from("inventario")
-      .select("*", { count: "exact", head: true });
+      .select("id_inventario", { count: "exact", head: true });
 
     let dataQuery = client
       .from("inventario")
-      .select("*")
+      .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url")
       .order("id_inventario", { ascending: false })
       .range(rangeFrom, rangeTo);
 

@@ -195,6 +195,9 @@ const refreshTable = () => {
 
 <template>
   <div class="w-full space-y-4 pb-4">
+    <div v-if="isPending" class="flex justify-center items-center py-12">
+      <span class="loader border-4 border-blue-500 border-t-transparent rounded-full w-12 h-12 animate-spin"></span>
+    </div>
     <DeleteStock
       v-if="selectedIds.length > 0"
       :selected-ids="selectedIds"
@@ -229,3 +232,18 @@ const refreshTable = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.loader {
+  display: inline-block;
+  border-radius: 50%;
+  border-width: 4px;
+  border-style: solid;
+  border-color: #3b82f6 #3b82f6 #3b82f6 transparent;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
