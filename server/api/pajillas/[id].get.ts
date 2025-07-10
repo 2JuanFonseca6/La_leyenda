@@ -9,11 +9,14 @@ export default defineEventHandler(async (event) => {
     return createError({ statusCode: 400, statusMessage: "ID requerido" })
   }
 
-  // Obtener la pajilla
+  // Convertir id a número
+  const numericId = Number(id)
+
+  // Obtener la pajilla (sin fecha_ingreso, usar created_at si se requiere)
   const { data: pajilla, error } = await client
     .from("pajillas")
-    .select("id, pajilla, fecha_ingreso, descripcion, stock")
-    .eq("id", id)
+    .select("id, pajilla, descripcion, stock, created_at, updated_at, animal_id, fecha_uso")
+    .eq("id", numericId)
     .single()
 
   if (error || !pajilla) {
@@ -24,7 +27,7 @@ export default defineEventHandler(async (event) => {
   const { data: movs, error: movsError } = await client
     .from('movimientos_pajilla')
     .select('pajilla_id, tipo_movimiento, cantidad')
-    .eq('pajilla_id', id)
+    .eq('pajilla_id', numericId)
 
   if (movsError) {
     return createError({ statusCode: 500, statusMessage: movsError.message })

@@ -1,6 +1,6 @@
 // server/api/reproduction/reproductions.get.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase";
+import type { Database } from "~/types/supabase";
 import { createError, getHeader, getQuery } from "h3";
 
 export default defineEventHandler(async (event) => {
@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
   // Validación de parámetros
   const page = Number(query.page) || 1;
   const pageSize = Number(query.pageSize) || 10;
+  const search = String(query.search || "").trim();
 
   if (isNaN(page) || page < 1 || isNaN(pageSize) || pageSize < 1) {
     throw createError({
@@ -29,14 +30,28 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Consulta principal
-    const { data, error, count } = await client
+    let countQuery = client
       .from("reproduccion")
-      .select("*", { count: "exact" })
+      .select("*", { count: "exact", head: true });
+    
+    let dataQuery = client
+      .from("reproduccion")
+      .select("*")
       .order("fecha_evento", { ascending: false })
       .range((page - 1) * pageSize, page * pageSize - 1);
 
-    if (error) throw error;
+    // Aplicar filtro de búsqueda si se proporciona
+    if (search) {
+      const searchFilter = `id_reproduccion.eq.${search},madre_id.ilike.%${search}%,padre_id.ilike.%${search}%,raza.ilike.%${search}%,tipo_concepcion.ilike.%${search}%`;
+      countQuery = countQuery.or(searchFilter);
+      dataQuery = dataQuery.or(searchFilter);
+    }
+
+    const { count, error: countError } = await countQuery;
+    if (countError) throw countError;
+
+    const { data, error: dataError } = await dataQuery;
+    if (dataError) throw dataError;
 
     // Mapeamos cada fila para añadir `id` = `id_reproduccion`
     const reproduccionesConId = (data || []).map((row) => ({

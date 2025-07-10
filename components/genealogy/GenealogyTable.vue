@@ -42,7 +42,8 @@ const fetchReproducciones = async () => {
   try {
     const params = {
       page: pagination.value.pageIndex,
-      pageSize: pagination.value.pageSize
+      pageSize: pagination.value.pageSize,
+      search: genealogySearchTerm.value || ''
     }
     const response = await $fetch<{ reproducciones: Reproduction[]; total: number }>('/api/reproduction/reproductions', { params })
     data.value = response.reproducciones
@@ -54,24 +55,17 @@ const fetchReproducciones = async () => {
   }
 }
 
-watch([() => pagination.value.pageIndex, () => pagination.value.pageSize], fetchReproducciones)
+watch([() => pagination.value.pageIndex, () => pagination.value.pageSize, genealogySearchTerm], fetchReproducciones)
 
 fetchReproducciones()
 
 function onGenealogySearch(searchValue: string) {
   genealogySearchTerm.value = searchValue.trim()
+  pagination.value.pageIndex = 1 // Reset a la primera página al buscar
 }
 
 const filteredData = computed(() => {
-  const term = genealogySearchTerm.value.trim().toLowerCase()
-  if (!term) return data.value
-  return data.value.filter(rep =>
-    rep.id_reproduccion.toString().toLowerCase().includes(term) ||
-    rep.madre_id.toLowerCase().includes(term) ||
-    (rep.padre_id ?? '').toLowerCase().includes(term) ||
-    rep.raza.toLowerCase().includes(term) ||
-    (rep.tipo_concepcion ?? '').toLowerCase().includes(term)
-  )
+  return data.value
 })
 
 const columns: TableColumn<Reproduction>[] = [

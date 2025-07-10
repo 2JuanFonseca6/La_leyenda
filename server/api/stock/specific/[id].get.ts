@@ -1,6 +1,6 @@
 // server/api/animal/specific/[id].get.ts
 import { serverSupabaseClient } from "#supabase/server";
-import { Database } from "~/types/supabase"; // Ajusta si es necesario
+import type { Database } from "~/types/supabase"; // Ajusta si es necesario
 import { createError } from "h3";
 
 export default defineEventHandler(async (event) => {
@@ -16,10 +16,11 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
 
   try {
+    const numericId = Number(id);
     const { data, error, status } = await client
       .from("inventario")
       .select("*")
-      .eq("id_inventario", id)
+      .eq("id_inventario", numericId)
       .single();
 
     if (error) {

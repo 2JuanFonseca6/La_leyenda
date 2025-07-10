@@ -5,7 +5,7 @@ export async function getUserSession(event: any) {
   const user = await serverSupabaseUser(event)
   if (!user) return null
   // Obtener el rol desde la tabla profiles
-  const supabase = serverSupabaseClient<Database>(event)
+  const supabase = await serverSupabaseClient<Database>(event)
   const { data, error } = await supabase
     .from('profiles')
     .select('role')

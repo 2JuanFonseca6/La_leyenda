@@ -1,13 +1,25 @@
 <script setup lang="ts">
+import { ref, watch, onUnmounted } from 'vue'
+
 const searchTerm = ref('')
 const emit = defineEmits(['search'])
 
+// Debounce para evitar demasiadas llamadas
+let timeoutId: NodeJS.Timeout | null = null
+
 const handleSearch = () => {
-  emit('search', searchTerm.value.trim())
+  if (timeoutId) clearTimeout(timeoutId)
+  
+  timeoutId = setTimeout(() => {
+    emit('search', searchTerm.value.trim())
+  }, 300)
 }
 
-watch(searchTerm, () => {
-  emit('search', searchTerm.value.trim())
+watch(searchTerm, handleSearch)
+
+// Limpiar timeout al desmontar
+onUnmounted(() => {
+  if (timeoutId) clearTimeout(timeoutId)
 })
 </script>
 

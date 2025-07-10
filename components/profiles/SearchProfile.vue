@@ -38,6 +38,7 @@ const handleSearch = async (term: string) => {
 
 const handleInput = (event: Event) => {
   const term = (event.target as HTMLInputElement).value.trim()
+  searchTerm.value = term
 
   if (timeoutId) clearTimeout(timeoutId)
 
@@ -96,8 +97,14 @@ const deleteProfile = async () => {
 <template>
   <div class="relative w-full max-w-md space-y-4">
     <!-- Buscador -->
-    <UInput placeholder="Buscar por nombre o email..." icon="i-heroicons-magnifying-glass" :loading="isSearching"
-      @input="handleInput" class="w-full"/>
+    <UInput 
+      v-model="searchTerm"
+      placeholder="Buscar por nombre o email..." 
+      icon="i-heroicons-magnifying-glass" 
+      :loading="isSearching"
+      @input="handleInput" 
+      class="w-full"
+    />
 
     <!-- Resultados de búsqueda -->
     <Transition name="fade">

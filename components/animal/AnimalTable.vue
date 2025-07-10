@@ -154,12 +154,24 @@ defineExpose({
   fetchAnimals,
   tableApi: computed(() => table.value?.tableApi)
 })
+
+const props = defineProps<{ search?: string }>()
+
+const filteredData = computed(() => {
+  const term = (props.search || '').trim().toLowerCase()
+  if (!term) return data.value
+  return data.value.filter(animal =>
+    animal.id_animal.toLowerCase().includes(term) ||
+    animal.raza.toLowerCase().includes(term) ||
+    animal.tipo_animal.toLowerCase().includes(term)
+  )
+})
 </script>
 
 <template>
   <div class="w-full space-y-4 pb-4">
     <div class="flex justify-between items-center px-4 py-3.5 border-b border-accented">
-      <AnimalSearch class="w-full" />
+      <!-- <AnimalSearch class="w-full" /> -->
       <UButton
         v-if="userRole === 'admin'"
         icon="i-heroicons-plus-20-solid"
@@ -178,7 +190,7 @@ defineExpose({
     <UTable
       v-model:expanded="expanded"
       ref="table"
-      :data="data"
+      :data="filteredData"
       :columns="columns"
       :loading="isPending"
       class="flex-1"

@@ -38,7 +38,8 @@ const fetchPajillas = async () => {
   try {
     const params = {
       page: pagination.value.pageIndex,
-      pageSize: pagination.value.pageSize
+      pageSize: pagination.value.pageSize,
+      search: props.search || ''
     }
     // Fetch inventario y movimientos de hoy
     const [inventarioRes, movimientosRes] = await Promise.all([
@@ -67,7 +68,7 @@ const fetchPajillas = async () => {
   }
 }
 
-watch([() => pagination.value.pageIndex, () => pagination.value.pageSize], fetchPajillas)
+watch([() => pagination.value.pageIndex, () => pagination.value.pageSize, () => props.search], fetchPajillas)
 fetchPajillas()
 
 const columns: TableColumn<Pajilla>[] = [
@@ -174,12 +175,7 @@ const refreshTable = () => {
 }
 
 const filteredData = computed(() => {
-  const term = props.search?.toLowerCase() || ''
-  if (!term) return data.value
-  return data.value.filter(pajilla =>
-    pajilla.pajilla.toLowerCase().includes(term) ||
-    (pajilla.descripcion ?? '').toLowerCase().includes(term)
-  )
+  return data.value
 })
 
 const showEditModal = ref(false)

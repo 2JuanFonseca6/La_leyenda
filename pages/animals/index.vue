@@ -4,13 +4,19 @@
   
   <BreadNav :items="breadcrumbItems" />
   <h1 class="text-3xl font-bold tracking-widest uppercase text-center">Animales</h1>
-  <AnimalTable />
+  <AnimalSearch v-model="search" />
+  <AnimalTable :search="search" />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import BreadNav from '~/components/navigation/BreadNav.vue';
 import PrintHeader from '~/components/PrintHeader.vue';
+import AnimalSearch from '~/components/animal/AnimalSearch.vue';
+import AnimalTable from '~/components/animal/AnimalTable.vue';
 import type { BreadcrumbItem } from '@nuxt/ui'
+
+const search = ref('')
 
 const breadcrumbItems: BreadcrumbItem[] = [
   {

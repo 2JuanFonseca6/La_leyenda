@@ -47,7 +47,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { BreadcrumbItem } from "@nuxt/ui";
-import { AnimalWeightTimeline } from '~/components/dashboard'
+import MetricsCards from '~/components/dashboard/MetricsCards.vue'
+import StadisticCards from '~/components/dashboard/StadisticCards.vue'
+import SalesCharts from '~/components/dashboard/SalesCharts.vue'
 
 definePageMeta({ layout: "logged" });
 

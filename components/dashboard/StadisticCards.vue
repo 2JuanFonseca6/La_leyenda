@@ -74,7 +74,7 @@ import {
 } from 'chart.js'
 import type { ChartOptions, ChartData } from 'chart.js'
 import { useFetch } from '#app'
-import { AnimalWeightTimeline } from './index'
+
 
 ChartJS.register(
   CategoryScale,

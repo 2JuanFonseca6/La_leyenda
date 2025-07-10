@@ -1,1 +1,0 @@
-export { default as AnimalWeightTimeline } from './AnimalWeightTimeline.vue' 

@@ -6,25 +6,37 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const page = parseInt(query.page as string) || 1
   const pageSize = parseInt(query.pageSize as string) || 10
+  const search = String(query.search || "").trim()
   const offset = (page - 1) * pageSize
 
   try {
     // Obtener el total de registros
-    const { count, error: countError } = await client
+    let countQuery = client
       .from("pajillas")
       .select("*", { count: "exact", head: true })
+
+    // Obtener los datos paginados
+    let dataQuery = client
+      .from("pajillas")
+      .select("id, pajilla, fecha_ingreso, descripcion, stock")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + pageSize - 1)
+
+    // Aplicar filtro de búsqueda si se proporciona
+    if (search) {
+      const searchFilter = `pajilla.ilike.%${search}%,descripcion.ilike.%${search}%`
+      countQuery = countQuery.or(searchFilter)
+      dataQuery = dataQuery.or(searchFilter)
+    }
+
+    const { count, error: countError } = await countQuery
 
     if (countError) {
       console.error("Error al contar pajillas:", countError.message)
       return createError({ statusCode: 500, statusMessage: countError.message })
     }
 
-    // Obtener los datos paginados
-    const { data, error } = await client
-      .from("pajillas")
-      .select("id, pajilla, fecha_ingreso, descripcion, stock")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + pageSize - 1)
+    const { data, error } = await dataQuery
 
     if (error) {
       console.error("Error al cargar pajillas:", error.message)
