@@ -1,7 +1,7 @@
 <template>
-  <div class="vue-flow-container h-[500px] w-full border rounded-lg print:h-[300px] print:border-0 print:rounded-none">
+  <div class="vue-flow-container h-[500px] w-full border rounded-lg print:h-[700px] print:w-[95vw] print:mx-auto print:border print:border-gray-300 print:rounded-lg print:p-0 print:m-0 print:scale-[1.35] print:origin-top-left">
     <VueFlow v-model:nodes="nodes" v-model:edges="edges" :fit-view-on-init="true" :max-zoom="1.5" :min-zoom="0.5"
-      :node-drag-threshold="0" class="print:scale-75 print:transform print:origin-top-left">
+      :node-drag-threshold="0">
       <Background :gap="35" :size="1" class="print:hidden" />
       <Controls class="print:hidden" />
     </VueFlow>

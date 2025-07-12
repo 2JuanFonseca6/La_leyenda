@@ -250,19 +250,16 @@ const handleHealthUpdated = () => {
       </div>
 
       <template v-else>
-        <div class="print:block" :class="{ 'print:hidden': !printSections.genealogia }">
+        <div :class="{ 'print:hidden': !printSections.genealogia }">
           <h2 v-if="genealogy" class="text-2xl font-semibold mt-8 print:text-lg print:mt-4"> Árbol Genealógico </h2>
-          
-          <!-- Árbol interactivo para pantalla -->
+          <!-- Solo pantalla -->
           <div class="print:hidden">
             <GenealogyTree v-if="genealogy" :tree-data="genealogy" class="mt-8" />
           </div>
-          
-          <!-- Árbol compacto para impresión -->
+          <!-- Solo impresión -->
           <div class="hidden print:block">
             <GenealogyTreePrint v-if="genealogy" :tree-data="genealogy" />
           </div>
-          
           <UAlert v-if="!genealogy" title="Sin registro genealógico"
             description="No se encontraron datos de parentesco para este animal." icon="i-heroicons-information-circle"
             color="warning" class="mt-8 print:text-sm" />

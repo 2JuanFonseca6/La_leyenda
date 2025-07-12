@@ -196,6 +196,18 @@
         </div>
       </div>
 
+      <!-- NUEVA SECCIÓN: Peso al Destete -->
+      <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
+        <div class="grid grid-cols-3 gap-4 text-center print:gap-2">
+          <div>
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs">Peso al Destete</label>
+            <p class="text-lg font-semibold print:text-sm">
+              {{ animal.peso_destete != null ? animal.peso_destete + ' kg' : 'N/A' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- NUEVA SECCIÓN: Información Adicional -->
       <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
         <h4 class="text-lg font-bold mb-4">Información Adicional</h4>
@@ -304,33 +316,97 @@
 
       <!-- EVALUACIONES REPRODUCTIVAS: ANDROLÓGICO Y GENOMATOLÓGICO -->
       <div class="mt-8 border-t pt-6">
-        <h4 class="text-lg font-bold mb-4">Evaluaciones Reproductivas</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-1 print:gap-2">
-          <!-- Imagen Andrológica -->
-          <div class="flex flex-col items-center print:items-start print:mb-4">
-            <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold">Andrológico</label>
-            <img
-              v-if="animal.andrologico_image_url"
-              :src="animal.andrologico_image_url"
-              alt="Imagen Andrológica"
-              class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
-              @click="openPreview(animal.andrologico_image_url, 'andrologico')"
+        <template v-if="showEvaluaciones">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-bold mb-0">Evaluaciones Reproductivas</h4>
+            <UButton
+              :icon="showEvaluaciones ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showEvaluaciones = !showEvaluaciones"
+              size="sm"
+              color="neutral"
+              :title="showEvaluaciones ? 'Ocultar Evaluaciones' : 'Mostrar Evaluaciones'"
             />
-            <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
           </div>
-          <!-- Imagen Genomatológica -->
-          <div class="flex flex-col items-center print:items-start print:mb-4">
-            <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold">Genomatológico</label>
-            <img
-              v-if="animal.genomatologico_image_url"
-              :src="animal.genomatologico_image_url"
-              alt="Imagen Genomatológica"
-              class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
-              @click="openPreview(animal.genomatologico_image_url, 'genomatologico')"
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="flex flex-col items-center md:items-start">
+              <template v-if="showAndrologico">
+                <UButton
+                  :icon="showAndrologico ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                  @click="showAndrologico = !showAndrologico"
+                  size="sm"
+                  color="neutral"
+                  :title="showAndrologico ? 'Ocultar Andrológico' : 'Mostrar Andrológico'"
+                >Andrológico</UButton>
+                <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold mt-2">Andrológico</label>
+              </template>
+              <template v-else>
+                <UButton
+                  :icon="showAndrologico ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                  @click="showAndrologico = !showAndrologico"
+                  size="sm"
+                  color="neutral"
+                  :title="showAndrologico ? 'Ocultar Andrológico' : 'Mostrar Andrológico'"
+                >Andrológico</UButton>
+              </template>
+            </div>
+            <div class="flex flex-col items-center md:items-end">
+              <template v-if="showGenomatologico">
+                <UButton
+                  :icon="showGenomatologico ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                  @click="showGenomatologico = !showGenomatologico"
+                  size="sm"
+                  color="neutral"
+                  :title="showGenomatologico ? 'Ocultar Genomatológico' : 'Mostrar Genomatológico'"
+                >Genomatológico</UButton>
+                <label class="text-sm font-medium text-[var(--color-custom-300)] mb-2 print:text-base print:font-bold mt-2">Genomatológico</label>
+              </template>
+              <template v-else>
+                <UButton
+                  :icon="showGenomatologico ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                  @click="showGenomatologico = !showGenomatologico"
+                  size="sm"
+                  color="neutral"
+                  :title="showGenomatologico ? 'Ocultar Genomatológico' : 'Mostrar Genomatológico'"
+                >Genomatológico</UButton>
+              </template>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-1 print:gap-2">
+            <!-- Imagen Andrológica -->
+            <div v-if="showAndrologico" class="flex flex-col items-center print:items-start print:mb-4">
+              <img
+                v-if="animal.andrologico_image_url"
+                :src="animal.andrologico_image_url"
+                alt="Imagen Andrológica"
+                class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
+                @click="openPreview(animal.andrologico_image_url, 'andrologico')"
+              />
+              <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
+            </div>
+            <!-- Imagen Genomatológica -->
+            <div v-if="showGenomatologico" class="flex flex-col items-center print:items-start print:mb-4">
+              <img
+                v-if="animal.genomatologico_image_url"
+                :src="animal.genomatologico_image_url"
+                alt="Imagen Genomatológica"
+                class="rounded border border-gray-300 max-h-64 object-contain mb-2 cursor-pointer transition hover:scale-105 print:max-h-[400px] print:w-full print:object-contain print:mb-2"
+                @click="openPreview(animal.genomatologico_image_url, 'genomatologico')"
+              />
+              <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div class="flex items-center gap-4 mb-4">
+            <UButton
+              :icon="showEvaluaciones ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showEvaluaciones = !showEvaluaciones"
+              size="sm"
+              color="neutral"
+              :title="showEvaluaciones ? 'Ocultar Evaluaciones' : 'Mostrar Evaluaciones'"
             />
-            <span v-else class="text-gray-400 mb-2 print:text-gray-700">Sin imagen</span>
           </div>
-        </div>
+        </template>
       </div>
 
       <!-- HISTORIAL DE SALUD -->
@@ -526,6 +602,15 @@
             <UInput v-model.number="formData.cantidad_hijos" type="number" min="0" step="1" placeholder="0" />
           </UFormField>
 
+          <!-- Peso al Destete -->
+          <UFormField name="peso_destete" label="Peso al Destete (kg)" class="col-span-1">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Peso al Destete (kg)</span>
+            </template>
+            <UInput v-model="formData.peso_destete" type="number" min="0" step="0.01" placeholder="Ej: 180" 
+              class="text-[var(--color-custom-900)] dark:text-[var(--color-custom-50)]" />
+          </UFormField>
+
           <!-- Imagen del Animal -->
           <UFormField name="image" label="Imagen del Animal" class="col-span-1 sm:col-span-2">
             <template #label>
@@ -647,6 +732,7 @@ const schema = z.object({
   dueño: z.string().optional(),
   tipo_ganado: z.enum(["PURO", "COMERCIO"]).optional(),
   cantidad_hijos: z.coerce.number().min(0).optional(),
+  peso_destete: z.number().nullable().optional(),
 });
 
 const { userRole } = useUserRole();
@@ -690,6 +776,8 @@ const genomatologicoInput = ref<HTMLInputElement | null>(null);
 
 const showChart = ref(true)
 const showHistorial = ref(true)
+const showAndrologico = ref(true)
+const showGenomatologico = ref(true)
 const chartRef = ref<HTMLCanvasElement>()
 const historialPeso = ref<HistorialPeso[]>([])
 
@@ -724,6 +812,7 @@ const formData = reactive<{
   dueño?: string;
   tipo_ganado?: "PURO" | "COMERCIO";
   cantidad_hijos?: number;
+  peso_destete?: number | null;
 }>({
   id_animal: props.animal.id_animal,
   fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
@@ -755,6 +844,7 @@ const formData = reactive<{
   dueño: props.animal.dueño || "",
   tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
   cantidad_hijos: props.animal.cantidad_hijos || undefined,
+  peso_destete: props.animal.peso_destete || undefined,
 });
 
 let chartInstance: Chart | null = null
@@ -1518,6 +1608,7 @@ const enableEditing = () => {
     dueño: props.animal.dueño || "",
     tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
     cantidad_hijos: props.animal.cantidad_hijos || undefined,
+    peso_destete: props.animal.peso_destete || undefined,
   });
 };
 
@@ -1593,6 +1684,7 @@ const handleSubmit = async () => {
           dueño: formData.dueño || null,
           tipo_ganado: formData.tipo_ganado || null,
           cantidad_hijos: formData.cantidad_hijos || null,
+          peso_destete: formData.peso_destete || null,
         },
       }
     );
@@ -1625,6 +1717,7 @@ const handleSubmit = async () => {
       fecha_fallecimiento: formData.fecha_fallecimiento || null,
       venta: false,
       peso_inicial: 0,
+      peso_destete: formData.peso_destete || null,
     });
   } catch (error: unknown) {
     console.error("Error en actualización:", error);
@@ -1712,6 +1805,8 @@ const handleDeletePreviewImage = async () => {
     });
   }
 };
+
+const showEvaluaciones = ref(true)
 </script>
 
 <style scoped>

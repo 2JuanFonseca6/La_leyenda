@@ -44,98 +44,140 @@ const props = defineProps<{
 
 @media print {
   .genealogy-print {
-    display: block !important;
-    margin: 1rem 0;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
-    background: white;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.5rem 0;
+    padding: 1.5rem 1rem;
+    border: 1.5px solid #374151;
+    background: #fff;
+    border-radius: 10px;
+    min-width: 350px;
+    max-width: 800px;
+    width: 100%;
+    font-family: 'Times New Roman', Times, serif;
   }
 
   .genealogy-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
+    width: 100%;
   }
 
   .genealogy-node {
-    border: 2px solid #374151;
+    border: 1.5px solid #374151;
     border-radius: 8px;
-    padding: 0.75rem;
-    background: white;
+    padding: 1rem 2rem;
+    background: #fff;
     min-width: 200px;
     text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #222;
+    position: relative;
+    z-index: 2;
   }
 
   .main-node {
-    border-color: #1f2937;
-    background: #f9fafb;
+    border-color: #222;
+    background: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #111;
   }
 
   .parents-container {
     display: flex;
-    gap: 2rem;
+    gap: 4rem;
     justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    position: relative;
+    margin-top: 1.2rem;
   }
 
   .parent-node {
-    border-color: #6b7280;
+    border: 1.5px solid #374151;
+    border-radius: 8px;
+    background: #fff;
+    min-width: 160px;
+    padding: 0.7rem 1.2rem 1.2rem 1.2rem;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #222;
     position: relative;
+    z-index: 2;
   }
 
-  .parent-node::before {
-    content: '';
-    position: absolute;
-    top: -1rem;
-    left: 50%;
-    width: 2px;
-    height: 1rem;
-    background: #374151;
-    transform: translateX(-50%);
+  .parent-label {
+    font-size: 0.95rem;
+    color: #374151;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    font-style: italic;
+    font-weight: 400;
+    margin-top: 0.4rem;
+    display: block;
+    letter-spacing: 0.2px;
   }
 
   .node-content {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.3rem;
+    align-items: center;
   }
 
   .node-id {
     font-weight: bold;
-    font-size: 14px;
-    color: #1f2937;
+    font-size: 1.05rem;
+    color: #222;
+    letter-spacing: 0.2px;
   }
 
   .node-info {
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 0.98rem;
+    color: #444;
+    font-weight: 400;
+    letter-spacing: 0.1px;
   }
 
-  .parent-label {
-    font-size: 10px;
-    color: #9ca3af;
-    font-style: italic;
-    margin-top: 0.25rem;
+  /* Líneas rectas de conexión */
+  .genealogy-container {
+    position: relative;
   }
-
-  .mother::after {
-    content: '↖';
+  .genealogy-container::before {
+    content: '';
+    display: block;
     position: absolute;
-    top: -1.5rem;
+    top: 2.2rem;
     left: 50%;
+    width: 2px;
+    height: 2.2rem;
+    background: #374151;
+    z-index: 1;
     transform: translateX(-50%);
-    font-size: 16px;
-    color: #374151;
   }
-
-  .father::after {
-    content: '↗';
+  .parents-container::before {
+    content: '';
     position: absolute;
-    top: -1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 16px;
-    color: #374151;
+    top: -1.2rem;
+    left: 0;
+    width: 100%;
+    height: 0;
+    border-top: 1.5px solid #374151;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .parent-node.mother::before,
+  .parent-node.father::before,
+  .parent-node.mother::after,
+  .parent-node.father::after {
+    content: none !important;
   }
 }
 </style> 

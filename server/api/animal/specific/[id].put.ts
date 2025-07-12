@@ -47,6 +47,7 @@ export default defineEventHandler(async (event) => {
     andrologico_image_url: body.andrologico_image_url,
     genomatologico_image_url: body.genomatologico_image_url,
     cantidad_hijos: body.cantidad_hijos,
+    peso_destete: body.peso_destete,
   };
 
   // Filtra campos undefined

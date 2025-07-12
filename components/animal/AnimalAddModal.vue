@@ -64,6 +64,14 @@
           <UInput v-model.number="formState.peso_actual" type="number" step="0.1" />
         </UFormField>
 
+        <!-- Peso al Destete (opcional) -->
+        <UFormField name="peso_destete" class="col-span-1">
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Peso al Destete (kg, opcional)</span>
+          </template>
+          <UInput v-model.number="formState.peso_destete" type="number" step="0.1" placeholder="Ej: 80" />
+        </UFormField>
+
         <!-- Estado de Salud -->
         <UFormField name="estado_salud" class="col-span-1">
           <template #label>
@@ -134,7 +142,7 @@
         <!-- Imagen del Animal -->
         <UFormField name="image" class="col-span-1 sm:col-span-2">
           <template #label>
-            <span>Imagen del Animal</span>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Imagen del Animal</span>
           </template>
           <UInput type="file" @change="handleFileChange" accept="image/*" class="cursor-pointer" />
         </UFormField>
@@ -142,7 +150,7 @@
         <!-- Imagen Andrológica -->
         <UFormField name="andrologico_image" class="col-span-1 sm:col-span-2">
           <template #label>
-            <span>Imagen Andrológica</span>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Imagen Andrológica</span>
           </template>
           <UInput type="file" @change="handleAndrologicoFileChange" accept="image/*" class="cursor-pointer" />
         </UFormField>
@@ -150,7 +158,7 @@
         <!-- Imagen Genomatológica -->
         <UFormField name="genomatologico_image" class="col-span-1 sm:col-span-2">
           <template #label>
-            <span>Imagen Genomatológica</span>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Imagen Genomatológica</span>
           </template>
           <UInput type="file" @change="handleGenomatologicoFileChange" accept="image/*" class="cursor-pointer" />
         </UFormField>
@@ -199,6 +207,7 @@ const schema = z.object({
   fecha_nacimiento: z.string().date("Fecha inválida"),
   peso_inicial: z.number().min(0, "El peso no puede ser negativo"),
   peso_actual: z.number().min(0, "El peso no puede ser negativo"),
+  peso_destete: z.number().optional().nullable(),
 });
 
 type FormState = Omit<
@@ -214,6 +223,7 @@ type FormState = Omit<
   andrologico_image_url?: string | null;
   genomatologico_image_url?: string | null;
   cantidad_hijos?: number | null;
+  peso_destete?: number | null;
 };
 
 const formState = reactive<FormState>({
@@ -233,6 +243,7 @@ const formState = reactive<FormState>({
   andrologico_image_url: undefined,
   genomatologico_image_url: undefined,
   cantidad_hijos: undefined,
+  peso_destete: undefined,
 });
 
 const selectedFile = ref<File | null>(null);
@@ -307,6 +318,7 @@ const resetForm = () => {
     andrologico_image_url: undefined,
     genomatologico_image_url: undefined,
     cantidad_hijos: undefined,
+    peso_destete: undefined,
   });
   selectedFile.value = null;
   selectedAndrologicoFile.value = null;

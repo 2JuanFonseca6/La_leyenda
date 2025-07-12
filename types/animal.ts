@@ -26,6 +26,7 @@ export interface Animal {
   andrologico_image_url?: string | null;
   genomatologico_image_url?: string | null;
   cantidad_hijos?: number | null;
+  peso_destete?: number | null;
 }
 
 export interface Venta {

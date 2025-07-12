@@ -87,6 +87,14 @@
           {{ animal.id_reproduccion || '—' }}
         </span>
       </div>
+
+      <!-- Columna X: Peso al Destete -->
+      <div class="flex flex-col">
+        <span class="text-xs text-[var(--color-custom-300)]">Peso al Destete</span>
+        <span class="text-sm font-medium text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)]">
+          {{ animal.peso_destete != null ? animal.peso_destete + ' kg' : 'N/A' }}
+        </span>
+      </div>
     </div>
   </UCard>
 
@@ -161,6 +169,7 @@ interface Animal {
   estado_salud: string
   venta: boolean
   id_reproduccion: string | null
+  peso_destete: number | null
 }
 
 // Props y emits
