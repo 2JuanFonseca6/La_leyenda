@@ -25,7 +25,7 @@
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Notas</span>
           </template>
-          <UTextarea v-model="form.notas" :maxlength="200" class="w-full"/>
+          <UTextarea v-model="form.notas" :maxlength="2000" class="w-full"/>
         </UFormField>
 
         <div class="flex justify-end gap-3 mt-4">

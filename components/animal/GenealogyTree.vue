@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { VueFlow, Position } from '@vue-flow/core'
+import { VueFlow, Position, useVueFlow } from '@vue-flow/core'
 import { Background, Controls } from '@vue-flow/additional-components'
 import '@vue-flow/core/dist/style.css'
 import type { Edge, Node } from '@vue-flow/core'
@@ -76,4 +76,57 @@ watch(() => props.treeData, (newVal) => {
     buildTree(newVal, 500, 100, true)
   }
 }, { immediate: true, deep: true })
+
+// --- Ajuste automático para impresión ---
+const { fitView } = useVueFlow()
+
+onMounted(() => {
+  // Ajustar el árbol automáticamente antes de imprimir
+  const handleBeforePrint = () => {
+    setTimeout(() => {
+      fitView && fitView()
+    }, 100) // pequeño delay para asegurar render
+  }
+  window.addEventListener('beforeprint', handleBeforePrint)
+})
 </script>
+
+<style scoped>
+.vue-flow-container {
+  height: 500px;
+  width: 100%;
+  border: 1.5px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  margin: 0 auto;
+  padding: 0;
+  overflow: auto;
+}
+
+@media print {
+  .vue-flow-container {
+    width: 180vw !important;
+    height: 90vh !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    /* Escala el contenido para que quepa en la hoja */
+    transform: scale(0.45);
+    transform-origin: top left;
+    break-after: auto !important;
+    break-inside: avoid !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+  }
+  body, html {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}
+</style>

@@ -96,39 +96,10 @@ watch(
 const { data: genealogy, pending: genealogyPending } = await useLazyFetch<GenealogyResponse>(
   `/api/genealogy/id/${id}`,
   {
-    server: false,
-    transform: (res: any) => transformGenealogyData(res)
+    server: false
+    // Eliminamos el transform, ya que la respuesta ya es el árbol completo
   }
 )
-
-// Función para transformar la respuesta de la API
-const transformGenealogyData = (apiData: any): GenealogyResponse => {
-  if (!apiData?.reproduccion) {
-    return {
-      id: apiData.animal.id_animal,
-      raza: apiData.animal.raza,
-      tipo_animal: apiData.animal.tipo_animal,
-      madre: undefined,
-      padre: undefined
-    }
-  }
-
-  const transformAnimalToNode = (animalItem: Animal): GenealogyTreeNode => ({
-    id: animalItem.id_animal,
-    raza: animalItem.raza,
-    tipo_animal: animalItem.tipo_animal,
-    madre: undefined,
-    padre: undefined
-  });
-
-  return {
-    id: apiData.animal.id_animal,
-    raza: apiData.animal.raza,
-    tipo_animal: apiData.animal.tipo_animal,
-    madre: apiData.reproduccion.madre ? transformAnimalToNode(apiData.reproduccion.madre) : undefined,
-    padre: apiData.reproduccion.padre ? transformAnimalToNode(apiData.reproduccion.padre) : undefined
-  };
-};
 
 
 const showPrintOptions = ref(false)
@@ -253,11 +224,11 @@ const handleHealthUpdated = () => {
         <div :class="{ 'print:hidden': !printSections.genealogia }">
           <h2 v-if="genealogy" class="text-2xl font-semibold mt-8 print:text-lg print:mt-4"> Árbol Genealógico </h2>
           <!-- Solo pantalla -->
-          <div class="print:hidden">
+          <div>
             <GenealogyTree v-if="genealogy" :tree-data="genealogy" class="mt-8" />
           </div>
-          <!-- Solo impresión -->
-          <div class="hidden print:block">
+          <!-- Árbol de impresión siempre visible -->
+          <div>
             <GenealogyTreePrint v-if="genealogy" :tree-data="genealogy" />
           </div>
           <UAlert v-if="!genealogy" title="Sin registro genealógico"

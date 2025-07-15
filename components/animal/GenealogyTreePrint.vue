@@ -1,40 +1,68 @@
 <template>
-  <div class="genealogy-print">
-    <div class="genealogy-container">
-      <div class="genealogy-node main-node">
-        <div class="node-content">
-          <div class="node-id">{{ treeData?.id || 'N/A' }}</div>
-          <div class="node-info">{{ treeData?.raza || 'N/A' }} | {{ treeData?.tipo_animal || 'N/A' }}</div>
-        </div>
-      </div>
-      
-      <div class="parents-container">
-        <div v-if="treeData?.madre" class="parent-node mother">
-          <div class="node-content">
-            <div class="node-id">{{ treeData.madre.id }}</div>
-            <div class="node-info">{{ treeData.madre.raza }} | {{ treeData.madre.tipo_animal }}</div>
-            <div class="parent-label">Madre</div>
-          </div>
-        </div>
-        
-        <div v-if="treeData?.padre" class="parent-node father">
-          <div class="node-content">
-            <div class="node-id">{{ treeData.padre.id }}</div>
-            <div class="node-info">{{ treeData.padre.raza }} | {{ treeData.padre.tipo_animal }}</div>
-            <div class="parent-label">Padre</div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="genealogy-print" v-if="treeData">
+    <ul class="genealogy-list">
+      <GenealogyListNode :node="treeData" role="Animal" :generation="0" />
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { GenealogyTreeNode } from '~/types/animal'
+const props = defineProps<{ treeData?: GenealogyTreeNode | null }>()
+</script>
 
-const props = defineProps<{
-  treeData?: GenealogyTreeNode | null
-}>()
+<script lang="ts">
+import { defineComponent } from 'vue'
+
+export default {
+  components: {
+    GenealogyListNode: defineComponent({
+      name: 'GenealogyListNode',
+      props: {
+        node: {
+          type: Object,
+          required: true
+        },
+        role: {
+          type: String,
+          required: true
+        },
+        generation: {
+          type: Number,
+          required: true
+        }
+      },
+      computed: {
+        nextGeneration() {
+          return this.generation + 1
+        },
+        motherRole() {
+          if (this.generation === 0) return 'Madre'
+          if (this.generation === 1) return 'Abuela materna'
+          if (this.generation === 2) return 'Bisabuela materna'
+          return 'Ascendiente'
+        },
+        fatherRole() {
+          if (this.generation === 0) return 'Padre'
+          if (this.generation === 1) return 'Abuelo materno'
+          if (this.generation === 2) return 'Bisabuelo materno'
+          return 'Ascendiente'
+        }
+      },
+      template: `
+        <li class='genealogy-list-item' :style="{ marginLeft: (generation * 2) + 'rem' }">
+          <span class='role-label'>{{ role }}:</span>
+          <span class='node-id'>{{ node.id }}</span>
+          <span class='node-info'>{{ node.raza }} | {{ node.tipo_animal }}</span>
+          <ul v-if="generation < 4 && (node.madre || node.padre)">
+            <GenealogyListNode v-if="node.madre" :node="node.madre" :role="motherRole" :generation="nextGeneration" />
+            <GenealogyListNode v-if="node.padre" :node="node.padre" :role="fatherRole" :generation="nextGeneration" />
+          </ul>
+        </li>
+      `
+    })
+  }
+}
 </script>
 
 <style scoped>
@@ -44,140 +72,41 @@ const props = defineProps<{
 
 @media print {
   .genealogy-print {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
+    display: block !important;
     margin: 1.5rem 0;
     padding: 1.5rem 1rem;
-    border: 1.5px solid #374151;
+    border: none;
     background: #fff;
-    border-radius: 10px;
+    border-radius: 0;
     min-width: 350px;
     max-width: 800px;
     width: 100%;
     font-family: 'Times New Roman', Times, serif;
   }
-
-  .genealogy-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    width: 100%;
+  .genealogy-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
   }
-
-  .genealogy-node {
-    border: 1.5px solid #374151;
-    border-radius: 8px;
-    padding: 1rem 2rem;
-    background: #fff;
-    min-width: 200px;
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #222;
-    position: relative;
-    z-index: 2;
-  }
-
-  .main-node {
-    border-color: #222;
-    background: #fff;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #111;
-  }
-
-  .parents-container {
-    display: flex;
-    gap: 4rem;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    position: relative;
-    margin-top: 1.2rem;
-  }
-
-  .parent-node {
-    border: 1.5px solid #374151;
-    border-radius: 8px;
-    background: #fff;
-    min-width: 160px;
-    padding: 0.7rem 1.2rem 1.2rem 1.2rem;
-    text-align: center;
-    font-size: 1rem;
+  .genealogy-list-item {
+    margin-bottom: 0.7rem;
+    font-size: 1.05rem;
     font-weight: 500;
     color: #222;
-    position: relative;
-    z-index: 2;
   }
-
-  .parent-label {
-    font-size: 0.95rem;
-    color: #374151;
-    background: none;
-    border-radius: 0;
-    padding: 0;
-    font-style: italic;
-    font-weight: 400;
-    margin-top: 0.4rem;
-    display: block;
-    letter-spacing: 0.2px;
+  .role-label {
+    font-weight: bold;
+    margin-right: 0.5rem;
   }
-
-  .node-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    align-items: center;
-  }
-
   .node-id {
     font-weight: bold;
-    font-size: 1.05rem;
-    color: #222;
-    letter-spacing: 0.2px;
+    margin-right: 0.5rem;
+    color: #374151;
   }
-
   .node-info {
-    font-size: 0.98rem;
     color: #444;
     font-weight: 400;
-    letter-spacing: 0.1px;
-  }
-
-  /* Líneas rectas de conexión */
-  .genealogy-container {
-    position: relative;
-  }
-  .genealogy-container::before {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 2.2rem;
-    left: 50%;
-    width: 2px;
-    height: 2.2rem;
-    background: #374151;
-    z-index: 1;
-    transform: translateX(-50%);
-  }
-  .parents-container::before {
-    content: '';
-    position: absolute;
-    top: -1.2rem;
-    left: 0;
-    width: 100%;
-    height: 0;
-    border-top: 1.5px solid #374151;
-    z-index: 1;
-    pointer-events: none;
-  }
-  .parent-node.mother::before,
-  .parent-node.father::before,
-  .parent-node.mother::after,
-  .parent-node.father::after {
-    content: none !important;
+    margin-left: 0.5rem;
   }
 }
 </style> 

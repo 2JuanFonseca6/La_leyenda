@@ -2,6 +2,63 @@ import { serverSupabaseClient } from "#supabase/server";
 import type { Database } from "~/types/supabase";
 import { createError, getHeader } from "h3";
 
+// Función recursiva para construir el árbol genealógico completo
+type GenealogyTreeNode = {
+  id: string;
+  raza: string;
+  tipo_animal: string;
+  madre?: GenealogyTreeNode;
+  padre?: GenealogyTreeNode;
+};
+
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+async function buildGenealogyTree(client: SupabaseClient<Database>, animalId: string, depth = 0, maxDepth = 5): Promise<GenealogyTreeNode | undefined> {
+  if (!animalId || depth > maxDepth) return undefined;
+
+  // 1. Obtener animal
+  const { data: animal, error: animalError } = await client
+    .from("animals")
+    .select("*")
+    .eq("id_animal", animalId)
+    .single();
+  if (animalError || !animal) return undefined;
+
+  // 2. Obtener reproducción (si existe id_reproduccion)
+  let madreNode: GenealogyTreeNode | undefined = undefined;
+  let padreNode: GenealogyTreeNode | undefined = undefined;
+  const reproduccionId = animal.id_reproduccion;
+
+  if (reproduccionId !== null && reproduccionId !== undefined) {
+    const { data: reproduccionData, error: errReproduccion } = await client
+      .from("reproduccion")
+      .select(
+        `*, madre:animals!fk_reproduccion_madre(id_animal, raza, tipo_animal, id_reproduccion), padre:animals!fk_reproduccion_padre(id_animal, raza, tipo_animal, id_reproduccion)`
+      )
+      .eq("id_reproduccion", reproduccionId)
+      .maybeSingle();
+
+    if (!errReproduccion && reproduccionData) {
+      // Recursivamente buscar madre
+      if (reproduccionData.madre && reproduccionData.madre.id_animal) {
+        madreNode = await buildGenealogyTree(client, String(reproduccionData.madre.id_animal), depth + 1, maxDepth);
+      }
+      // Recursivamente buscar padre
+      if (reproduccionData.padre && reproduccionData.padre.id_animal) {
+        padreNode = await buildGenealogyTree(client, String(reproduccionData.padre.id_animal), depth + 1, maxDepth);
+      }
+    }
+  }
+
+  return {
+    id: animal.id_animal,
+    raza: animal.raza,
+    tipo_animal: animal.tipo_animal ?? '',
+    madre: madreNode,
+    padre: padreNode,
+  };
+}
+
 export default defineEventHandler(async (event) => {
   // --- INICIO: Comprobación de Acceso Directo ---
   const secFetchSite = getHeader(event, "sec-fetch-site");
@@ -28,68 +85,18 @@ export default defineEventHandler(async (event) => {
     });
 
   try {
-    // 1. Obtener animal
-    const { data: animal, error: animalError } = await client
-      .from("animals")
-      .select("*")
-      .eq("id_animal", id)
-      .single();
-
-    if (animalError) throw animalError;
-
-    // 2. Obtener genealogía (si existe)
-    const { data: genealogia, error: genealogiaError } = await client
-      .from("genealogia")
-      .select("*")
-      .eq("animal_id", id)
-      .maybeSingle(); // Permite null si no hay registros
-
-    if (genealogiaError) throw genealogiaError;
-
-    // 3. Obtener reproducción (si existe id_reproduccion)
-    let reproduccionData = null;
-    const reproduccionId = animal.id_reproduccion ?? null;
-
-    if (reproduccionId && !isNaN(reproduccionId)) {
-      const { data, error: errReproduccion } = await client
-        .from("reproduccion")
-        .select(
-          `
-            *,
-            madre:animals!fk_reproduccion_madre(id_animal, raza, tipo_animal),
-            padre:animals!fk_reproduccion_padre(id_animal, raza, tipo_animal)
-          `
-        )
-        .eq("id_reproduccion", reproduccionId)
-        .maybeSingle();
-
-      if (!errReproduccion) reproduccionData = data;
+    // Construir árbol genealógico completo recursivo
+    const genealogyTree = await buildGenealogyTree(client, id);
+    if (!genealogyTree) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Animal no encontrado o sin genealogía",
+      });
     }
-
-    // Construir respuesta
-    const response = {
-      animal: animal,
-      genealogia: genealogia
-        ? {
-            tipo_registro: genealogia.tipo_registro,
-            documento: genealogia.documento,
-            observaciones: genealogia.observaciones,
-          }
-        : null,
-      reproduccion: reproduccionData
-        ? {
-            tipo_concepcion: reproduccionData.tipo_concepcion,
-            fecha_evento: reproduccionData.fecha_evento,
-            madre: reproduccionData.madre,
-            padre: reproduccionData.padre,
-          }
-        : null,
-    };
-
-    return response;
+    return genealogyTree;
   } catch (err: any) {
     // Manejar errores específicos
-    if (err.message.includes("No rows found")) {
+    if (err.message && err.message.includes("No rows found")) {
       throw createError({
         statusCode: 404,
         statusMessage: "Animal no encontrado",
