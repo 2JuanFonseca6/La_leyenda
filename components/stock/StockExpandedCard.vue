@@ -180,13 +180,29 @@ const handleFacturaFileChange = async (event: Event) => {
   }
 }
 
+const isFacturaModalOpen = ref(false)
+const isDeleteFacturaModalOpen = ref(false) // NUEVO: estado para modal de confirmación de eliminación
+
+function openFacturaModal() {
+  isFacturaModalOpen.value = true
+}
+function closeFacturaModal() {
+  isFacturaModalOpen.value = false
+}
+
 const handleDeleteFactura = async () => {
   if (!formState.factura_url) return;
-  if (!confirm('¿Seguro que deseas eliminar la factura adjunta? Esta acción no se puede deshacer.')) return;
+  // Eliminar confirm nativo, ahora se usará el modal
+  isDeleteFacturaModalOpen.value = true;
+};
+
+// Nueva función: ejecutar la eliminación real tras confirmar en el modal
+const confirmDeleteFactura = async () => {
+  isDeleteFacturaModalOpen.value = false;
   isLoading.value = true;
   try {
     // Eliminar del storage
-    const fileName = formState.factura_url.split('/').pop();
+    const fileName = formState.factura_url?.split('/')?.pop();
     if (fileName) {
       const { error: deleteError } = await supabase.storage
         .from('inventario-image')
@@ -205,6 +221,7 @@ const handleDeleteFactura = async () => {
       color: 'success',
       icon: 'i-heroicons-check-circle',
     });
+    emit('updated');
   } catch (error: any) {
     toast.add({
       title: 'Error al eliminar factura',
@@ -215,7 +232,7 @@ const handleDeleteFactura = async () => {
   } finally {
     isLoading.value = false;
   }
-}
+};
 </script>
 
 <template>
@@ -320,19 +337,62 @@ const handleDeleteFactura = async () => {
             </NuxtLink>
           </template>
           <template v-else>
-            <div class="flex justify-center items-center bg-white border rounded shadow max-w-xs max-h-60 p-2">
-              <img
-                :src="formState.factura_url"
-                alt="Factura"
-                class="object-contain max-h-56 max-w-xs mx-auto"
-                style="background: #fff;"
-              />
+            <div class="flex flex-col items-center">
+              <div class="flex justify-center items-center bg-white border rounded shadow max-w-xs max-h-60 p-2 cursor-pointer" @click="openFacturaModal">
+                <img
+                  :src="formState.factura_url"
+                  alt="Factura"
+                  class="object-contain max-h-56 max-w-xs mx-auto"
+                  style="background: #fff;"
+                />
+              </div>
+              <UButton
+                class="mt-2"
+                color="primary"
+                icon="i-heroicons-arrow-down-tray"
+                :href="formState.factura_url"
+                download
+                target="_blank"
+              >Descargar Imagen</UButton>
             </div>
+            <!-- Modal para ampliar imagen -->
+            <UModal v-model:open="isFacturaModalOpen" title="Factura" :dismissible="true" @close="closeFacturaModal">
+              <template #body>
+                <div class="flex flex-col items-center justify-center">
+                  <img :src="formState.factura_url" alt="Factura ampliada" class="max-w-full max-h-[80vh] rounded shadow" />
+                  <UButton
+                    class="mt-4"
+                    color="primary"
+                    icon="i-heroicons-arrow-down-tray"
+                    :href="formState.factura_url"
+                    download
+                    target="_blank"
+                  >Descargar Imagen</UButton>
+                </div>
+              </template>
+            </UModal>
           </template>
           <UButton color="error" icon="i-heroicons-trash" @click="handleDeleteFactura" :loading="isLoading">Eliminar Factura</UButton>
         </div>
         <div v-else class="text-xs text-gray-400 mt-2">No hay factura adjunta</div>
       </UFormField>
     </div>
+    <UModal v-model:open="isDeleteFacturaModalOpen" title="Eliminar Factura" :dismissible="false">
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-red-500 dark:text-red-300">
+            ¿Seguro que deseas eliminar la factura adjunta? Esta acción no se puede deshacer.
+          </p>
+          <div class="flex justify-end gap-3 mt-4">
+            <UButton color="primary" variant="ghost" :disabled="isLoading" @click="isDeleteFacturaModalOpen = false">
+              Cancelar
+            </UButton>
+            <UButton color="error" :loading="isLoading" @click="confirmDeleteFactura">
+              Confirmar Eliminación
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </UCard>
 </template>
