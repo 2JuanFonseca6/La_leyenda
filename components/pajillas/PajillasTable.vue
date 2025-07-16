@@ -122,7 +122,7 @@ const columns = computed<TableColumn<Pajilla>[]>(() => [
   },
   {
     accessorKey: 'salida_hoy',
-    header: 'Salida (hoy)',
+    header: 'Salida',
     cell: ({ row }) => h('span', { class: 'font-mono text-sm text-red-700' }, row.original.salida_hoy)
   },
   {
@@ -259,7 +259,7 @@ defineExpose({
           <span class="i-lucide-arrow-up-right text-red-600 text-2xl" />
           <span class="text-2xl font-extrabold text-red-600">{{ resumenGeneral.salidaHoy }}</span>
         </div>
-        <div class="text-sm text-muted">Salida (hoy)</div>
+        <div class="text-sm text-muted">Salida</div>
       </div>
       <!-- Stock Final -->
       <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
