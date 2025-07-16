@@ -4,7 +4,7 @@
       <img 
         src="/img/logo/logo-black.webp" 
         alt="Logo San Rafael" 
-        class="h-10 w-auto"
+        class="h-20 w-auto"
         @error="handleImageError"
       />
     </div>

@@ -1,80 +1,44 @@
 <template>
-  <div class="flex min-h-screen w-full overflow-hidden bg-[var(--color-m7)] dark:bg-[var(--color-m2)]">
-    <!-- Form Container con animación de entrada -->
-    <div class="animate-fade-in-right flex w-full items-center justify-center p-6 md:w-1/2 md:p-10">
-      <div class="absolute top-4 right-4 z-50 bg-[var(--color-custom-500)] dark:bg-[var(--color-custom-50)] rounded-full">
-        <Theming />
-      </div>
-      <div class="w-full max-w-md space-y-6">
-        <ClientOnly>
-          <!-- Logo con animación -->
-          <div class="animate-bounce-in">
-            <!-- Imagen para el tema oscuro (se muestra si isDark es true) -->
-            <img v-if="isDark" src="/assets/img/logo/logo-white.webp" alt="Logo San Rafael - Tema Oscuro"
-              class="mx-auto h-70 w-auto transform transition-transform duration-300 hover:scale-105" />
-
-            <!-- Imagen para el tema claro (se muestra si isDark es false) -->
-            <img v-else src="/assets/img/logo/logo-black.webp" alt="Logo San Rafael - Tema Claro"
-              class="mx-auto h-70 w-auto transform transition-transform duration-300 hover:scale-105 grayscale-100" />
-          </div>
-        </ClientOnly>
-
-        <!-- Contenido del formulario -->
-        <div class="mt-8 space-y-6">
-          <div class="animate-fade-in-up delay-100">
-            <h2 class="mb-2 text-center text-3xl font-semibold text-gray-800 dark:text-white">Bienvenido de vuelta</h2>
-            <p class="text-center text-gray-500 dark:text-gray-400">Por favor ingresa tus credenciales para continuar
-            </p>
-          </div>
-
-          <ClientOnly>
-            <UForm :state="state" class="space-y-5" @submit="login">
-              <div class="animate-fade-in-up delay-200">
-                <UInput v-model="state.email" type="email" placeholder="ejemplo@email.com" icon="i-heroicons-envelope"
-                  class="w-full rounded-lg" autocomplete="username" />
-              </div>
-
-              <div class="animate-fade-in-up delay-300">
-                <div label="Contraseña" name="password">
-                  <div class="relative">
-                    <UInput v-model="state.password" :type="showPassword ? 'text' : 'password'"
-                      placeholder="Ingresa tu contraseña" icon="i-heroicons-lock-closed" class="w-full rounded-lg pr-10"
-                      autocomplete="current-password" />
-                    <button type="button"
-                      class="absolute inset-y-0 right-2 flex cursor-pointer items-center text-gray-500 transition-colors dark:text-gray-300"
-                      @click="showPassword = !showPassword" aria-label="Toggle password visibility">
-                      <UIcon :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="animate-fade-in-up delay-500">
-                <UButton block type="submit" :loading="isLoading">
-                  <span v-if="!isLoading" class="uppercase tracking-widest font-bold">Ingresar</span>
-                </UButton>
-              </div>
-            </UForm>
-          </ClientOnly>
+  <div class="flex min-h-screen w-full bg-[var(--color-m7)] dark:bg-[var(--color-m2)] relative">
+    <!-- Fondo decorativo con overlay -->
+    <div class="absolute inset-0 z-0">
+      <img src="/assets/img/login/orion.webp" alt="Imagen decorativa" class="w-full h-full object-cover object-center blur-sm opacity-60" />
+      <div class="absolute inset-0 bg-white/60 dark:bg-black/60"></div>
+    </div>
+    <!-- Contenedor centrado -->
+    <div class="relative z-10 flex w-full min-h-screen items-center justify-center">
+      <div class="w-full max-w-md p-8 rounded-2xl shadow-2xl bg-white/90 dark:bg-[var(--color-m2)]/90 backdrop-blur-lg border border-[var(--color-custom-100)] dark:border-[var(--color-custom-500)]">
+        <!-- Logo grande y centrado -->
+        <div class="flex flex-col items-center mb-8">
+          <img v-if="isDark" src="/assets/img/logo/logo-white.webp" alt="Logo San Rafael - Tema Oscuro"
+            class="mx-auto h-48 w-auto drop-shadow-lg mb-2 animate-bounce-in" />
+          <img v-else src="/assets/img/logo/logo-negro.webp" alt="Logo San Rafael - Tema Claro"
+            class="mx-auto h-48 w-auto drop-shadow-lg mb-2 animate-bounce-in grayscale-100" />
         </div>
+        <!-- Título y subtítulo -->
+        <h2 class="mb-2 text-center text-3xl font-bold text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Bienvenido de vuelta</h2>
+        <p class="text-center text-gray-500 dark:text-gray-300 mb-6">Por favor ingresa tus credenciales para continuar</p>
+        <!-- Formulario -->
+        <UForm :state="state" class="space-y-5" @submit="login">
+          <UInput v-model="state.email" type="email" placeholder="ejemplo@email.com" icon="i-heroicons-envelope"
+            class="w-full rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--color-custom-400)]" autocomplete="username" />
+          <div class="relative">
+            <UInput v-model="state.password" :type="showPassword ? 'text' : 'password'"
+              placeholder="Ingresa tu contraseña" icon="i-heroicons-lock-closed" class="w-full rounded-lg pr-10 shadow-sm focus:ring-2 focus:ring-[var(--color-custom-400)]" autocomplete="current-password" />
+            <button type="button"
+              class="absolute inset-y-0 right-2 flex cursor-pointer items-center text-gray-500 transition-colors dark:text-gray-300"
+              @click="showPassword = !showPassword" aria-label="Toggle password visibility">
+              <UIcon :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="h-5 w-5" />
+            </button>
+          </div>
+          <UButton block type="submit" :loading="isLoading"
+            class="mt-2 py-3 text-lg font-bold tracking-widest uppercase bg-[var(--color-custom-400)] dark:bg-[var(--color-custom-100)] text-white dark:text-[var(--color-custom-400)] rounded-lg shadow-md hover:scale-105 transition-transform">
+            <span v-if="!isLoading">Ingresar</span>
+          </UButton>
+        </UForm>
       </div>
     </div>
-
-    <!-- Sección de imagen con efecto parallax -->
-    <div class="relative hidden h-screen overflow-hidden md:flex md:w-1/2">
-      <div class="parallax-bg h-full w-full">
-        <img src="/assets/img/login/orion.webp" alt="Imagen decorativa"
-          class="h-full w-full scale-110 transform object-cover object-center grayscale" />
-      </div>
-      <div
-        class="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 to-black/30 p-10 backdrop-blur-sm transition-all duration-500 hover:backdrop-blur-none">
-        <div class="animate-fade-in max-w-md text-center text-white">
-          <UIcon name="i-heroicons-rocket-launch" class="mx-auto mb-4 h-12 w-12 animate-pulse" />
-          <h3 class="mb-4 text-3xl font-bold">Explora nuevas posibilidades</h3>
-          <p class="text-lg opacity-90">Descubre todo lo que nuestra plataforma tiene para ofrecerte</p>
-        </div>
-      </div>
-    </div>
+    <!-- Botón de theming eliminado del login -->
   </div>
 </template>
 
