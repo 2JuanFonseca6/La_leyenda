@@ -11,9 +11,9 @@
         <!-- Logo grande y centrado -->
         <div class="flex flex-col items-center mb-8">
           <img v-if="isDark" src="/assets/img/logo/logo-white.webp" alt="Logo San Rafael - Tema Oscuro"
-            class="mx-auto h-48 w-auto drop-shadow-lg mb-2 animate-bounce-in" />
+            class="mx-auto h-64 w-auto drop-shadow-lg mb-2 animate-bounce-in" />
           <img v-else src="/assets/img/logo/logo-negro.webp" alt="Logo San Rafael - Tema Claro"
-            class="mx-auto h-48 w-auto drop-shadow-lg mb-2 animate-bounce-in grayscale-100" />
+            class="mx-auto h-64 w-auto drop-shadow-lg mb-2 animate-bounce-in grayscale-100" />
         </div>
         <!-- Título y subtítulo -->
         <h2 class="mb-2 text-center text-3xl font-bold text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Bienvenido de vuelta</h2>
