@@ -37,7 +37,6 @@
           <MetricsCards v-if="currentView === 'metrics'" />
           <StadisticCards v-if="currentView === 'charts'" />
           <SalesCharts v-if="currentView === 'sales'" />
-          <AnimalWeightTimeline v-if="currentView === 'health'" />
         </div>
       </Transition>
     </div>
@@ -56,8 +55,7 @@ definePageMeta({ layout: "logged" });
 const views = [
   { id: 'metrics', label: 'Métricas', icon: 'i-heroicons-chart-bar-square' },
   { id: 'charts', label: 'Gráficos', icon: 'i-heroicons-chart-pie' },
-  { id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' },
-  { id: 'health', label: 'Salud', icon: 'i-healthicons-cardiogram-outline-24px' }
+  { id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' }
 ];
 
 const currentView = ref('metrics');

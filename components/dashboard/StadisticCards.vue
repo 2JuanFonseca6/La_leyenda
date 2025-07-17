@@ -1,65 +1,62 @@
 <template>
   <div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <!-- Animales por Tipo -->
-      <UCard class="min-h-[400px]">
+      <UCard class="w-full max-w-lg min-h-[300px] md:min-h-[400px] mx-auto">
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Animales por Tipo</span>
             <UIcon name="i-heroicons-chart-pie" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4 overflow-y-auto">
+        <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
           <client-only>
             <Bar v-if="!pendingAnimals" :data="animalsByTypeData" :options="chartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
           </client-only>
         </div>
       </UCard>
-
       <!-- Animales por Tipo de Ganado (PURO vs COMERCIO) -->
-      <UCard class="min-h-[400px]">
+      <UCard class="w-full max-w-lg min-h-[300px] md:min-h-[400px] mx-auto">
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Animales por Tipo de Ganado</span>
             <UIcon name="i-heroicons-pie-chart" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4 overflow-y-auto">
+        <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
           <client-only>
             <Pie v-if="!pendingAnimals" :data="animalsByTipoGanadoData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
           </client-only>
         </div>
       </UCard>
-
       <!-- Stock Bajo (Top 5) -->
-      <UCard class="min-h-[400px]">
+      <UCard class="w-full max-w-lg min-h-[300px] md:min-h-[400px] mx-auto">
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Stock Bajo (Top 5)</span>
             <UIcon name="i-heroicons-exclamation-triangle" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4 overflow-y-auto">
+        <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
           <client-only>
             <Bar v-if="!pendingStock" :data="lowStockData" :options="stockChartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
           </client-only>
         </div>
       </UCard>
-
       <!-- Fila centrada para las dos últimas tarjetas -->
-      <div class="col-span-3 flex justify-center gap-8">
+      <div class="col-span-1 md:col-span-2 xl:col-span-3 flex flex-wrap justify-center gap-8">
         <!-- Animales por Corral/Lote -->
-        <UCard class="min-h-[400px] w-full max-w-xl">
+        <UCard class="w-full max-w-xl min-h-[300px] md:min-h-[400px] mx-auto mb-6 md:mb-0">
           <template #header>
             <div class="flex items-center justify-between p-2">
               <span class="text-lg font-medium">Animales por Corral/Lote</span>
               <UIcon name="i-heroicons-rectangle-group" class="w-6 h-6 ml-2" />
             </div>
           </template>
-          <div class="h-[320px] p-4 overflow-y-auto">
+          <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
             <client-only>
               <Bar v-if="!pendingAnimals" :data="animalesPorCorralData" :options="corralChartOptions" />
               <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -67,14 +64,14 @@
           </div>
         </UCard>
         <!-- Animales por Estado de Salud -->
-        <UCard class="min-h-[400px] w-full max-w-xl">
+        <UCard class="w-full max-w-xl min-h-[300px] md:min-h-[400px] mx-auto">
           <template #header>
             <div class="flex items-center justify-between p-2">
               <span class="text-lg font-medium">Animales por Estado de Salud</span>
               <UIcon name="i-heroicons-heart" class="w-6 h-6 ml-2" />
             </div>
           </template>
-          <div class="h-[320px] p-4 overflow-y-auto">
+          <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
             <client-only>
               <Pie v-if="!pendingAnimals" :data="animalsBySaludData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
               <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
