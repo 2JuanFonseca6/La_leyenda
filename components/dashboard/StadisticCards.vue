@@ -49,37 +49,39 @@
         </div>
       </UCard>
 
-      <!-- Animales por Corral/Lote -->
-      <UCard class="min-h-[400px]">
-        <template #header>
-          <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">Animales por Corral/Lote</span>
-            <UIcon name="i-heroicons-rectangle-group" class="w-6 h-6 ml-2" />
+      <!-- Fila centrada para las dos últimas tarjetas -->
+      <div class="col-span-3 flex justify-center gap-8">
+        <!-- Animales por Corral/Lote -->
+        <UCard class="min-h-[400px] w-full max-w-xl">
+          <template #header>
+            <div class="flex items-center justify-between p-2">
+              <span class="text-lg font-medium">Animales por Corral/Lote</span>
+              <UIcon name="i-heroicons-rectangle-group" class="w-6 h-6 ml-2" />
+            </div>
+          </template>
+          <div class="h-[320px] p-4 overflow-y-auto">
+            <client-only>
+              <Bar v-if="!pendingAnimals" :data="animalesPorCorralData" :options="corralChartOptions" />
+              <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            </client-only>
           </div>
-        </template>
-        <div class="h-[320px] p-4 overflow-y-auto">
-          <client-only>
-            <Bar v-if="!pendingAnimals" :data="animalesPorCorralData" :options="corralChartOptions" />
-            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
-          </client-only>
-        </div>
-      </UCard>
-      <!-- Mover Incremento Anual Promedio de Peso a la parte de abajo -->
-      <!-- Animales por Estado de Salud -->
-      <UCard class="min-h-[400px]">
-        <template #header>
-          <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">Animales por Estado de Salud</span>
-            <UIcon name="i-heroicons-heart" class="w-6 h-6 ml-2" />
+        </UCard>
+        <!-- Animales por Estado de Salud -->
+        <UCard class="min-h-[400px] w-full max-w-xl">
+          <template #header>
+            <div class="flex items-center justify-between p-2">
+              <span class="text-lg font-medium">Animales por Estado de Salud</span>
+              <UIcon name="i-heroicons-heart" class="w-6 h-6 ml-2" />
+            </div>
+          </template>
+          <div class="h-[320px] p-4 overflow-y-auto">
+            <client-only>
+              <Pie v-if="!pendingAnimals" :data="animalsBySaludData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
+              <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            </client-only>
           </div>
-        </template>
-        <div class="h-[320px] p-4 overflow-y-auto">
-          <client-only>
-            <Pie v-if="!pendingAnimals" :data="animalsBySaludData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
-            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
-          </client-only>
-        </div>
-      </UCard>
+        </UCard>
+      </div>
     </div>
     <div class="mt-10">
       <UCard class="min-h-[400px]">
