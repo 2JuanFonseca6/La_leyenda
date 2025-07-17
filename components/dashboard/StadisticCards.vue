@@ -65,6 +65,21 @@
         </div>
       </UCard>
       <!-- Mover Incremento Anual Promedio de Peso a la parte de abajo -->
+      <!-- Animales por Estado de Salud -->
+      <UCard class="min-h-[400px]">
+        <template #header>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Animales por Estado de Salud</span>
+            <UIcon name="i-heroicons-heart" class="w-6 h-6 ml-2" />
+          </div>
+        </template>
+        <div class="h-[320px] p-4 overflow-y-auto">
+          <client-only>
+            <Pie v-if="!pendingAnimals" :data="animalsBySaludData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
+            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          </client-only>
+        </div>
+      </UCard>
     </div>
     <div class="mt-10">
       <UCard class="min-h-[400px]">
@@ -297,6 +312,37 @@ const animalsByTipoGanadoData = computed<ChartData<'pie'>>(() => ({
     label: 'Cantidad',
     data: [animalsByTipoGanado.value.PURO, animalsByTipoGanado.value.COMERCIO],
     backgroundColor: ['#c3791b', '#6B7280'],
+  }]
+}));
+
+// Animales por estado de salud
+const estadosSalud = [
+  'EXCELENTE', 'BUENO', 'REGULAR', 'MALO', 'CRITICO', 'RECUPERACION', 'OBSERVACION'
+];
+const animalsBySalud = computed(() => {
+  const counts: Record<string, number> = {};
+  for (const estado of estadosSalud) counts[estado] = 0;
+  for (const a of animals.value) {
+    if (!a.estado_salud) continue;
+    const estado = String(a.estado_salud).trim().toUpperCase();
+    if (counts[estado] !== undefined) counts[estado]++;
+  }
+  return counts;
+});
+const animalsBySaludData = computed<ChartData<'pie'>>(() => ({
+  labels: estadosSalud,
+  datasets: [{
+    label: 'Cantidad',
+    data: estadosSalud.map(e => animalsBySalud.value[e]),
+    backgroundColor: [
+      '#22c55e', // EXCELENTE (verde)
+      '#a3e635', // BUENO (lime)
+      '#fde047', // REGULAR (amarillo)
+      '#fb923c', // MALO (naranja)
+      '#ef4444', // CRITICO (rojo)
+      '#38bdf8', // RECUPERACION (celeste)
+      '#a3a3a3', // OBSERVACION (gris)
+    ],
   }]
 }));
 </script>
