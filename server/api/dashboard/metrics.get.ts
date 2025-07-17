@@ -11,21 +11,45 @@ export default defineEventHandler(async (event) => {
     .select("id_animal", { head: true, count: "exact" });
   if (errA) throw createError({ statusCode: 500, message: errA.message });
 
-  // 2) Incremento de peso (%)
-  const { data: pesos, error: errP } = await client
-    .from("animals")
-    .select("peso_inicial, peso_actual");
-  if (errP) throw createError({ statusCode: 500, message: errP.message });
-  let sumInicial = 0,
-    sumActual = 0;
-  pesos?.forEach((a) => {
-    sumInicial += a.peso_inicial;
-    sumActual += a.peso_actual;
-  });
-  const weightIncreasePercent =
-    sumInicial > 0
-      ? Number(((sumActual - sumInicial) / sumInicial * 100).toFixed(2))
-      : 0;
+  // 2) Incremento de peso mensual promedio REAL
+  // Obtener todos los historiales de peso
+  const { data: pesosHist, error: errPH } = await client
+    .from("historial_peso")
+    .select("animal_id, peso, fecha_registro");
+  if (errPH) throw createError({ statusCode: 500, message: errPH.message });
+
+  // Agrupar por animal y por mes
+  const incrementosMensuales: number[] = [];
+  if (pesosHist && Array.isArray(pesosHist)) {
+    const porAnimal: Record<string, { fecha: string; peso: number }[]> = {};
+    for (const p of pesosHist) {
+      if (!porAnimal[p.animal_id]) porAnimal[p.animal_id] = [];
+      porAnimal[p.animal_id].push({ fecha: p.fecha_registro, peso: p.peso });
+    }
+    for (const historial of Object.values(porAnimal)) {
+      // Ordenar por fecha
+      historial.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+      // Agrupar por año-mes
+      const porMes: Record<string, { primero: number; ultimo: number }> = {};
+      for (const p of historial) {
+        const ym = p.fecha.slice(0, 7); // YYYY-MM
+        if (!porMes[ym]) {
+          porMes[ym] = { primero: p.peso, ultimo: p.peso };
+        } else {
+          porMes[ym].ultimo = p.peso;
+        }
+      }
+      // Calcular incremento mensual para ese animal
+      for (const mes in porMes) {
+        const inc = porMes[mes].ultimo - porMes[mes].primero;
+        if (!isNaN(inc)) incrementosMensuales.push(inc);
+      }
+    }
+  }
+  // Promedio global mensual
+  const weightIncreasePercent = incrementosMensuales.length
+    ? Number((incrementosMensuales.reduce((a, b) => a + b, 0) / incrementosMensuales.length).toFixed(2))
+    : 0;
 
   // 3) Total de insumos
   const { count: totalInsumos, error: errI } = await client
@@ -33,13 +57,15 @@ export default defineEventHandler(async (event) => {
     .select("id_inventario", { head: true, count: "exact" });
   if (errI) throw createError({ statusCode: 500, message: errI.message });
 
-  // 4) Stock bajo (<=10 unidades)
+  // 4) Stock bajo (<=10 unidades) sumando todas las empresas
   const LOW_THRESHOLD = 10;
-  const { count: lowStock, error: errL } = await client
+  const { data: lowStockItems, error: errL } = await client
     .from("inventario")
-    .select("id_inventario", { head: true, count: "exact" })
+    .select("cantidad, proveedor_id")
     .lte("cantidad", LOW_THRESHOLD);
   if (errL) throw createError({ statusCode: 500, message: errL.message });
+  // Sumar el total de stock bajo de todas las empresas
+  const lowStock = lowStockItems?.reduce((acc, i) => acc + (i.cantidad ?? 0), 0) ?? 0;
 
   // 5) Gastos inventario
   const { data: invItems, error: errG } = await client

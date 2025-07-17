@@ -339,13 +339,13 @@ const confirmDeleteFactura = async () => {
           <template v-else>
             <div class="flex flex-col items-center">
               <div class="flex justify-center items-center bg-white border rounded shadow max-w-xs max-h-60 p-2 cursor-pointer" @click="openFacturaModal">
-                <img
-                  :src="formState.factura_url"
-                  alt="Factura"
-                  class="object-contain max-h-56 max-w-xs mx-auto"
-                  style="background: #fff;"
-                />
-              </div>
+              <img
+                :src="formState.factura_url"
+                alt="Factura"
+                class="object-contain max-h-56 max-w-xs mx-auto"
+                style="background: #fff;"
+              />
+            </div>
               <UButton
                 class="mt-2"
                 color="primary"

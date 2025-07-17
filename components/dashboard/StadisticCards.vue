@@ -9,7 +9,7 @@
             <UIcon name="i-heroicons-chart-pie" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4">
+        <div class="h-[320px] p-4 overflow-y-auto">
           <client-only>
             <Bar v-if="!pendingAnimals" :data="animalsByTypeData" :options="chartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -25,7 +25,7 @@
             <UIcon name="i-heroicons-exclamation-triangle" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4">
+        <div class="h-[320px] p-4 overflow-y-auto">
           <client-only>
             <Bar v-if="!pendingStock" :data="lowStockData" :options="stockChartOptions" />
             <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
@@ -33,21 +33,41 @@
         </div>
       </UCard>
 
-      <!-- Gastos por Categoría (placeholder) -->
+      <!-- Animales por Corral/Lote -->
       <UCard class="min-h-[400px]">
         <template #header>
           <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">Gastos por Categoría</span>
-            <UIcon name="i-heroicons-currency-dollar-20-solid" class="w-6 h-6 ml-2" />
+            <span class="text-lg font-medium">Animales por Corral/Lote</span>
+            <UIcon name="i-heroicons-rectangle-group" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4 flex items-center justify-center text-gray-400">
-          <span>Próximamente...</span>
+        <div class="h-[320px] p-4 overflow-y-auto">
+          <client-only>
+            <Bar v-if="!pendingAnimals" :data="animalesPorCorralData" :options="corralChartOptions" />
+            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          </client-only>
+        </div>
+      </UCard>
+      <!-- Mover Incremento Anual Promedio de Peso a la parte de abajo -->
+    </div>
+    <div class="mt-10">
+      <UCard class="min-h-[400px]">
+        <template #header>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Incremento Anual Promedio de Peso</span>
+            <UIcon name="i-heroicons-chart-line" class="w-6 h-6 ml-2" />
+          </div>
+        </template>
+        <div class="h-[320px] p-4 overflow-y-auto">
+          <client-only>
+            <Line v-if="!pendingAnimals && !pendingPesos" :data="pesoAnualData" :options="lineChartOptions" />
+            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          </client-only>
         </div>
       </UCard>
     </div>
-    <div v-if="errorAnimals || errorStock" class="mt-4 text-red-500">
-      Error al cargar datos: {{ errorAnimals?.message || errorStock?.message }}
+    <div v-if="errorAnimals || errorStock || errorPesos" class="mt-4 text-red-500">
+      Error al cargar datos: {{ errorAnimals?.message || errorStock?.message || errorPesos?.message }}
     </div>
   </div>
 </template>
@@ -55,6 +75,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -66,6 +87,7 @@ import {
 } from 'chart.js'
 import type { ChartOptions, ChartData } from 'chart.js'
 import { useFetch } from '#app'
+import { ref } from 'vue'
 
 ChartJS.register(
   CategoryScale,
@@ -128,5 +150,116 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: { x: { beginAtZero: true } }
+}))
+
+// Fetch corrales
+const { data: corralesRes, pending: pendingCorrales, error: errorCorrales } = await useFetch('/api/corrales/corrales', { params: { pageSize: 1000 } })
+const corrales = computed(() => Array.isArray(corralesRes.value?.corrales) ? corralesRes.value.corrales : [])
+const corralIdToNombre = computed(() => {
+  const map: Record<string, string> = {}
+  for (const c of corrales.value) {
+    map[c.id_corral] = c.nombre
+  }
+  return map
+})
+
+// Agrupar animales por corral/lote (incluir todos los corrales)
+const animalesPorCorral = computed(() => {
+  const counts: Record<string, number> = {};
+  // Inicializar todos los corrales en 0
+  for (const c of corrales.value) {
+    counts[c.nombre] = 0;
+  }
+  // Sumar animales por corral
+  for (const a of animals.value) {
+    const corralId = (a as any).id_corral;
+    const nombre = corralId ? (corralIdToNombre.value[corralId] || corralId) : 'Sin corral';
+    counts[nombre] = (counts[nombre] || 0) + 1;
+  }
+  return counts;
+});
+const animalesPorCorralData = computed<ChartData<'bar'>>(() => ({
+  labels: Object.keys(animalesPorCorral.value),
+  datasets: [{
+    label: 'Cantidad',
+    data: Object.values(animalesPorCorral.value),
+    backgroundColor: '#c3791b'
+  }]
+}));
+const corralChartOptions = computed<ChartOptions<'bar'>>(() => ({
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: { x: { beginAtZero: true } }
+}));
+
+// Obtener historiales de peso de todos los animales
+const pesosPorAnimal = ref<Record<string, any[]>>({})
+const errorPesos = ref<Error|null>(null)
+const pendingPesos = ref(true)
+
+if (!pendingAnimals.value && animals.value.length > 0) {
+  pendingPesos.value = true
+  Promise.all(
+    animals.value.map(async (a) => {
+      try {
+        const res = await $fetch(`/api/animal/specific/${a.id_animal}/peso`)
+        pesosPorAnimal.value[a.id_animal] = res.historial_peso || []
+      } catch (e) {
+        errorPesos.value = e instanceof Error ? e : new Error(String(e))
+      }
+    })
+  ).finally(() => {
+    pendingPesos.value = false
+  })
+}
+
+// Calcular incremento anual promedio
+const pesoAnualData = computed(() => {
+  // Map: año -> array de incrementos
+  const incrementosPorAño: Record<string, number[]> = {}
+  for (const [id, historial] of Object.entries(pesosPorAnimal.value)) {
+    if (!Array.isArray(historial) || historial.length < 2) continue
+    // Agrupar por año
+    const porAño: Record<string, { primero: number, ultimo: number }> = {}
+    for (const p of historial) {
+      const año = new Date(p.fecha_registro).getFullYear().toString()
+      if (!(año in porAño)) {
+        porAño[año] = { primero: p.peso, ultimo: p.peso }
+      } else {
+        porAño[año].ultimo = p.peso
+      }
+    }
+    for (const año in porAño) {
+      const inc = porAño[año].ultimo - porAño[año].primero
+      if (!incrementosPorAño[año]) incrementosPorAño[año] = []
+      incrementosPorAño[año].push(inc)
+    }
+  }
+  // Calcular promedio por año
+  const años = Object.keys(incrementosPorAño).sort()
+  const promedios = años.map(año => {
+    const arr = incrementosPorAño[año]
+    return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+  })
+  return {
+    labels: años,
+    datasets: [{
+      label: 'Incremento promedio (kg)',
+      data: promedios,
+      borderColor: '#c3791b',
+      backgroundColor: 'rgba(195,121,27,0.2)',
+      tension: 0.2,
+      fill: true
+    }]
+  }
+})
+
+const lineChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: true } },
+  scales: { x: { beginAtZero: false }, y: { beginAtZero: true } }
 }))
 </script>
