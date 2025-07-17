@@ -11,6 +11,23 @@ export default defineEventHandler(async (event) => {
     .select("id_animal", { head: true, count: "exact" });
   if (errA) throw createError({ statusCode: 500, message: errA.message });
 
+  // 1b) Total de corrales (lotes)
+  const { count: totalCorrales, error: errCorrales } = await client
+    .from("corrales")
+    .select("id_corral", { head: true, count: "exact" });
+  if (errCorrales) throw createError({ statusCode: 500, message: errCorrales.message });
+
+  // 1c) Conteo de animales por estado de salud (agrupado manualmente)
+  const { data: saludData, error: errSalud } = await client
+    .from("animals")
+    .select("estado_salud, id_animal");
+  if (errSalud) throw createError({ statusCode: 500, message: errSalud.message });
+  // Agrupar en JS
+  const animalsByHealth: Record<string, number> = {};
+  for (const row of saludData || []) {
+    if (row.estado_salud) animalsByHealth[row.estado_salud] = (animalsByHealth[row.estado_salud] || 0) + 1;
+  }
+
   // 2) Incremento de peso mensual promedio REAL
   // Obtener todos los historiales de peso
   const { data: pesosHist, error: errPH } = await client
@@ -123,9 +140,22 @@ export default defineEventHandler(async (event) => {
 
   const añoActual = new Date().getFullYear().toString();
 
+  // Animal con mayor cantidad de descendencia
+  const { data: topDescAnimal, error: errDesc } = await client
+    .from("animals")
+    .select("id_animal, raza, cantidad_hijos")
+    .gt("cantidad_hijos", 0)
+    .order("cantidad_hijos", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (errDesc) throw createError({ statusCode: 500, message: errDesc.message });
+
   return {
     totalAnimals,
+    totalCorrales,
+    animalsByHealth,
     weightIncreasePercent,
+    topDescAnimal,
     totalInsumos,
     lowStock,
     totalExpenses,

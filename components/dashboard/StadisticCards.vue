@@ -17,6 +17,22 @@
         </div>
       </UCard>
 
+      <!-- Animales por Tipo de Ganado (PURO vs COMERCIO) -->
+      <UCard class="min-h-[400px]">
+        <template #header>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Animales por Tipo de Ganado</span>
+            <UIcon name="i-heroicons-pie-chart" class="w-6 h-6 ml-2" />
+          </div>
+        </template>
+        <div class="h-[320px] p-4 overflow-y-auto">
+          <client-only>
+            <Pie v-if="!pendingAnimals" :data="animalsByTipoGanadoData" :options="{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}" />
+            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          </client-only>
+        </div>
+      </UCard>
+
       <!-- Stock Bajo (Top 5) -->
       <UCard class="min-h-[400px]">
         <template #header>
@@ -76,6 +92,7 @@
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Line } from 'vue-chartjs'
+import { Pie } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -262,4 +279,24 @@ const lineChartOptions = computed(() => ({
   plugins: { legend: { display: true } },
   scales: { x: { beginAtZero: false }, y: { beginAtZero: true } }
 }))
+
+// Animales por tipo_ganado (PURO vs COMERCIO)
+const animalsByTipoGanado = computed(() => {
+  const counts: Record<string, number> = { PURO: 0, COMERCIO: 0 };
+  for (const a of animals.value) {
+    if (!a.tipo_ganado) continue;
+    const tipo = String(a.tipo_ganado).trim().toUpperCase();
+    if (tipo === 'SALDRAN PURO' || tipo === 'PURO') counts.PURO++;
+    else if (tipo === 'COMERCIO') counts.COMERCIO++;
+  }
+  return counts;
+});
+const animalsByTipoGanadoData = computed<ChartData<'pie'>>(() => ({
+  labels: ['PURO', 'COMERCIO'],
+  datasets: [{
+    label: 'Cantidad',
+    data: [animalsByTipoGanado.value.PURO, animalsByTipoGanado.value.COMERCIO],
+    backgroundColor: ['#c3791b', '#6B7280'],
+  }]
+}));
 </script>

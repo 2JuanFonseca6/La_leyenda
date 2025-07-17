@@ -24,27 +24,7 @@
     </div>
 
     <!-- Fila 2: inventario -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-      <UCard v-for="(item, i) in inventoryList" :key="i">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <span>{{ item.title }}</span>
-            <UIcon :name="item.icon" class="w-6 h-6 ml-2" />
-          </div>
-        </template>
-        <div class="p-4 text-2xl font-semibold text-center">
-          <div
-            v-if="pending"
-            class="animate-pulse text-transparent bg-gray-300 dark:bg-gray-700 rounded"
-          >
-            &nbsp;
-          </div>
-          <div v-else>
-            {{ item.format(metrics) }}
-          </div>
-        </div>
-      </UCard>
-    </div>
+    <!-- Eliminada: ya no se muestran métricas de inventario -->
   </div>
 </template>
 
@@ -99,32 +79,17 @@ const metricsList = [
     format: (m: Metrics) => fmtNum(m.totalAnimals),
   },
   {
+    title: "Total de Lotes",
+    icon: "i-heroicons-rectangle-group",
+    format: (m: Metrics) => fmtNum((m as any).totalCorrales),
+  },
+  {
     title: "Incremento de Peso (Mensual)",
     icon: "i-healthicons-cardiogram-outline-24px",
     format: (m: Metrics) => fmtPct(m.weightIncreasePercent),
   },
-  {
-    title: "Ventas Totales",
-    icon: "i-heroicons-currency-dollar-20-solid",
-    format: (m: Metrics) => fmtMoney(m.totalSales),
-  },
+  // Eliminada: Mayor Descendencia
 ];
 
-const inventoryList = [
-  {
-    title: "Total Insumos",
-    icon: "i-healthicons-ui-menu-grid-outline",
-    format: (m: Metrics) => fmtNum(m.totalInsumos),
-  },
-  {
-    title: "Stock Bajo",
-    icon: "i-heroicons-arrow-trending-down-16-solid",
-    format: (m: Metrics) => fmtNum(m.lowStock),
-  },
-  {
-    title: "Gastos Inventario",
-    icon: "i-heroicons-currency-dollar-20-solid",
-    format: (m: Metrics) => fmtMoney(m.totalExpenses),
-  },
-];
+const inventoryList: never[] = [];
 </script>
