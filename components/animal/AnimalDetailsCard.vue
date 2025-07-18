@@ -237,13 +237,13 @@
             />
           </div>
         </div>
-        <div v-if="showChart" class="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-          <div ref="chartContainerRef" class="w-full h-[320px] overflow-x-auto overflow-y-hidden scrollbar-hide">
-            <div class="chart-wrapper" :class="{ 'mobile-scroll': isMobile && historialPeso.length > 6 }">
-              <canvas ref="chartRef" :style="chartCanvasStyle"></canvas>
+        <div v-if="showChart" class="bg-white dark:bg-gray-900 rounded-lg shadow p-0 print:p-0 print:shadow-none print:border print:border-gray-300">
+          <div ref="chartContainerRef" class="w-full h-[320px] overflow-x-auto overflow-y-hidden scrollbar-hide print:h-[400px] print:overflow-visible">
+            <div class="chart-wrapper print:w-full print:min-w-full" :class="{ 'mobile-scroll': isMobile && historialPeso.length > 6 }">
+              <canvas ref="chartRef" :style="chartCanvasStyle" class="print:w-full print:min-w-full"></canvas>
             </div>
           </div>
-          <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2">No hay registros de peso para este animal.</div>
+          <div v-if="historialPeso.length === 0" class="text-gray-500 mt-2 p-4 print:p-2">No hay registros de peso para este animal.</div>
         </div>
       </div>
 
@@ -852,8 +852,13 @@ const fetchHistorialPeso = async () => {
 
 // Estilo dinámico para el canvas: ancho fijo con scroll horizontal si hay muchos puntos, en cualquier dispositivo
 const chartCanvasStyle = computed(() => {
-  if (historialPeso.value.length > 12) {
-    const minWidth = Math.max(historialPeso.value.length * 120, 400); // 120px por punto
+  // Para impresión, siempre usar ancho completo
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('print').matches) {
+    return 'width: 100% !important; min-width: 100% !important; height: 100%;';
+  }
+  
+  if (historialPeso.value.length > 6) {
+    const minWidth = Math.max(historialPeso.value.length * 100, 400); // 100px por punto (reducido de 120px)
     if (chartRef.value) {
       chartRef.value.width = minWidth;
       chartRef.value.style.width = `${minWidth}px`;
@@ -871,9 +876,9 @@ const chartCanvasStyle = computed(() => {
 });
 
 // Variables de configuración para Chart.js (deben estar antes de usarse)
-const chartPadding = computed(() => isMobile.value ? 30 : 40);
+const chartPadding = computed(() => isMobile.value ? 20 : 30);
 const legendFont = computed(() => isMobile.value ? 10 : 12);
-const labelPadding = computed(() => isMobile.value ? 4 : 10);
+const labelPadding = computed(() => isMobile.value ? 4 : 8);
 const axisFont = computed(() => isMobile.value ? 9 : 12);
 
 // Variables de fuente y radio para el plugin y dataset
@@ -919,9 +924,90 @@ const renderChart = () => {
   if (chartInstance) chartInstance.destroy();
   if (!historialPeso.value.length) return;
 
+  // Detectar si estamos en modo impresión
+  const isPrintMode = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('print').matches;
+
   let chartOptions;
-  if (isMobile.value && historialPeso.value.length > 6) {
-    const minWidth = Math.max(historialPeso.value.length * 120, 400);
+  if (isPrintMode) {
+    // Configuración específica para impresión
+    chartRef.value.width = chartContainerRef.value?.offsetWidth || 800;
+    chartRef.value.style.width = '100%';
+    chartRef.value.style.minWidth = '100%';
+    chartOptions = {
+      responsive: false,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 20,
+          bottom: 20,
+          left: 10,
+          right: 10
+        }
+      },
+      plugins: {
+        legend: { 
+          display: true,
+          labels: {
+            font: {
+              size: 12,
+              weight: 'bold' as const
+            },
+            padding: 10
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: { 
+          title: { 
+            display: true, 
+            text: 'Fecha',
+            font: {
+              size: 12,
+              weight: 'bold' as const
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: 11
+            },
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: false,
+            maxTicksLimit: undefined
+          },
+          offset: false,
+        },
+        y: { 
+          title: { 
+            display: true, 
+            text: 'Peso (kg)',
+            font: {
+              size: 12,
+              weight: 'bold' as const
+            }
+          }, 
+          beginAtZero: false,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          ticks: {
+            font: {
+              size: 11
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index' as const
+      }
+    };
+  } else if (isMobile.value && historialPeso.value.length > 6) {
+    const minWidth = Math.max(historialPeso.value.length * 100, 400);
     chartRef.value.width = minWidth;
     chartRef.value.style.width = `${minWidth}px`;
     chartRef.value.style.minWidth = `${minWidth}px`;
@@ -929,10 +1015,10 @@ const renderChart = () => {
       responsive: false,
       layout: {
         padding: {
-          top: 20,
-          bottom: 20,
-          left: 10,
-          right: 10
+          top: 15,
+          bottom: 15,
+          left: 5,
+          right: 5
         }
       },
       plugins: {
@@ -1009,8 +1095,8 @@ const renderChart = () => {
         padding: {
           top: chartPadding.value,
           bottom: chartPadding.value,
-          left: 0,
-          right: 0
+          left: 5,
+          right: 5
         }
       },
       plugins: {
@@ -1045,8 +1131,8 @@ const renderChart = () => {
             },
             maxRotation: isMobile.value ? 45 : 0,
             minRotation: isMobile.value ? 30 : 0,
-            autoSkip: true,
-            maxTicksLimit: isMobile.value ? 4 : 8
+            autoSkip: false,
+            maxTicksLimit: undefined
           },
           offset: false,
         },
@@ -1076,7 +1162,7 @@ const renderChart = () => {
       }
     };
   }
-  chartRef.value.height = 320;
+  chartRef.value.height = isPrintMode ? 400 : 320;
   chartRef.value.style.height = '100%';
 
   // Calcular los cambios en kilogramos y porcentajes
@@ -1109,20 +1195,36 @@ const renderChart = () => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = color;
-        const offsetY = isUp ? -25 : 30;
+        const offsetY = isUp ? -20 : 25;
         ctx.fillText(arrow, point.x, point.y + offsetY);
         // Kg
         ctx.font = `bold ${fontKg}px Arial, sans-serif`;
         ctx.textBaseline = isUp ? 'bottom' : 'top';
         const kgText = `${isUp ? '+' : ''}${change.kg.toFixed(1)} kg`;
-        ctx.fillText(kgText, point.x, point.y + offsetY + (isUp ? -18 : 18));
+        ctx.fillText(kgText, point.x, point.y + offsetY + (isUp ? -15 : 15));
         // Porcentaje
         ctx.font = `${fontPercent}px Arial, sans-serif`;
         ctx.fillStyle = isUp ? '#16a34a' : '#dc2626';
         const percentText = `(${isUp ? '+' : ''}${change.percent.toFixed(1)}%)`;
-        ctx.fillText(percentText, point.x, point.y + offsetY + (isUp ? -32 : 32));
+        ctx.fillText(percentText, point.x, point.y + offsetY + (isUp ? -28 : 28));
       });
       ctx.restore();
+    }
+  };
+
+  // Plugin específico para impresión que ajusta el tamaño
+  const printPlugin = {
+    id: 'printPlugin',
+    beforeDraw(chart: any) {
+      if (isPrintMode) {
+        const canvas = chart.canvas;
+        const container = chartContainerRef.value;
+        if (container) {
+          canvas.width = container.offsetWidth;
+          canvas.style.width = '100%';
+          canvas.style.minWidth = '100%';
+        }
+      }
     }
   };
 
@@ -1146,11 +1248,12 @@ const renderChart = () => {
           pointHoverBackgroundColor: '#059669',
           pointHoverBorderColor: '#ffffff',
           clip: false,
+          borderWidth: 2,
         }
       ]
     },
     options: chartOptions,
-    plugins: [arrowPlugin]
+    plugins: [arrowPlugin, printPlugin]
   })
   
   // Inicializar scroll móvil si es necesario
@@ -1230,6 +1333,17 @@ watch([historialPeso, isEditing, showChart], () => {
     }
   })
 }, { deep: true })
+
+// Escuchar cambios en el modo de impresión
+if (typeof window !== 'undefined') {
+  window.matchMedia('print').addEventListener('change', (e) => {
+    if (e.matches && showChart.value && historialPeso.value.length > 0) {
+      setTimeout(() => {
+        renderChart()
+      }, 100)
+    }
+  })
+}
 
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -1802,6 +1916,9 @@ const showEvaluaciones = ref(true)
   position: relative;
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-scroll {
@@ -1809,6 +1926,31 @@ const showEvaluaciones = ref(true)
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+  padding: 0;
+  margin: 0;
+}
+
+/* Estilos específicos para impresión */
+@media print {
+  .chart-wrapper {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+  
+  .chart-wrapper canvas {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  .mobile-scroll {
+    overflow: visible !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+  }
 }
 
 /* Mejorar la experiencia táctil en móvil */
