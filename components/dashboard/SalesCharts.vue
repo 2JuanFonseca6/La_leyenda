@@ -1,51 +1,114 @@
 <template>
   <div class="space-y-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-6">
-      <!-- 1) Ventas por Animal -->
+    <!-- Nueva fila para las gráficas combinadas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <UCard class="min-h-[400px]">
         <template #header>
           <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">Ventas por Animal</span>
-            <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 ml-2" />
+            <span class="text-lg font-medium">Ventas Mensuales por Animal</span>
+            <UIcon name="i-heroicons-bars-3-bottom-left" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4">
           <ClientOnly>
-            <Bar v-if="!pending" :data="salesBarData" :options="chartOptions" />
-            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            <Bar v-if="!pending && stackedBarData.datasets.length > 0" :data="stackedBarData" :options="stackedBarOptions" />
+            <div v-else-if="pending" class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            <div v-else class="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <div class="text-center">
+                <UIcon name="i-heroicons-chart-bar" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No hay datos de ventas disponibles</p>
+              </div>
+            </div>
           </ClientOnly>
         </div>
       </UCard>
-
-      <!-- 2) Evolución Mensual Año Actual -->
       <UCard class="min-h-[400px]">
         <template #header>
           <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">Evolución de Ventas</span>
-            <UIcon name="i-heroicons-presentation-chart-line" class="w-6 h-6 ml-2" />
+            <span class="text-lg font-medium">Ventas Detalladas por año</span>
+            <UIcon name="i-heroicons-chart-line" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4">
           <ClientOnly>
-            <Line v-if="!pending" :data="salesLineData" :options="chartOptions" />
-            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            <Line v-if="!pending && multiLineData.datasets.length > 0" :data="multiLineData" :options="multiLineOptions" />
+            <div v-else-if="pending" class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+            <div v-else class="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <div class="text-center">
+                <UIcon name="i-heroicons-chart-line" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No hay datos de ventas disponibles</p>
+              </div>
+            </div>
           </ClientOnly>
         </div>
       </UCard>
+    </div>
 
-      <!-- 3) % Variación entre Ventas Consecutivas -->
-      <UCard class="min-h-[400px]">
+    <!-- Tarjetas de métricas con filtros -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Métrica de ventas por mes -->
+      <UCard>
         <template #header>
           <div class="flex items-center justify-between p-2">
-            <span class="text-lg font-medium">% Variación Ventas</span>
-            <UIcon name="i-heroicons-arrow-trending-up-20-solid" class="w-6 h-6 ml-2" />
+            <span class="text-lg font-medium">Total Ventas por Mes</span>
+            <UIcon name="i-heroicons-currency-dollar" class="w-6 h-6 ml-2" />
           </div>
         </template>
-        <div class="h-[320px] p-4">
-          <ClientOnly>
-            <Line v-if="!pending" :data="salesPctData" :options="pctChartOptions" />
-            <div v-else class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
-          </ClientOnly>
+        <div class="p-4">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Seleccionar Mes
+            </label>
+            <select
+              v-model="selectedMonth"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option v-for="month in monthOptions" :key="month.value" :value="month.value">
+                {{ month.label }}
+              </option>
+            </select>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-green-600 dark:text-green-400">
+              ${{ monthlyTotal.toLocaleString('es-CL') }}
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {{ selectedMonthLabel }}
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <!-- Métrica de ventas por año -->
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between p-2">
+            <span class="text-lg font-medium">Total Ventas por Año</span>
+            <UIcon name="i-heroicons-calendar" class="w-6 h-6 ml-2" />
+          </div>
+        </template>
+        <div class="p-4">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Seleccionar Año
+            </label>
+            <select
+              v-model="selectedYear"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option v-for="year in yearOptions" :key="year" :value="year">
+                {{ year }}
+              </option>
+            </select>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              ${{ yearlyTotal.toLocaleString('es-CL') }}
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Año {{ selectedYear }}
+            </div>
+          </div>
         </div>
       </UCard>
     </div>
@@ -57,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -104,7 +167,181 @@ const metrics = computed(() => mr.value ?? {
   analisis_ventas: { ventas_anuales: {} }
 })
 
-const chartOptions = computed<ChartOptions<'bar' | 'line'>>(() => ({
+// Estados para los filtros
+const selectedMonth = ref<number>(new Date().getMonth())
+const selectedYear = ref<string>(new Date().getFullYear().toString())
+
+// Obtener todos los animales para mapear id_animal a nombre/código
+const { data: animalsRes } = await useFetch('/api/animal/animals', { params: { pageSize: 1000 } })
+const animalMap = computed(() => {
+  const map: Record<string, { id: string; raza: string; displayName: string }> = {}
+  for (const a of animalsRes.value?.animals || []) {
+    map[a.id_animal] = {
+      id: a.id_animal,
+      raza: a.raza || 'Sin raza',
+      displayName: a.id_animal + (a.raza ? ` (${a.raza})` : '')
+    }
+  }
+  return map
+})
+
+// Opciones para los selectores
+const monthOptions = computed(() => [
+  { label: 'Enero', value: 0 },
+  { label: 'Febrero', value: 1 },
+  { label: 'Marzo', value: 2 },
+  { label: 'Abril', value: 3 },
+  { label: 'Mayo', value: 4 },
+  { label: 'Junio', value: 5 },
+  { label: 'Julio', value: 6 },
+  { label: 'Agosto', value: 7 },
+  { label: 'Septiembre', value: 8 },
+  { label: 'Octubre', value: 9 },
+  { label: 'Noviembre', value: 10 },
+  { label: 'Diciembre', value: 11 }
+])
+
+const yearOptions = computed(() => {
+  const years = new Set<string>()
+  for (const sale of metrics.value.salesData) {
+    const year = new Date(sale.fecha_venta).getFullYear().toString()
+    years.add(year)
+  }
+  return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a))
+})
+
+// Labels para mostrar
+const selectedMonthLabel = computed(() => {
+  const month = monthOptions.value.find(m => m.value === selectedMonth.value)
+  return month ? month.label : 'Mes seleccionado'
+})
+
+// Cálculo de totales
+const monthlyTotal = computed(() => {
+  const sales = metrics.value.salesData
+  return sales
+    .filter(sale => {
+      const date = new Date(sale.fecha_venta)
+      return date.getMonth() === selectedMonth.value
+    })
+    .reduce((total, sale) => total + sale.monto, 0)
+})
+
+const yearlyTotal = computed(() => {
+  const sales = metrics.value.salesData
+  return sales
+    .filter(sale => {
+      const date = new Date(sale.fecha_venta)
+      return date.getFullYear().toString() === selectedYear.value
+    })
+    .reduce((total, sale) => total + sale.monto, 0)
+})
+
+// Agrupar ventas por mes y animal (para barras apiladas)
+function getSalesByAnimalAndMonth() {
+  const sales = metrics.value.salesData
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+  const byAnimal: Record<string, number[]> = {}
+  
+  for (const s of sales) {
+    const date = new Date(s.fecha_venta)
+    const month = date.getMonth()
+    const animal = animalMap.value[s.animal_id] || { id: s.animal_id, raza: 'Sin raza', displayName: s.animal_id }
+    if (!byAnimal[animal.displayName]) byAnimal[animal.displayName] = Array(12).fill(0)
+    byAnimal[animal.displayName][month] += s.monto
+  }
+  
+  return { byAnimal, months }
+}
+
+// Agrupar ventas por año y animal (para líneas anuales)
+function getSalesByAnimalAndYear() {
+  const sales = metrics.value.salesData
+  const byAnimal: Record<string, { x: string; y: number; animalInfo: any }[]> = {}
+  
+  for (const s of sales) {
+    const date = new Date(s.fecha_venta)
+    const year = date.getFullYear().toString()
+    const animal = animalMap.value[s.animal_id] || { id: s.animal_id, raza: 'Sin raza', displayName: s.animal_id }
+    if (!byAnimal[animal.displayName]) byAnimal[animal.displayName] = []
+    
+    // Buscar si ya existe un registro para este año
+    const existingYearIndex = byAnimal[animal.displayName].findIndex(d => d.x === year)
+    if (existingYearIndex >= 0) {
+      byAnimal[animal.displayName][existingYearIndex].y += s.monto
+    } else {
+      byAnimal[animal.displayName].push({
+        x: year,
+        y: s.monto,
+        animalInfo: animal
+      })
+    }
+  }
+  
+  // Ordenar por año
+  for (const animal in byAnimal) {
+    byAnimal[animal].sort((a, b) => parseInt(a.x) - parseInt(b.x))
+  }
+  
+  return byAnimal
+}
+
+// Remove the problematic chartOptions and use specific ones for each chart type
+
+// Datos para barra apilada (por mes)
+const stackedBarData = computed<ChartData<'bar'>>(() => {
+  const { byAnimal, months } = getSalesByAnimalAndMonth()
+  const datasets = Object.entries(byAnimal).map(([animal, data], i) => ({
+    label: animal,
+    data,
+    backgroundColor: [
+      'rgba(59, 130, 246, 0.8)',   // Azul
+      'rgba(16, 185, 129, 0.8)',   // Verde
+      'rgba(245, 158, 11, 0.8)',   // Amarillo
+      'rgba(239, 68, 68, 0.8)',    // Rojo
+      'rgba(139, 92, 246, 0.8)',   // Púrpura
+      'rgba(236, 72, 153, 0.8)',   // Rosa
+      'rgba(14, 165, 233, 0.8)',   // Cian
+      'rgba(34, 197, 94, 0.8)',    // Verde esmeralda
+      'rgba(251, 146, 60, 0.8)',   // Naranja
+      'rgba(168, 85, 247, 0.8)',   // Violeta
+    ][i % 10],
+    borderColor: [
+      'rgba(59, 130, 246, 1)',
+      'rgba(16, 185, 129, 1)',
+      'rgba(245, 158, 11, 1)',
+      'rgba(239, 68, 68, 1)',
+      'rgba(139, 92, 246, 1)',
+      'rgba(236, 72, 153, 1)',
+      'rgba(14, 165, 233, 1)',
+      'rgba(34, 197, 94, 1)',
+      'rgba(251, 146, 60, 1)',
+      'rgba(168, 85, 247, 1)',
+    ][i % 10],
+    borderWidth: 2,
+    borderRadius: 8,
+    borderSkipped: false,
+    hoverBackgroundColor: [
+      'rgba(59, 130, 246, 1)',
+      'rgba(16, 185, 129, 1)',
+      'rgba(245, 158, 11, 1)',
+      'rgba(239, 68, 68, 1)',
+      'rgba(139, 92, 246, 1)',
+      'rgba(236, 72, 153, 1)',
+      'rgba(14, 165, 233, 1)',
+      'rgba(34, 197, 94, 1)',
+      'rgba(251, 146, 60, 1)',
+      'rgba(168, 85, 247, 1)',
+    ][i % 10],
+    hoverBorderColor: 'rgba(255, 255, 255, 1)',
+    hoverBorderWidth: 3
+  }))
+  return {
+    labels: months,
+    datasets
+  }
+})
+const stackedBarOptions = computed((): ChartOptions<'bar'> => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -112,44 +349,148 @@ const chartOptions = computed<ChartOptions<'bar' | 'line'>>(() => ({
       position: 'top',
       labels: {
         padding: 20,
-        boxWidth: 10,
-        color: '#6B7280'
+        boxWidth: 15,
+        boxHeight: 8,
+        color: '#374151',
+        font: {
+          size: 12,
+          weight: 'bold'
+        },
+        usePointStyle: true,
+        pointStyle: 'circle'
       }
     },
     tooltip: {
+      backgroundColor: 'rgba(17, 24, 39, 0.95)',
+      titleColor: '#ffffff',
+      bodyColor: '#ffffff',
+      borderColor: 'rgba(59, 130, 246, 0.5)',
+      borderWidth: 1,
+      cornerRadius: 8,
       padding: 12,
+      displayColors: true,
       callbacks: {
+        title: (items) => {
+          const item = items[0]
+          return `📅 ${item.label}`
+        },
         label: (ctx) => {
           const y = ctx.parsed.y
-          return typeof y === 'number'
-            ? `\$${y.toLocaleString('es-CL')}`
-            : ''
+          return `💰 ${ctx.dataset.label}: $${y.toLocaleString('es-CL')}`
         }
       }
     }
   },
   scales: {
     x: { 
+      stacked: true,
+      grid: {
+        display: false
+      },
       ticks: { 
         color: '#6B7280',
-        maxRotation: 45,
-        minRotation: 45
+        font: {
+          size: 11,
+          weight: 'bold'
+        },
+        maxRotation: 0,
+        minRotation: 0
       }
     },
     y: {
+      stacked: true,
+      beginAtZero: true,
+      grid: {
+        color: 'rgba(229, 231, 235, 0.5)',
+        drawBorder: false,
+        lineWidth: 1
+      },
       ticks: {
         color: '#6B7280',
-        callback: (val) => `\$${Number(val).toLocaleString('es-CL')}`
-      },
-      grid: {
-        drawBorder: false,
-        color: '#E5E7EB'
+        font: {
+          size: 11,
+          weight: 'bold'
+        },
+        callback: (val) => `$${Number(val).toLocaleString('es-CL')}`,
+        padding: 8
       }
     }
+  },
+  interaction: {
+    intersect: false,
+    mode: 'index'
   }
-}))
+}) as ChartOptions<'bar'>)
 
-const pctChartOptions = computed<ChartOptions<'line'>>(() => ({
+// Datos para líneas múltiples (por año)
+const multiLineData = computed<ChartData<'line'>>(() => {
+  const byAnimal = getSalesByAnimalAndYear()
+  const datasets = Object.entries(byAnimal).map(([animal, data], i) => ({
+    label: animal,
+    data: data.map(d => ({ x: parseInt(d.x), y: d.y })),
+    borderColor: [
+      'rgba(59, 130, 246, 1)',   // Azul
+      'rgba(16, 185, 129, 1)',   // Verde
+      'rgba(245, 158, 11, 1)',   // Amarillo
+      'rgba(239, 68, 68, 1)',    // Rojo
+      'rgba(139, 92, 246, 1)',   // Púrpura
+      'rgba(236, 72, 153, 1)',   // Rosa
+      'rgba(14, 165, 233, 1)',   // Cian
+      'rgba(34, 197, 94, 1)',    // Verde esmeralda
+      'rgba(251, 146, 60, 1)',   // Naranja
+      'rgba(168, 85, 247, 1)',   // Violeta
+    ][i % 10],
+    backgroundColor: [
+      'rgba(59, 130, 246, 0.1)',
+      'rgba(16, 185, 129, 0.1)',
+      'rgba(245, 158, 11, 0.1)',
+      'rgba(239, 68, 68, 0.1)',
+      'rgba(139, 92, 246, 0.1)',
+      'rgba(236, 72, 153, 0.1)',
+      'rgba(14, 165, 233, 0.1)',
+      'rgba(34, 197, 94, 0.1)',
+      'rgba(251, 146, 60, 0.1)',
+      'rgba(168, 85, 247, 0.1)',
+    ][i % 10],
+    tension: 0.4,
+    fill: true,
+    pointRadius: 6,
+    pointHoverRadius: 10,
+    pointBackgroundColor: [
+      'rgba(59, 130, 246, 1)',
+      'rgba(16, 185, 129, 1)',
+      'rgba(245, 158, 11, 1)',
+      'rgba(239, 68, 68, 1)',
+      'rgba(139, 92, 246, 1)',
+      'rgba(236, 72, 153, 1)',
+      'rgba(14, 165, 233, 1)',
+      'rgba(34, 197, 94, 1)',
+      'rgba(251, 146, 60, 1)',
+      'rgba(168, 85, 247, 1)',
+    ][i % 10],
+    pointBorderColor: '#ffffff',
+    pointBorderWidth: 3,
+    pointHoverBackgroundColor: '#ffffff',
+    pointHoverBorderColor: [
+      'rgba(59, 130, 246, 1)',
+      'rgba(16, 185, 129, 1)',
+      'rgba(245, 158, 11, 1)',
+      'rgba(239, 68, 68, 1)',
+      'rgba(139, 92, 246, 1)',
+      'rgba(236, 72, 153, 1)',
+      'rgba(14, 165, 233, 1)',
+      'rgba(34, 197, 94, 1)',
+      'rgba(251, 146, 60, 1)',
+      'rgba(168, 85, 247, 1)',
+    ][i % 10],
+    pointHoverBorderWidth: 4,
+    borderWidth: 3
+  }))
+  return {
+    datasets
+  }
+})
+const multiLineOptions = computed((): ChartOptions<'line'> => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -157,98 +498,76 @@ const pctChartOptions = computed<ChartOptions<'line'>>(() => ({
       position: 'top',
       labels: {
         padding: 20,
-        boxWidth: 10,
-        color: '#6B7280'
+        boxWidth: 15,
+        boxHeight: 8,
+        color: '#374151',
+        font: {
+          size: 12,
+          weight: 'bold'
+        },
+        usePointStyle: true,
+        pointStyle: 'circle'
       }
     },
     tooltip: {
+      backgroundColor: 'rgba(17, 24, 39, 0.95)',
+      titleColor: '#ffffff',
+      bodyColor: '#ffffff',
+      borderColor: 'rgba(59, 130, 246, 0.5)',
+      borderWidth: 1,
+      cornerRadius: 8,
       padding: 12,
+      displayColors: true,
       callbacks: {
+        title: (items) => {
+          const item = items[0]
+          return `📅 Año: ${item.parsed.x}`
+        },
         label: (ctx) => {
           const y = ctx.parsed.y
-          return typeof y === 'number'
-            ? `${y.toFixed(2)}%`
-            : ''
+          return `💰 ${ctx.dataset.label}: $${y.toLocaleString('es-CL')}`
         }
       }
     }
   },
   scales: {
     x: { 
+      grid: {
+        color: 'rgba(229, 231, 235, 0.3)',
+        drawBorder: false,
+        lineWidth: 1
+      },
       ticks: { 
         color: '#6B7280',
-        maxRotation: 45,
-        minRotation: 45
+        font: {
+          size: 11,
+          weight: 'bold'
+        },
+        maxRotation: 0,
+        minRotation: 0,
+        padding: 8
       }
     },
     y: {
+      grid: {
+        color: 'rgba(229, 231, 235, 0.3)',
+        drawBorder: false,
+        lineWidth: 1
+      },
       ticks: {
         color: '#6B7280',
-        callback: (val) => `${Number(val).toFixed(0)}%`
-      },
-      grid: {
-        drawBorder: false,
-        color: '#E5E7EB'
+        font: {
+          size: 11,
+          weight: 'bold'
+        },
+        callback: (val) => `$${Number(val).toLocaleString('es-CL')}`,
+        padding: 8
       }
     }
+  },
+  interaction: {
+    intersect: false,
+    mode: 'index'
   }
-}))
-
-const salesBarData = computed<ChartData<'bar'>>(() => {
-  const byAnimal = metrics.value.salesData.reduce<Record<string, number>>((acc, s) => {
-    acc[s.animal_id] = (acc[s.animal_id] || 0) + s.monto
-    return acc
-  }, {})
-  return {
-    labels: Object.keys(byAnimal),
-    datasets: [{
-      label: 'Ventas por Animal',
-      data: Object.values(byAnimal),
-      backgroundColor: '#c3791b'
-    }]
-  }
-})
-
-const salesLineData = computed<ChartData<'line'>>(() => {
-  const año = new Date().getFullYear().toString()
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-  const ventas = metrics.value.analisis_ventas.ventas_anuales[año]?.ventas_por_mes ?? Array(12).fill(0)
-  return {
-    labels: meses,
-    datasets: [{
-      label: `Ventas ${año}`,
-      data: ventas,
-      borderColor: '#c3791b',
-      tension: 0.2,
-      fill: false,
-      pointBackgroundColor: '#c3791b'
-    }]
-  }
-})
-
-const salesPctData = computed<ChartData<'line'>>(() => {
-  const sorted = [...metrics.value.salesData].sort(
-    (a,b) => new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime()
-  )
-  const dates = sorted.map(s => new Date(s.fecha_venta).toLocaleDateString())
-  const pct = sorted.map((s,i,arr) => {
-    if (i===0) return 0
-    const prev = arr[i-1].monto
-    return prev > 0
-      ? ((s.monto - prev) / prev) * 100
-      : 0
-  })
-  return {
-    labels: dates,
-    datasets: [{
-      label: '% Variación',
-      data: pct,
-      borderColor: '#c3791b',
-      tension: 0.2,
-      fill: false,
-      pointRadius: 3,
-      pointBackgroundColor: '#c3791b'
-    }]
-  }
-})
+}) as ChartOptions<'line'>)
 </script>
