@@ -36,7 +36,8 @@
         <div :key="currentView">
           <MetricsCards v-if="currentView === 'metrics'" />
           <StadisticCards v-if="currentView === 'charts'" />
-          <SalesCharts v-if="currentView === 'sales'" />
+          <!-- Solo mostrar SalesCharts si es admin -->
+          <SalesCharts v-if="currentView === 'sales' && isAdmin" />
         </div>
       </Transition>
     </div>
@@ -44,19 +45,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { BreadcrumbItem } from "@nuxt/ui";
 import MetricsCards from '~/components/dashboard/MetricsCards.vue'
 import StadisticCards from '~/components/dashboard/StadisticCards.vue'
 import SalesCharts from '~/components/dashboard/SalesCharts.vue'
+import { useUserRole } from '~/composables/arestricted'
+
+const { isAdmin } = useUserRole()
 
 definePageMeta({ layout: "logged" });
 
-const views = [
+const views = computed(() => [
   { id: 'metrics', label: 'Métricas', icon: 'i-heroicons-chart-bar-square' },
   { id: 'charts', label: 'Gráficos', icon: 'i-heroicons-chart-pie' },
-  { id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' }
-];
+  // Solo mostrar la opción de ventas si es admin
+  ...(isAdmin.value ? [{ id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' }] : [])
+]);
 
 const currentView = ref('metrics');
 

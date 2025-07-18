@@ -2,7 +2,15 @@
   <div class="print-header print-only">
     <div class="logo">
       <img 
-        src="/img/logo/logo-black.webp" 
+        v-if="!isDark"
+        src="/assets/img/logo/logo-negro.webp" 
+        alt="Logo San Rafael" 
+        class="h-20 w-auto"
+        @error="handleImageError"
+      />
+      <img 
+        v-else
+        src="/assets/img/logo/logo-white.webp" 
         alt="Logo San Rafael" 
         class="h-20 w-auto"
         @error="handleImageError"
@@ -18,6 +26,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+const colorMode = useColorMode ? useColorMode() : { value: 'light' }
+const isDark = computed(() => colorMode.value === 'dark')
+
 interface Props {
   title?: string
 }

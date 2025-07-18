@@ -198,45 +198,23 @@
 
       <!-- NUEVA SECCIÓN: Peso al Destete -->
       <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
-        <div class="grid grid-cols-3 gap-4 text-center print:gap-2">
-          <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs">Peso al Destete</label>
-            <p class="text-lg font-semibold print:text-sm">
-              {{ animal.peso_destete != null ? animal.peso_destete + ' kg' : 'N/A' }}
-            </p>
-          </div>
+        <div class="flex flex-col items-center justify-center text-center">
+          <label class="text-base font-medium text-[var(--color-custom-300)] print:text-sm mb-1">Peso al Destete</label>
+          <p class="text-3xl font-extrabold print:text-xl">{{ animal.peso_destete != null ? animal.peso_destete + ' kg' : 'N/A' }}</p>
         </div>
       </div>
 
       <!-- NUEVA SECCIÓN: Información Adicional -->
       <div class="mt-8 border-t pt-6 print:mt-4 print:pt-2">
-        <h4 class="text-lg font-bold mb-4">Información Adicional</h4>
-        <div class="grid grid-cols-2 gap-4 print:gap-2">
-          <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
-              >Dueño</label
-            >
-            <p class="text-lg font-semibold print:text-sm">
-              {{ animal.dueño || "N/A" }}
-            </p>
+        <h4 class="text-lg font-bold mb-4 text-center">Información Adicional</h4>
+        <div class="flex flex-col md:flex-row items-center justify-center gap-8 print:flex-row print:gap-12">
+          <div class="text-center">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs">Dueño</label>
+            <p class="text-xl font-semibold print:text-base">{{ animal.dueño || 'N/A' }}</p>
           </div>
-
-          <div>
-            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
-              >Tipo de Ganado</label
-            >
-            <p class="text-lg font-semibold print:text-sm">
-              {{ animal.tipo_ganado || "N/A" }}
-            </p>
-          </div>
-
-          <div v-if="animal.tipo_animal === 'VACA'">
-            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs"
-              >Cantidad de Hijos</label
-            >
-            <p class="text-lg font-semibold print:text-sm">
-              {{ animal.cantidad_hijos || "0" }}
-            </p>
+          <div class="text-center">
+            <label class="text-sm font-medium text-[var(--color-custom-300)] print:text-xs">Tipo de Ganado</label>
+            <p class="text-xl font-semibold print:text-base uppercase">{{ animal.tipo_ganado || 'N/A' }}</p>
           </div>
         </div>
       </div>
