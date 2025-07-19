@@ -70,4 +70,11 @@ export default defineNuxtConfig({
   build: {
     transpile: ["@vue-flow/core", "@vue-flow/additional-components", "vue-chartjs"],
   },
+
+  // Nitro configuration
+  nitro: {
+    experimental: {
+      wasm: true
+    }
+  },
 });
