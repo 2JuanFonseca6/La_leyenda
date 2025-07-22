@@ -58,8 +58,8 @@ const metrics = computed(
     }
 );
 
-function fmtNum(n: number) {
-  return n.toLocaleString();
+function fmtNum(n: number | undefined) {
+  return (n ?? 0).toLocaleString();
 }
 function fmtPct(n: number) {
   return `${n.toFixed(2)}%`;

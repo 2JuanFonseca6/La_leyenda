@@ -35,7 +35,7 @@
         </UFormField>
 
         <!-- Fecha de Nacimiento -->
-        <UFormField name="fecha_nacimiento" required class="col-span-1 sm:col-span-2 lg:col-span-1">
+        <UFormField name="fecha_nacimiento" class="col-span-1 sm:col-span-2 lg:col-span-1">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
               Fecha de Nacimiento
@@ -45,7 +45,7 @@
         </UFormField>
 
         <!-- Peso Inicial -->
-        <UFormField name="peso_inicial" required class="col-span-1">
+        <UFormField name="peso_inicial" class="col-span-1">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
               Peso Inicial (kg)
@@ -55,7 +55,7 @@
         </UFormField>
 
         <!-- Peso Actual -->
-        <UFormField name="peso_actual" required class="col-span-1">
+        <UFormField name="peso_actual" class="col-span-1">
           <template #label>
             <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
               Peso Actual (kg)
@@ -212,9 +212,9 @@ const estadoSaludOptions = computed(() =>
 const schema = z.object({
   id_animal: z.string().min(1, "El ID es requerido"),
   raza: z.string().min(1, "La raza es requerida"),
-  fecha_nacimiento: z.string().date("Fecha inválida"),
-  peso_inicial: z.number().min(0, "El peso no puede ser negativo"),
-  peso_actual: z.number().min(0, "El peso no puede ser negativo"),
+  fecha_nacimiento: z.string().optional().or(z.literal("")).or(z.null()),
+  peso_inicial: z.number().min(0, "El peso no puede ser negativo").optional().or(z.nan()),
+  peso_actual: z.number().min(0, "El peso no puede ser negativo").optional().or(z.nan()),
   peso_destete: z.number().optional().nullable(),
 });
 
@@ -238,7 +238,7 @@ const formState = reactive<FormState>({
   id_animal: "",
   tipo_animal: undefined,
   raza: "",
-  fecha_nacimiento: new Date().toISOString().split("T")[0],
+  fecha_nacimiento: "",
   peso_inicial: 0,
   peso_actual: 0,
   estado_salud: undefined,
@@ -313,7 +313,7 @@ const resetForm = () => {
     id_animal: "",
     tipo_animal: undefined,
     raza: "",
-    fecha_nacimiento: new Date().toISOString().split("T")[0],
+    fecha_nacimiento: "",
     peso_inicial: 0,
     peso_actual: 0,
     estado_salud: undefined,
@@ -371,15 +371,52 @@ const handleSubmit = async () => {
       genomatologicoImageUrl = await uploadImage(selectedGenomatologicoFile.value, `${formState.id_animal}-genomatologico`, 'animal-images');
     }
 
-    const animalData = {
-      ...formState,
+    let animalDataFiltrado: any = {
+      id_animal: formState.id_animal || "",
+      raza: formState.raza || "",
+      peso_inicial: formState.peso_inicial ?? 0,
+      peso_actual: formState.peso_actual ?? 0,
+      fecha_nacimiento: formState.fecha_nacimiento,
       imagen_url: imageUrl,
       andrologico_image_url: andrologicoImageUrl,
       genomatologico_image_url: genomatologicoImageUrl,
       descripcion: formState.descripcion,
+      estado_salud: formState.estado_salud,
+      fecha_fallecimiento: formState.fecha_fallecimiento,
+      id_corral: formState.id_corral,
+      id_reproduccion: formState.id_reproduccion,
+      dueño: formState.dueño,
+      tipo_ganado: formState.tipo_ganado,
+      cantidad_hijos: formState.cantidad_hijos,
+      peso_destete: formState.peso_destete,
     };
+    // Crea un nuevo objeto sin fecha_nacimiento si es string vacía
+    let animalDataFiltradoFinal = Object.fromEntries(
+      Object.entries(animalDataFiltrado).filter(
+        ([key, value]) => key !== 'fecha_nacimiento' || value !== ""
+      )
+    );
+    // Si no existe fecha_nacimiento, asígnala como null (para cumplir con el tipado)
+    if (!('fecha_nacimiento' in animalDataFiltradoFinal)) {
+      animalDataFiltradoFinal.fecha_nacimiento = null;
+    }
+    // Asegura que los campos requeridos estén presentes
+    if (!('id_animal' in animalDataFiltradoFinal)) animalDataFiltradoFinal.id_animal = formState.id_animal || "";
+    if (!('raza' in animalDataFiltradoFinal)) animalDataFiltradoFinal.raza = formState.raza || "";
+    if (!('peso_inicial' in animalDataFiltradoFinal)) animalDataFiltradoFinal.peso_inicial = formState.peso_inicial ?? 0;
+    if (!('peso_actual' in animalDataFiltradoFinal)) animalDataFiltradoFinal.peso_actual = formState.peso_actual ?? 0;
 
-    const { error } = await supabase.from("animals").insert(animalData).single();
+    // Validación mínima antes de enviar a Supabase
+    if (!animalDataFiltradoFinal.id_animal || !animalDataFiltradoFinal.raza) {
+      useToast().add({
+        title: 'Error',
+        description: 'ID Animal y Raza son obligatorios.',
+        color: 'error',
+      });
+      return;
+    }
+
+    const { error } = await supabase.from("animals").insert(animalDataFiltradoFinal as any).single();
 
     if (error) throw error;
 

@@ -110,8 +110,16 @@ const baseColumns: TableColumn<Animal>[] = [
   {
     accessorKey: 'fecha_nacimiento',
     header: 'Fecha de Nacimiento',
-    cell: ({ row }) =>
-      new Date(row.getValue('fecha_nacimiento')).toLocaleDateString()
+    cell: ({ row }) => {
+      const fecha = row.getValue('fecha_nacimiento');
+      if (
+        (typeof fecha === 'string' && fecha !== '' && fecha !== null && fecha !== undefined && !isNaN(Date.parse(fecha))) ||
+        (typeof fecha === 'number' && !isNaN(fecha))
+      ) {
+        return new Date(fecha).toLocaleDateString();
+      }
+      return 'N/A';
+    }
   },
   {
     accessorKey: 'raza',
@@ -197,7 +205,7 @@ const filteredData = computed(() => {
     >
       <template #expanded="{ row }">
         <AnimalExpandedCard
-          :animal="row.original"
+          :animal="{ ...row.original, peso_destete: ('peso_destete' in row.original && typeof (row.original as any).peso_destete === 'number') ? (row.original as any).peso_destete : null }"
           @deleted="refreshTable"
           :can-edit="userRole === 'admin'"
         />

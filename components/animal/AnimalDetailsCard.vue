@@ -93,7 +93,9 @@
               >Fecha de Nacimiento</label
             >
             <p class="text-lg font-semibold print:text-sm">
-              {{ new Date(animal.fecha_nacimiento).toLocaleDateString() }}
+              {{ animal.fecha_nacimiento && !['', null, undefined].includes(animal.fecha_nacimiento) && !isNaN(Date.parse(animal.fecha_nacimiento))
+                ? new Date(animal.fecha_nacimiento).toLocaleDateString()
+                : 'N/A' }}
             </p>
           </div>
 
@@ -492,13 +494,19 @@
           </UFormField>
 
           <!-- Fecha de Nacimiento -->
-          <UFormField name="fecha_nacimiento" required class="col-span-1 sm:col-span-2 lg:col-span-1">
+          <UFormField name="fecha_nacimiento" class="col-span-1 sm:col-span-2 lg:col-span-1">
             <template #label>
               <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
                 Fecha de Nacimiento
               </span>
             </template>
-            <UInput v-model="formData.fecha_nacimiento" type="date" />
+            <UInput
+              v-model="formData.fecha_nacimiento"
+              type="date"
+              :value="formData.fecha_nacimiento && !['', null, undefined].includes(formData.fecha_nacimiento) && !isNaN(Date.parse(formData.fecha_nacimiento))
+                ? formData.fecha_nacimiento
+                : ''"
+            />
           </UFormField>
 
           <!-- Peso Inicial -->
@@ -512,7 +520,7 @@
           </UFormField>
 
           <!-- Peso Actual -->
-          <UFormField name="peso_actual" required class="col-span-1">
+          <UFormField name="peso_actual" class="col-span-1">
             <template #label>
               <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">
                 Peso Actual (kg)
@@ -687,7 +695,7 @@ const estadoSaludOptions = [
 
 const schema = z.object({
   id_animal: z.string().optional(), // Solo lectura
-  fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
+  fecha_nacimiento: z.string().optional().or(z.literal("")).or(z.null()),
   raza: z
     .string()
     .min(2, "Mínimo 2 caracteres")
@@ -695,9 +703,8 @@ const schema = z.object({
   tipo_animal: z.enum(["TERNERO", "TERNERA", "NOVILLO", "NOVILLA", "TORO", "VACA"]),
   peso_actual: z.coerce
     .number()
-    .positive("Debe ser positivo")
-    .min(1, "Mínimo 1 kg")
-    .max(2000, "Máximo 2000 kg"),
+    .optional()
+    .or(z.nan()),
   estado_salud: z.enum([
     "EXCELENTE",
     "BUENO",
@@ -715,13 +722,13 @@ const schema = z.object({
   id_reproduccion: z.coerce.number().max(500, "Máximo 500").optional(),
   fecha_fallecimiento: z
     .union([
-      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
-      z.literal(""),
+      z.string().regex(/^[\d]{4}-[\d]{2}-[\d]{2}$/, "Fecha inválida"),
+      z.literal("")
     ])
     .optional(),
   // NUEVOS CAMPOS
   dueño: z.string().optional(),
-  tipo_ganado: z.enum(["PURO", "COMERCIO"]).optional(),
+  tipo_ganado: z.enum(["PURO", "COMERCIO"]).optional().or(z.null()),
   cantidad_hijos: z.coerce.number().min(0).optional(),
   peso_destete: z.number().nullable().optional(),
 });
@@ -807,7 +814,7 @@ const formData = reactive<{
   descripcion?: string;
 }>({
   id_animal: props.animal.id_animal,
-  fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
+  fecha_nacimiento: props.animal.fecha_nacimiento ? props.animal.fecha_nacimiento.split("T")[0] : "",
   raza: props.animal.raza,
   tipo_animal: props.animal.tipo_animal as
     | "NOVILLO"
@@ -1686,7 +1693,7 @@ const enableEditing = () => {
   // Reset form data to original values
   Object.assign(formData, {
     id_animal: props.animal.id_animal,
-    fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
+    fecha_nacimiento: props.animal.fecha_nacimiento ? props.animal.fecha_nacimiento.split("T")[0] : "",
     raza: props.animal.raza,
     tipo_animal: props.animal.tipo_animal as
       | "NOVILLO"
@@ -1775,26 +1782,31 @@ const deleteImage = async () => {
 const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
+    // Construir el objeto de actualización y eliminar fecha_nacimiento si es string vacía
+    const updateData: any = {
+      fecha_nacimiento: formData.fecha_nacimiento,
+      raza: formData.raza,
+      tipo_animal: formData.tipo_animal,
+      peso_actual: formData.peso_actual,
+      estado_salud: formData.estado_salud,
+      peso_inicial: formData.peso_inicial,
+      id_reproduccion: formData.id_reproduccion,
+      fecha_fallecimiento: formData.fecha_fallecimiento || null,
+      // NUEVOS CAMPOS
+      dueño: formData.dueño || null,
+      tipo_ganado: formData.tipo_ganado || null,
+      cantidad_hijos: formData.cantidad_hijos || null,
+      peso_destete: formData.peso_destete || null,
+      descripcion: formData.descripcion || null,
+    };
+    if (updateData.fecha_nacimiento === "") {
+      delete updateData.fecha_nacimiento;
+    }
     const response = await $fetch(
       `/api/animal/specific/${props.animal.id_animal}`,
       {
         method: "PUT",
-        body: {
-          fecha_nacimiento: formData.fecha_nacimiento,
-          raza: formData.raza,
-          tipo_animal: formData.tipo_animal,
-          peso_actual: formData.peso_actual,
-          estado_salud: formData.estado_salud,
-          peso_inicial: formData.peso_inicial,
-          id_reproduccion: formData.id_reproduccion,
-          fecha_fallecimiento: formData.fecha_fallecimiento || null,
-          // NUEVOS CAMPOS
-          dueño: formData.dueño || null,
-          tipo_ganado: formData.tipo_ganado || null,
-          cantidad_hijos: formData.cantidad_hijos || null,
-          peso_destete: formData.peso_destete || null,
-          descripcion: formData.descripcion || null,
-        },
+        body: updateData,
       }
     );
 

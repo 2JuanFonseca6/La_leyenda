@@ -8,7 +8,8 @@ export default defineEventHandler(async (event) => {
   // 1) Total de animales
   const { count: totalAnimals, error: errA } = await client
     .from("animals")
-    .select("id_animal", { head: true, count: "exact" });
+    .select("id_animal", { head: true, count: "exact" })
+    .not("fecha_nacimiento", "is", null);
   if (errA) throw createError({ statusCode: 500, message: errA.message });
 
   // 1b) Total de corrales (lotes)
