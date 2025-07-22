@@ -19,8 +19,8 @@ import { useUserRole } from '~/composables/arestricted'
 const { userRole } = useUserRole()
 
 type FormState = {
-  id_proveedor: number
-  original_id: number
+  id_proveedor: string
+  original_id: string
   nombre_empresa: string
   telefono: string
   correo_empresa: string | null
@@ -28,8 +28,8 @@ type FormState = {
 }
 
 const formState = reactive<FormState>({
-  id_proveedor: props.item.id_proveedor,
-  original_id: props.item.id_proveedor,
+  id_proveedor: String(props.item.id_proveedor),
+  original_id: String(props.item.id_proveedor),
   nombre_empresa: props.item.nombre_empresa,
   telefono: props.item.telefono,
   correo_empresa: props.item.correo_empresa,
@@ -44,6 +44,12 @@ const handleUpdate = async () => {
     // Validar campos requeridos
     if (!formState.id_proveedor || !formState.nombre_empresa || !formState.telefono) {
       error.value = 'Todos los campos marcados son obligatorios'
+      isLoading.value = false
+      return
+    }
+    // Validar formato de id_proveedor (solo números y guiones)
+    if (!/^[0-9-]+$/.test(formState.id_proveedor)) {
+      error.value = 'El ID solo puede contener números y guiones'
       isLoading.value = false
       return
     }
@@ -134,8 +140,8 @@ const handleDelete = async () => {
       <UFormField label="ID Proveedor" required>
         <template v-if="isEditing">
           <UInput 
-            v-model.number="formState.id_proveedor" 
-            type="number" 
+            v-model="formState.id_proveedor" 
+            type="text" 
           />
         </template>
         <template v-else>

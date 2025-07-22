@@ -11,7 +11,7 @@
             <template #label>
               <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">ID Proveedor</span>
             </template>
-            <UInput v-model="form.id_proveedor" type="number" />
+            <UInput v-model="form.id_proveedor" type="text" />
           </UFormField>
   
           <UFormField name="nombre_empresa" required>
@@ -64,7 +64,9 @@
   const isSubmitting = ref(false);
   
   const schema = z.object({
-    id_proveedor: z.number().min(1, "El ID del proveedor es requerido"),
+    id_proveedor: z.string()
+      .min(1, "El ID del proveedor es requerido")
+      .regex(/^[0-9-]+$/, "Solo se permiten números y guiones"),
     nombre_empresa: z.string().min(1, "El nombre de la empresa es requerido"),
     telefono: z.string().min(1, "El teléfono es requerido"),
     correo_empresa: z.string().email("Debe ser un email válido").optional().or(z.literal("")),
@@ -72,7 +74,7 @@
   });
   
   const form = reactive({
-    id_proveedor: 0,
+    id_proveedor: "",
     nombre_empresa: "",
     telefono: "",
     correo_empresa: "",
@@ -82,7 +84,7 @@
   const openModal = () => {
     isOpen.value = true;
     Object.assign(form, {
-      id_proveedor: 0,
+      id_proveedor: "",
       nombre_empresa: "",
       telefono: "",
       correo_empresa: "",

@@ -2,14 +2,14 @@
   <BreadNav :items="breadcrumbItems" />
   <h1 class="text-3xl font-bold tracking-widest uppercase text-center">Provedores</h1>
   <div class="justify-end flex my-4 space-x-4">
-    <ProviderAddModal />
+    <ProviderAddModal @saved="refreshTable" />
   </div>
-<ProviderTable ref="providerTable"/>
+  <ProviderTable ref="providerTable"/>
 </template>
 
 <script setup lang="ts">
 import BreadNav from '~/components/navigation/BreadNav.vue';
-
+import { ref } from 'vue';
 import type { BreadcrumbItem } from '@nuxt/ui'
 const providerTable = ref();
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -29,6 +29,10 @@ const breadcrumbItems: BreadcrumbItem[] = [
     to: '/stock/providers',
   }
 ]
+
+const refreshTable = () => {
+  providerTable.value?.fetchProviders?.();
+}
 
 definePageMeta({
   middleware: ['restricted'],
