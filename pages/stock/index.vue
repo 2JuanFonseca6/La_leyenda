@@ -21,7 +21,10 @@
       <StockAddModal v-if="userRole === 'admin'" @saved="handleSaved" />
       <StockStadistics ref="stats" />
     </div>
-    <StockTable ref="stockTable" @refreshed="handleTableRefreshed" />
+    <div class="flex justify-start mb-4 px-4">
+      <InventorySearch @search="onInventorySearchInput" />
+    </div>
+    <StockTable ref="stockTable" :search="inventorySearchTerm" @refreshed="handleTableRefreshed" />
   </div>
 </template>
 
@@ -34,6 +37,7 @@ const { userRole } = useUserRole()
 
 const stockTable = ref();
 const stats = ref();
+const inventorySearchTerm = ref<string>('');
 
 const handleSaved = () => {
   stockTable.value?.fetchInventory();
@@ -43,6 +47,10 @@ const handleSaved = () => {
 const handleTableRefreshed = () => {
   stats.value?.refreshMetrics();
 };
+
+const onInventorySearchInput = (val: string) => {
+  inventorySearchTerm.value = val;
+}
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   const items: BreadcrumbItem[] = [

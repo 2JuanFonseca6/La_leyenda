@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const props = defineProps<{ search?: string }>()
 import { ref, watch } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
@@ -37,7 +38,8 @@ const fetchProviders = async () => {
   try {
     const params = {
       page: pagination.value.pageIndex,
-      pageSize: pagination.value.pageSize
+      pageSize: pagination.value.pageSize,
+      search: props.search || ''
     }
     const response = await $fetch<{ proveedores: Provider[], total: number }>('/api/providers/providers', { params })
     data.value = response.proveedores
@@ -50,7 +52,7 @@ const fetchProviders = async () => {
   }
 }
 
-watch([() => pagination.value.pageIndex, () => pagination.value.pageSize], fetchProviders)
+watch([() => pagination.value.pageIndex, () => pagination.value.pageSize, () => props.search], fetchProviders)
 
 // Carga inicial
 fetchProviders()

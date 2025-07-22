@@ -19,11 +19,23 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Consulta principal
-    const { data, error, count } = await client
+    let baseQuery = client
       .from("proveedores")
       .select("*", { count: "exact" })
-      .order("nombre_empresa", { ascending: true })
+      .order("nombre_empresa", { ascending: true });
+
+    const search = String(query.search || '').trim();
+    if (search) {
+      const searchFilter = [
+        `nombre_empresa.ilike.%${search}%`,
+        `id_proveedor.ilike.%${search}%`,
+        `correo_empresa.ilike.%${search}%`,
+        `telefono.ilike.%${search}%`
+      ].join(',');
+      baseQuery = baseQuery.or(searchFilter);
+    }
+
+    const { data, error, count } = await baseQuery
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (error) throw error;

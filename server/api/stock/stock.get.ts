@@ -64,11 +64,11 @@ export default defineEventHandler(async (event) => {
       };
     } else {
       // Si hay búsqueda, usa la lógica original
-      const searchFilter = `
-        tipo.ilike.%${searchTerm}% ,
-        descripcion.ilike.%${searchTerm}% ,
-        proveedor_id.ilike.%${searchTerm}%
-      `;
+      const searchFilter = [
+        `tipo.ilike.%${searchTerm}%`,
+        `descripcion.ilike.%${searchTerm}%`,
+        `proveedor_id.ilike.%${searchTerm}%`
+      ].join(',');
       countQuery = countQuery.or(searchFilter);
       const dataQuery = client
         .from("inventario")
