@@ -50,12 +50,27 @@ export default defineEventHandler(async (event) => {
   try {
     let countQuery = client
       .from("animals")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
+      .not("fecha_nacimiento", "is", null)
+      .is("fecha_fallecimiento", null);
     let dataQuery = client
       .from("animals")
       .select("*")
       .order("fecha_nacimiento", { ascending: false })
-      .range(rangeFrom, rangeTo);
+      .range(rangeFrom, rangeTo)
+      .not("fecha_nacimiento", "is", null)
+      .is("fecha_fallecimiento", null);
+
+    // Excluir animales con ventas
+    const { data: ventasAnimales, error: errVentasAnimales } = await client
+      .from("ventas")
+      .select("animal_id");
+    if (errVentasAnimales) throw createError({ statusCode: 500, message: errVentasAnimales.message });
+    const vendidosIds = (ventasAnimales || []).map(v => v.animal_id);
+    if (vendidosIds.length > 0) {
+      countQuery = countQuery.not("id_animal", "in", `(${vendidosIds.map(id => `'${id}'`).join(",")})`);
+      dataQuery = dataQuery.not("id_animal", "in", `(${vendidosIds.map(id => `'${id}'`).join(",")})`);
+    }
 
     if (searchTerm) {
       const safeSearch = String(searchTerm || '').trim();
