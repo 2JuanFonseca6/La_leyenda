@@ -202,6 +202,11 @@
           <label class="text-base font-medium text-[var(--color-custom-300)] print:text-sm mb-1">Peso al Destete</label>
           <p class="text-3xl font-extrabold print:text-xl">{{ animal.peso_destete != null ? animal.peso_destete + ' kg' : 'N/A' }}</p>
         </div>
+        <!-- Descripción debajo de Peso al Destete -->
+        <div class="flex flex-col items-center justify-center text-center mt-4">
+          <label class="text-base font-medium text-[var(--color-custom-300)] print:text-sm mb-1">Descripción</label>
+          <p class="text-base print:text-sm">{{ animal.descripcion || 'Sin descripción' }}</p>
+        </div>
       </div>
 
       <!-- NUEVA SECCIÓN: Información Adicional -->
@@ -613,6 +618,14 @@
             <UInput type="file" @change="handleGenomatologicoFileChange" accept="image/*" class="cursor-pointer" />
           </UFormField>
 
+          <!-- Descripción (edición) -->
+          <UFormField name="descripcion" class="col-span-1 sm:col-span-2 lg:col-span-3">
+            <template #label>
+              <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Descripción</span>
+            </template>
+            <UTextarea v-model="formData.descripcion" placeholder="Descripción del animal (opcional)" :maxlength="500" />
+          </UFormField>
+
           <!-- Botones de acción ocupan toda la fila -->
           <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end gap-4 mt-2">
             <UButton type="button" variant="ghost" @click="cancelEditing">Cancelar</UButton>
@@ -791,6 +804,7 @@ const formData = reactive<{
   tipo_ganado?: "PURO" | "COMERCIO";
   cantidad_hijos?: number;
   peso_destete?: number | null;
+  descripcion?: string;
 }>({
   id_animal: props.animal.id_animal,
   fecha_nacimiento: props.animal.fecha_nacimiento.split("T")[0],
@@ -823,6 +837,7 @@ const formData = reactive<{
   tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
   cantidad_hijos: props.animal.cantidad_hijos || undefined,
   peso_destete: props.animal.peso_destete || undefined,
+  descripcion: props.animal.descripcion || "",
 });
 
 let chartInstance: Chart | null = null
@@ -1701,6 +1716,7 @@ const enableEditing = () => {
     tipo_ganado: props.animal.tipo_ganado as "PURO" | "COMERCIO" | undefined,
     cantidad_hijos: props.animal.cantidad_hijos || undefined,
     peso_destete: props.animal.peso_destete || undefined,
+    descripcion: props.animal.descripcion || "",
   });
 };
 
@@ -1777,6 +1793,7 @@ const handleSubmit = async () => {
           tipo_ganado: formData.tipo_ganado || null,
           cantidad_hijos: formData.cantidad_hijos || null,
           peso_destete: formData.peso_destete || null,
+          descripcion: formData.descripcion || null,
         },
       }
     );
@@ -1810,6 +1827,7 @@ const handleSubmit = async () => {
       venta: false,
       peso_inicial: 0,
       peso_destete: formData.peso_destete || null,
+      descripcion: formData.descripcion || null,
     });
   } catch (error: unknown) {
     console.error("Error en actualización:", error);

@@ -139,6 +139,14 @@
           <UInput v-model.number="formState.cantidad_hijos" type="number" min="0" step="1" placeholder="0" />
         </UFormField>
 
+        <!-- Descripción -->
+        <UFormField name="descripcion" class="col-span-1 sm:col-span-2 lg:col-span-3">
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Descripción</span>
+          </template>
+          <UTextarea v-model="formState.descripcion" placeholder="Descripción del animal (opcional)" :maxlength="500" />
+        </UFormField>
+
         <!-- Imagen del Animal -->
         <UFormField name="image" class="col-span-1 sm:col-span-2">
           <template #label>
@@ -368,6 +376,7 @@ const handleSubmit = async () => {
       imagen_url: imageUrl,
       andrologico_image_url: andrologicoImageUrl,
       genomatologico_image_url: genomatologicoImageUrl,
+      descripcion: formState.descripcion,
     };
 
     const { error } = await supabase.from("animals").insert(animalData).single();

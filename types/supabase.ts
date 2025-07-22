@@ -29,6 +29,7 @@ export type Database = {
           genomatologico_image_url: string | null
           cantidad_hijos: number | null
           peso_destete: number | null
+          descripcion: string | null
         }
         Insert: {
           estado_salud?: Database["public"]["Enums"]["estado_salud"] | null
@@ -49,6 +50,7 @@ export type Database = {
           genomatologico_image_url?: string | null
           cantidad_hijos?: number | null
           peso_destete?: number | null
+          descripcion?: string | null
         }
         Update: {
           estado_salud?: Database["public"]["Enums"]["estado_salud"] | null
@@ -69,6 +71,7 @@ export type Database = {
           genomatologico_image_url?: string | null
           cantidad_hijos?: number | null
           peso_destete?: number | null
+          descripcion?: string | null
         }
         Relationships: [
           {

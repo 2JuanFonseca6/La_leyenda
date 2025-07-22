@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
     genomatologico_image_url: body.genomatologico_image_url,
     cantidad_hijos: body.cantidad_hijos,
     peso_destete: body.peso_destete,
+    descripcion: body.descripcion,
   };
 
   // Filtra campos undefined

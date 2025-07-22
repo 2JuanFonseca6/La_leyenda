@@ -27,6 +27,7 @@ export interface Animal {
   genomatologico_image_url?: string | null;
   cantidad_hijos?: number | null;
   peso_destete?: number | null;
+  descripcion?: string | null;
 }
 
 export interface Venta {
