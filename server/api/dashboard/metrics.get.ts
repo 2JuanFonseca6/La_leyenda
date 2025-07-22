@@ -5,11 +5,21 @@ import type { Database } from "~/types/supabase";
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient<Database>(event);
 
-  // 1) Total de animales
+  // Excluir animales con ventas o fecha_fallecimiento
+  // 1. Obtener IDs de animales vendidos
+  const { data: ventasAnimales, error: errVentasAnimales } = await client
+    .from("ventas")
+    .select("animal_id");
+  if (errVentasAnimales) throw createError({ statusCode: 500, message: errVentasAnimales.message });
+  const vendidosIds = (ventasAnimales || []).map(v => v.animal_id);
+
+  // 2. Contar animales propios (fecha_nacimiento no nula, sin ventas, sin fecha_fallecimiento)
   const { count: totalAnimals, error: errA } = await client
     .from("animals")
     .select("id_animal", { head: true, count: "exact" })
-    .not("fecha_nacimiento", "is", null);
+    .not("fecha_nacimiento", "is", null)
+    .is("fecha_fallecimiento", null)
+    .not("id_animal", "in", `(${vendidosIds.map(id => `'${id}'`).join(",") || "''"})`);
   if (errA) throw createError({ statusCode: 500, message: errA.message });
 
   // 1b) Total de corrales (lotes)
