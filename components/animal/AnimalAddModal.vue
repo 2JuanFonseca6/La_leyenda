@@ -373,6 +373,7 @@ const handleSubmit = async () => {
 
     let animalDataFiltrado: any = {
       id_animal: formState.id_animal || "",
+      tipo_animal: formState.tipo_animal,
       raza: formState.raza || "",
       peso_inicial: formState.peso_inicial ?? 0,
       peso_actual: formState.peso_actual ?? 0,
