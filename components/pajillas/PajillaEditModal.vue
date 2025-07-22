@@ -3,31 +3,31 @@
     <template #body>
       <UForm :state="form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="handleSubmit">
         <UFormField name="id">
-          <template #label>ID</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">ID</span></template>
           <UInput v-model="form.id" readonly />
         </UFormField>
         <UFormField name="pajilla">
-          <template #label>Código</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Código</span></template>
           <UInput v-model="form.pajilla" />
         </UFormField>
         <UFormField name="fecha_ingreso">
-          <template #label>Fecha de Ingreso</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Fecha de Ingreso</span></template>
           <UInput v-model="form.fecha_ingreso" type="date" />
         </UFormField>
         <UFormField name="stock_inicial">
-          <template #label>Stock Inicial</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Stock Inicial</span></template>
           <UInput v-model.number="form.stock_inicial" type="number" min="0" />
         </UFormField>
         <UFormField name="salida_hoy">
-          <template #label>Salida (hoy)</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Salida (hoy)</span></template>
           <UInput :model-value="form.salida_hoy" readonly />
         </UFormField>
         <UFormField name="inventario_final">
-          <template #label>Stock Final</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Stock Final</span></template>
           <UInput :model-value="form.inventario_final" readonly />
         </UFormField>
         <UFormField name="descripcion" class="sm:col-span-2">
-          <template #label>Descripción / Observaciones</template>
+          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Descripción / Observaciones</span></template>
           <UTextarea v-model="form.descripcion" />
         </UFormField>
         <div class="col-span-2 flex justify-end gap-4 mt-4">

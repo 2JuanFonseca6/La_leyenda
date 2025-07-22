@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, type Ref, type ComputedRef } from 'vue'
+import { ref, onMounted, computed, type Ref, type ComputedRef, watch } from 'vue'
 import { useUserRole } from '~/composables/arestricted'
 import type { InventarioPajilla, MovimientoPajilla } from '~/types/pajillas'
 import SelectVacaDrawer from './SelectVacaDrawer.vue'
@@ -34,6 +34,14 @@ const editPajillaForm = ref({
 })
 
 const pajillaLocal: Ref<InventarioPajilla> = ref({ ...props.pajilla })
+
+// Refrescar automáticamente si cambian los datos externos (por ejemplo, tras editar desde el modal de la tabla)
+watch(() => props.pajilla, (newVal) => {
+  if (newVal && newVal.id !== pajillaLocal.value.id) {
+    pajillaLocal.value = { ...newVal }
+    fetchMovimientos()
+  }
+})
 
 // Type guard para evitar errores de acceso nulo
 function isAnimal(obj: unknown): obj is { id_animal: string, tipo_animal: string, raza: string } {
@@ -242,9 +250,7 @@ const columns: ComputedRef<{ label: string; value: (row: any) => any }[]> = comp
     <template #header>
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Detalles de la Pajilla</h3>
-        <div class="flex gap-2">
-          <UButton v-if="canEdit" icon="i-heroicons-pencil-square" color="neutral" variant="soft" class="!text-gray-800 dark:!text-gray-100" @click="openEditPajillaModal" size="sm" title="Editar pajilla" />
-        </div>
+        <!-- Botón de editar eliminado -->
       </div>
     </template>
 

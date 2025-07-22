@@ -148,6 +148,14 @@ const columns = computed<TableColumn<Pajilla>[]>(() => [
     header: 'Acciones',
     cell: ({ row }: { row: any }) => h('div', { class: 'flex gap-2' }, [
       h(UButton, {
+        icon: 'i-heroicons-pencil-square',
+        color: 'primary',
+        variant: 'soft',
+        size: 'sm',
+        title: 'Editar pajilla',
+        onClick: () => handleEdit(row.original)
+      }),
+      h(UButton, {
         icon: 'i-heroicons-trash',
         color: 'error',
         variant: 'soft',
@@ -323,7 +331,20 @@ defineExpose({
     <PajillaEditModal
       :open="showEditModal"
       :pajilla="pajillaAEditar"
-      @updated="() => { showEditModal = false; refreshTable(); }"
+      @updated="async () => {
+        showEditModal = false;
+        await refreshTable();
+        // Actualizar explícitamente el objeto de la fila expandida si está abierta
+        if (pajillaAEditar && expanded[pajillaAEditar.id]) {
+          const fila = data.value.find(p => p.id === pajillaAEditar.id);
+          if (fila) {
+            // Forzar actualización reactiva
+            expanded[pajillaAEditar.id] = false;
+            await nextTick();
+            expanded[pajillaAEditar.id] = true;
+          }
+        }
+      }"
       @close="showEditModal = false"
     />
     <!-- Modal de confirmación de eliminación de pajilla -->
