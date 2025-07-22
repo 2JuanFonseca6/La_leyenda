@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUserRole } from '~/composables/arestricted'
 import { useSupabaseClient } from '#imports'
+import DrawerProviders from './DrawerProviders.vue'
 
 const supabase = useSupabaseClient()
 
@@ -182,6 +183,7 @@ const handleFacturaFileChange = async (event: Event) => {
 
 const isFacturaModalOpen = ref(false)
 const isDeleteFacturaModalOpen = ref(false) // NUEVO: estado para modal de confirmación de eliminación
+const isProveedorDrawerOpen = ref(false)
 
 function openFacturaModal() {
   isFacturaModalOpen.value = true
@@ -314,7 +316,11 @@ const confirmDeleteFactura = async () => {
       <UFormField label="Proveedor ID" :required="true"
         :error="validations.proveedor_id.find(v => typeof v(formState.proveedor_id) === 'string')?.(formState.proveedor_id)">
         <template v-if="isEditing">
-          <UInput v-model="formState.proveedor_id" />
+          <div class="flex items-center gap-2">
+            <UInput v-model="formState.proveedor_id" readonly placeholder="Sin proveedor seleccionado" />
+            <UButton icon="i-heroicons-magnifying-glass" color="primary" @click="isProveedorDrawerOpen = true" title="Buscar proveedor" />
+            <DrawerProviders v-model:modelValue="isProveedorDrawerOpen" @select="formState.proveedor_id = $event.id_proveedor" />
+          </div>
         </template>
         <template v-else>
           <p class="py-2 px-3">{{ formState.proveedor_id }}</p>
