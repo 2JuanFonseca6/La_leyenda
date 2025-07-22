@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Line } from 'vue-chartjs'
 import { Pie } from 'vue-chartjs'
@@ -225,26 +225,25 @@ const corralChartOptions = computed<ChartOptions<'bar'>>(() => ({
   scales: { x: { beginAtZero: true } }
 }));
 
-// Obtener historiales de peso de todos los animales
+// Obtener historiales de peso de todos los animales (optimizado)
 const pesosPorAnimal = ref<Record<string, any[]>>({})
 const errorPesos = ref<Error|null>(null)
 const pendingPesos = ref(true)
 
-if (!pendingAnimals.value && animals.value.length > 0) {
-  pendingPesos.value = true
-  Promise.all(
-    animals.value.map(async (a) => {
-      try {
-        const res = await $fetch(`/api/animal/specific/${a.id_animal}/peso`)
-        pesosPorAnimal.value[a.id_animal] = res.historial_peso || []
-      } catch (e) {
-        errorPesos.value = e instanceof Error ? e : new Error(String(e))
-      }
-    })
-  ).finally(() => {
-    pendingPesos.value = false
-  })
-}
+watchEffect(async () => {
+  if (!pendingAnimals.value && animals.value.length > 0) {
+    pendingPesos.value = true
+    try {
+      const ids = animals.value.map(a => a.id_animal).join(',')
+      const res = await $fetch(`/api/animal/historiales-peso-batch?ids=${ids}`)
+      pesosPorAnimal.value = res.historiales || {}
+    } catch (e) {
+      errorPesos.value = e instanceof Error ? e : new Error(String(e))
+    } finally {
+      pendingPesos.value = false
+    }
+  }
+})
 
 // Calcular incremento anual promedio
 const pesoAnualData = computed(() => {
