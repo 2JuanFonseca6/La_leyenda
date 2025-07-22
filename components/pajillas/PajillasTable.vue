@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { Table } from '@tanstack/table-core'
@@ -121,9 +121,9 @@ const columns = computed<TableColumn<Pajilla>[]>(() => [
     cell: ({ row }) => h('span', { class: 'font-mono text-sm' }, row.original.stock_inicial)
   },
   {
-    accessorKey: 'salida_hoy',
+    accessorKey: 'total_salidas',
     header: 'Salida',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm text-red-700' }, row.original.salida_hoy)
+    cell: ({ row }) => h('span', { class: 'font-mono text-sm text-red-700' }, row.original.total_salidas)
   },
   {
     accessorKey: 'inventario_final',
@@ -235,7 +235,7 @@ const resumenGeneral = computed(() => {
   const pajillas = data.value;
   return {
     stockInicial: pajillas.reduce((sum, p) => sum + (p.stock_inicial || 0), 0),
-    salidaHoy: pajillas.reduce((sum, p) => sum + (p.salida_hoy || 0), 0),
+    salida: pajillas.reduce((sum, p) => sum + (p.total_salidas || 0), 0),
     stockFinal: pajillas.reduce((sum, p) => sum + (p.inventario_final || 0), 0),
     total: pajillas.length
   }
@@ -265,7 +265,7 @@ defineExpose({
       <div class="flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 py-6 transition hover:scale-[1.03] hover:shadow-lg">
         <div class="flex items-center gap-2 mb-1">
           <span class="i-lucide-arrow-up-right text-red-600 text-2xl" />
-          <span class="text-2xl font-extrabold text-red-600">{{ resumenGeneral.salidaHoy }}</span>
+          <span class="text-2xl font-extrabold text-red-600">{{ resumenGeneral.salida }}</span>
         </div>
         <div class="text-sm text-muted">Salida</div>
       </div>
@@ -336,7 +336,7 @@ defineExpose({
         await refreshTable();
         // Actualizar explícitamente el objeto de la fila expandida si está abierta
         if (pajillaAEditar && expanded[pajillaAEditar.id]) {
-          const fila = data.value.find(p => p.id === pajillaAEditar.id);
+          const fila = data.find((p: Pajilla) => p.id === pajillaAEditar!.id);
           if (fila) {
             // Forzar actualización reactiva
             expanded[pajillaAEditar.id] = false;

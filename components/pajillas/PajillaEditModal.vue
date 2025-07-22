@@ -18,10 +18,6 @@
           <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Stock Inicial</span></template>
           <UInput v-model.number="form.stock_inicial" type="number" min="0" />
         </UFormField>
-        <UFormField name="salida_hoy">
-          <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Salida (hoy)</span></template>
-          <UInput :model-value="form.salida_hoy" readonly />
-        </UFormField>
         <UFormField name="inventario_final">
           <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Stock Final</span></template>
           <UInput :model-value="form.inventario_final" readonly />

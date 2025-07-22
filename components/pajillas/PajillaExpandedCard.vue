@@ -37,11 +37,11 @@ const pajillaLocal: Ref<InventarioPajilla> = ref({ ...props.pajilla })
 
 // Refrescar automáticamente si cambian los datos externos (por ejemplo, tras editar desde el modal de la tabla)
 watch(() => props.pajilla, (newVal) => {
-  if (newVal && newVal.id !== pajillaLocal.value.id) {
+  if (newVal) {
     pajillaLocal.value = { ...newVal }
     fetchMovimientos()
   }
-})
+}, { deep: true })
 
 // Type guard para evitar errores de acceso nulo
 function isAnimal(obj: unknown): obj is { id_animal: string, tipo_animal: string, raza: string } {
@@ -243,6 +243,10 @@ const columns: ComputedRef<{ label: string; value: (row: any) => any }[]> = comp
   // Solo admin ve la columna Acciones
   ...(canEdit.value ? [{ label: 'Acciones', value: (row: any) => row }] : [])
 ])
+
+const totalSalidas = computed(() => {
+  return movimientos.value.reduce((sum, mov) => sum + (mov.cantidad || 0), 0)
+})
 </script>
 
 <template>
@@ -258,7 +262,7 @@ const columns: ComputedRef<{ label: string; value: (row: any) => any }[]> = comp
       <div><b>Código:</b> {{ pajillaLocal.pajilla }}</div>
       <div><b>Fecha Ingreso:</b> {{ new Date(pajillaLocal.fecha_ingreso).toLocaleDateString() }}</div>
       <div><b>Stock Inicial:</b> {{ pajillaLocal.stock_inicial ?? pajillaLocal.stock }}</div>
-      <div><b>Salidas:</b> {{ pajillaLocal.total_salidas }}</div>
+      <div><b>Salidas:</b> {{ totalSalidas }}</div>
       <div><b>Stock Final:</b> <span :class="pajillaLocal.inventario_final > 0 ? 'text-green-600' : 'text-red-600'">{{ pajillaLocal.inventario_final }}</span></div>
       <div class="col-span-3"><b>Descripción:</b> {{ pajillaLocal.descripcion || 'Sin descripción' }}</div>
     </div>
