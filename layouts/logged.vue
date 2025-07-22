@@ -39,7 +39,7 @@ const items = computed<ContextMenuItem[]>(() => {
       label: 'Pajillas',
       icon: 'i-healthicons-syringe-outline',
       type: 'link',
-      href: '/pajillas',
+      href: '/stock/pajillas',
     },
     {
       label: 'Ajustes',
