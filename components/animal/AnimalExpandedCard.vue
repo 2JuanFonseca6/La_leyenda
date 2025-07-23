@@ -173,7 +173,10 @@ interface Animal {
 }
 
 // Props y emits
-const props = defineProps<{ animal: Animal }>()
+const props = defineProps({
+  animal: Object,
+  canEdit: Boolean,
+})
 const emit = defineEmits<{
   (e: 'deleted', id: string): void
   (e: 'edit', id: string): void
