@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "NODE_NO_WARNINGS=1 nuxt build",
+    "start": "bun .output/server/index.mjs",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
