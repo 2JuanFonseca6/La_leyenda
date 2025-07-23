@@ -1,5 +1,5 @@
 [build]
-  command = "bash ./install-bun.sh && bun run build"
+  command = "bun run build"
   publish = ".output/public"
 
 [build.environment]
