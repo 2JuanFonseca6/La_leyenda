@@ -37,7 +37,7 @@ const { userRole } = useUserRole()
 
 const stockTable = ref();
 const stats = ref();
-const inventorySearchTerm = ref<string>('');
+const inventorySearchTerm = ref<{ term: string, date: string }>({ term: '', date: '' });
 
 const handleSaved = () => {
   stockTable.value?.fetchInventory();
@@ -48,7 +48,7 @@ const handleTableRefreshed = () => {
   stats.value?.refreshMetrics();
 };
 
-const onInventorySearchInput = (val: string) => {
+const onInventorySearchInput = (val: { term: string, date: string }) => {
   inventorySearchTerm.value = val;
 }
 

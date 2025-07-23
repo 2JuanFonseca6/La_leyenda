@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
   const page = Number(query.page) || 1;
   const pageSize = Number(query.pageSize) || 10;
   const searchTerm = String(query.search || "").trim();
+  const searchDate = String(query.date || '').trim();
 
   if (isNaN(page) || page < 1) {
     throw createError({
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
       .select("id_inventario", { count: "exact", head: true });
 
     // OPTIMIZACIÓN: Si no hay búsqueda, primero trae solo los IDs de la página, luego los detalles
-    if (!searchTerm) {
+    if (!searchTerm && !searchDate) {
       // 1. Trae solo los IDs de la página
       const { data: idsData, error: idsError } = await client
         .from("inventario")
@@ -64,21 +65,36 @@ export default defineEventHandler(async (event) => {
       };
     } else {
       // Si hay búsqueda, usa la lógica original
-      const searchFilter = [
-        `tipo.ilike.%${searchTerm}%`,
-        `descripcion.ilike.%${searchTerm}%`,
-        `proveedor_id.ilike.%${searchTerm}%`
-      ].join(',');
-      countQuery = countQuery.or(searchFilter);
-      const dataQuery = client
+      let query = client
         .from("inventario")
         .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url, fecha")
         .order("id_inventario", { ascending: false })
-        .range(rangeFrom, rangeTo)
-        .or(searchFilter);
+        .range(rangeFrom, rangeTo);
+      
+      let countQuery = client
+        .from("inventario")
+        .select("id_inventario", { count: "exact", head: true });
+
+      // Aplicar filtros
+      if (searchTerm && searchDate) {
+        // Ambos filtros: texto Y fecha
+        const textFilter = `tipo.ilike.%${searchTerm}%,descripcion.ilike.%${searchTerm}%,proveedor_id.ilike.%${searchTerm}%`;
+        query = query.or(textFilter).eq('fecha', searchDate);
+        countQuery = countQuery.or(textFilter).eq('fecha', searchDate);
+      } else if (searchTerm) {
+        // Solo filtro de texto
+        const textFilter = `tipo.ilike.%${searchTerm}%,descripcion.ilike.%${searchTerm}%,proveedor_id.ilike.%${searchTerm}%`;
+        query = query.or(textFilter);
+        countQuery = countQuery.or(textFilter);
+      } else if (searchDate) {
+        // Solo filtro de fecha
+        query = query.eq('fecha', searchDate);
+        countQuery = countQuery.eq('fecha', searchDate);
+      }
+
       const { count, error: countError } = await countQuery;
       if (countError) throw countError;
-      const { data, error: dataError } = await dataQuery;
+      const { data, error: dataError } = await query;
       if (dataError) throw dataError;
       return {
         items: data || [],

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ search?: string }>()
+const props = defineProps<{ search?: string | { term: string, date: string } }>()
 import { ref, watch } from "vue";
 import type { TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
@@ -41,11 +41,16 @@ const pagination = ref({
 const fetchInventory = async () => {
   isPending.value = true;
   try {
-    const params = {
+    let params: any = {
       page: pagination.value.pageIndex,
       pageSize: pagination.value.pageSize,
-      search: props.search || ''
     };
+    if (typeof props.search === 'object' && props.search !== null) {
+      params.search = props.search.term || '';
+      if (props.search.date) params.date = props.search.date;
+    } else {
+      params.search = props.search || '';
+    }
     const response = await $fetch<{ items: InventoryItem[]; total: number }>(
       "/api/stock/stock",
       { params }
