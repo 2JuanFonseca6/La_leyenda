@@ -24,6 +24,13 @@
           <UInput v-model="form.descripcion" type="text" />
         </UFormField>
 
+        <UFormField name="fecha" required>
+          <template #label>
+            <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Fecha</span>
+          </template>
+          <UInput v-model="form.fecha" type="date" />
+        </UFormField>
+
         <div class="flex gap-4">
           <UFormField name="cantidad" required>
             <template #label>
@@ -105,6 +112,7 @@ const schema = z.object({
     })
     .min(0.01, { message: "El precio debe ser mayor a 0" }),
   proveedor_id: z.string().min(1, "Debe seleccionar un proveedor"),
+  fecha: z.string().min(1, "La fecha es obligatoria"),
 });
 
 const form = reactive({
@@ -113,6 +121,7 @@ const form = reactive({
   cantidad: 0,
   precio: 0,
   proveedor_id: "",
+  fecha: "",
 });
 
 const openModal = () => {
@@ -123,6 +132,7 @@ const openModal = () => {
     cantidad: 0,
     precio: 0,
     proveedor_id: "",
+    fecha: "",
   });
 };
 
@@ -140,6 +150,7 @@ const handleSubmit = async () => {
         ...form,
         cantidad: Number(form.cantidad),
         precio: Number(form.precio),
+        fecha: form.fecha,
       },
     });
     useToast().add({ title: "Artículo agregado!", color: "success", icon: "i-heroicons-check-circle-20-solid" });

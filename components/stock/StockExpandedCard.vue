@@ -2,6 +2,7 @@
 import { useUserRole } from '~/composables/arestricted'
 import { useSupabaseClient } from '#imports'
 import DrawerProviders from './DrawerProviders.vue'
+import StockEditModal from './StockEditModal.vue'
 
 const supabase = useSupabaseClient()
 
@@ -16,6 +17,17 @@ const toast = useToast()
 const isEditing = ref(false)
 const isLoading = ref(false)
 
+type InventoryItem = {
+  id_inventario: number;
+  tipo: string;
+  descripcion: string;
+  cantidad: number;
+  precio: number;
+  proveedor_id: string;
+  factura_url?: string | null;
+  fecha?: string;
+};
+
 type FormState = {
   tipo: string
   descripcion: string
@@ -23,6 +35,7 @@ type FormState = {
   precio: number
   proveedor_id: string
   factura_url?: string | null
+  fecha?: string
 }
 
 const formState = reactive<FormState>({
@@ -31,7 +44,8 @@ const formState = reactive<FormState>({
   cantidad: props.item.cantidad,
   precio: props.item.precio,
   proveedor_id: props.item.proveedor_id,
-  factura_url: props.item.factura_url ?? undefined
+  factura_url: props.item.factura_url ?? undefined,
+  fecha: props.item.fecha || ''
 })
 
 // Tipos de artículos disponibles
@@ -50,7 +64,8 @@ const validations: {
     (value: number) => !!value || 'Campo obligatorio',
     (value: number) => value >= 0 || 'No puede ser negativo'
   ],
-  proveedor_id: [(value: string) => !!value || 'Campo obligatorio']
+  proveedor_id: [(value: string) => !!value || 'Campo obligatorio'],
+  fecha: [(value: string | undefined) => !!value || 'Campo obligatorio']
 }
 
 const handleUpdate = async () => {
@@ -235,6 +250,38 @@ const confirmDeleteFactura = async () => {
     isLoading.value = false;
   }
 };
+
+const showEditModal = ref(false)
+
+function openEditModal() {
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+}
+
+async function fetchItem() {
+  try {
+    const updated = await $fetch(`/api/stock/specific/${props.item.id_inventario}`)
+    // Actualiza los datos locales de la tarjeta
+    formState.tipo = updated.tipo
+    formState.descripcion = updated.descripcion
+    formState.cantidad = updated.cantidad
+    formState.precio = updated.precio
+    formState.proveedor_id = updated.proveedor_id
+    formState.factura_url = updated.factura_url ?? undefined
+    formState.fecha = updated.fecha || ''
+  } catch (e) {
+    // opcional: mostrar error
+  }
+}
+
+function handleEditUpdated() {
+  fetchItem()
+  emit('updated')
+  closeEditModal()
+}
 </script>
 
 <template>
@@ -244,14 +291,18 @@ const confirmDeleteFactura = async () => {
         <h3 class="text-lg font-semibold">Detalles del Producto</h3>
         <div class="flex gap-2">
           <UButton v-if="userRole === 'admin'" icon="i-heroicons-trash" color="error" @click="handleDelete" :loading="isLoading" title="Eliminar producto" />
-          <UButton v-if="!isEditing && userRole === 'admin'" icon="i-heroicons-pencil-square" color="primary" @click="isEditing = true" />
-          <template v-else-if="userRole === 'admin'">
-            <UButton icon="i-heroicons-x-mark" color="error" @click="isEditing = false" />
-            <UButton icon="i-heroicons-check" color="success" :loading="isLoading" @click="handleUpdate" />
-          </template>
+          <UButton v-if="userRole === 'admin'" icon="i-heroicons-pencil-square" color="primary" @click="openEditModal" />
         </div>
       </div>
     </template>
+
+    <StockEditModal
+      v-if="showEditModal"
+      :item="props.item"
+      :open="showEditModal"
+      @updated="handleEditUpdated"
+      @close="closeEditModal"
+    />
 
     <!-- Responsive grid with more columns -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -324,6 +375,15 @@ const confirmDeleteFactura = async () => {
         </template>
         <template v-else>
           <p class="py-2 px-3">{{ formState.proveedor_id }}</p>
+        </template>
+      </UFormField>
+      <!-- Campo Fecha -->
+      <UFormField label="Fecha" :required="true" :error="validations.fecha?.find(v => typeof v(formState.fecha) === 'string')?.(formState.fecha)">
+        <template v-if="isEditing">
+          <UInput v-model="formState.fecha" type="date" />
+        </template>
+        <template v-else>
+          <p class="py-2 px-3">{{ formState.fecha ? formState.fecha.split('-').reverse().join('/') : '-' }}</p>
         </template>
       </UFormField>
     </div>

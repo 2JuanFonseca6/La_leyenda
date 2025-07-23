@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
         precio: body.precio,
         proveedor_id: body.proveedor_id,
         tipo: body.tipo,
+        fecha: body.fecha // Guardar como string, sin convertir a Date
       })
       .select()
       .single();

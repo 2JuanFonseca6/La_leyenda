@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
       if (ids.length > 0) {
         const { data: details, error: detailsError } = await client
           .from("inventario")
-          .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url")
+          .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url, fecha")
           .in("id_inventario", ids);
         if (detailsError) throw detailsError;
         // Mantener el orden original de la página
@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
       countQuery = countQuery.or(searchFilter);
       const dataQuery = client
         .from("inventario")
-        .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url")
+        .select("id_inventario, tipo, descripcion, cantidad, precio, proveedor_id, factura_url, fecha")
         .order("id_inventario", { ascending: false })
         .range(rangeFrom, rangeTo)
         .or(searchFilter);

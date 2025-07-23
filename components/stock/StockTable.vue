@@ -15,6 +15,7 @@ type InventoryItem = {
   precio: number;
   proveedor_id: string;
   factura_url?: string | null;
+  fecha?: string;
 };
 
 interface TableComponent {
@@ -166,6 +167,11 @@ const columns: TableColumn<InventoryItem>[] = [
   {
     accessorKey: "proveedor_id",
     header: "ID Proveedor",
+  },
+  {
+    accessorKey: "fecha",
+    header: "Fecha",
+    cell: ({ row }) => row.original.fecha ? row.original.fecha.split('-').reverse().join('/') : '-',
   },
 ];
 

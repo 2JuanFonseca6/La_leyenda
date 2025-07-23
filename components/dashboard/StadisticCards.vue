@@ -135,7 +135,9 @@ const animals = computed(() => animalsRes.value?.animals || [])
 const animalsByType = computed(() => {
   const counts: Record<string, number> = {};
   for (const a of animals.value) {
+    // Solo contar animales con fecha_nacimiento válida
     if (!a.tipo_animal) continue;
+    if (!a.fecha_nacimiento || a.fecha_nacimiento === '' || a.fecha_nacimiento === null || isNaN(Date.parse(a.fecha_nacimiento))) continue;
     counts[a.tipo_animal] = (counts[a.tipo_animal] || 0) + 1;
   }
   return counts;

@@ -58,7 +58,6 @@ export default defineEventHandler(async (event) => {
       .select("*")
       .order("fecha_nacimiento", { ascending: false })
       .range(rangeFrom, rangeTo)
-      .not("fecha_nacimiento", "is", null)
       .is("fecha_fallecimiento", null);
 
     // Excluir animales con ventas
