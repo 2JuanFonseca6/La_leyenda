@@ -1,17 +1,11 @@
 [build]
   command = "bun run build"
-  publish = ".output" # ← ¡Este es el punto clave!
+  publish = ".output/public" 
 
 [build.environment]
   NODE_VERSION = "20"
   BUN_INSTALL = "/opt/buildhome/.bun"
   PATH = "/opt/buildhome/.bun/bin:$PATH"
-
-# ⚠️ NO uses redirect a index.html en SSR, así que esto lo eliminamos:
-# [[redirects]]
-#   from = "/*"
-#   to = "/index.html"
-#   status = 200
 
 [[headers]]
   for = "/*"
