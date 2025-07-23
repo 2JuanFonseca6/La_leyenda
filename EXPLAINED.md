@@ -175,7 +175,7 @@
 
 - v3.17.x: Refactor de inventario, drawer de proveedores, búsqueda reactiva, soporte de fechas, iconos con Iconify.
 - v3.16.x: Mejoras en genealogía, modales independientes, fixes de Supabase y types.
-- v3.15.x: Primeras versiones estables de gestión animal, corrales y usuarios.
+- v3.15.x: Primeras versiones estables de gestión animal, corrales y usuarios..
 
 # FAQ (Preguntas frecuentes)
 
