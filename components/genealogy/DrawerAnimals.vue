@@ -88,11 +88,15 @@ const pending = ref(false)
 const fetchAnimals = async () => {
   pending.value = true
   try {
+    const params = {
+      page: page.value,
+      pageSize: pageSize.value,
+      search: globalFilter.value
+    }
     const response = await $fetch<{
       animals: Animal[]
       total: number
-    }>(`/api/animal/animals?page=${page.value}&pageSize=${pageSize.value}`)
-    
+    }>(`/api/animal/animals`, { params })
     animals.value = response.animals
     total.value = response.total
   } catch (error) {
@@ -102,10 +106,8 @@ const fetchAnimals = async () => {
   }
 }
 
-// Observar cambios en paginación
-watch([page, pageSize], () => {
-  fetchAnimals()
-})
+// Observar cambios en paginación y filtro
+watch([page, pageSize, globalFilter], fetchAnimals)
 
 // Cargar datos iniciales
 fetchAnimals()
