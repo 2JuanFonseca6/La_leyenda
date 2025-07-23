@@ -27,67 +27,17 @@
 │           ├── logo-black.webp         # Logotipo versión negra
 │           └── logo-white.webp         # Logotipo versión blanca
 ├── components/                         # Componentes Vue reutilizables
-│   ├── animal/                         # Componentes de gestión animal
-│   │   ├── AnimalAddModal.vue          # Modal para registrar nuevo animal
-│   │   ├── AnimalDetailsCard.vue       # Tarjeta de detalles de animal
-│   │   ├── AnimalExpandedCard.vue      # Tarjeta expandida con detalles completos
-│   │   ├── AnimalSearch.vue            # Buscador de animales
-│   │   ├── AnimalTable.vue             # Tabla de animales
-│   │   ├── DeleteAnimalCard.vue        # Confirmación de eliminación individual
-│   │   ├── DeleteAnimals.vue           # Modal para eliminar múltiples animales
-│   │   ├── DrawerGenealogy.vue         # Drawer para visualizar id de reproducciones
-│   │   ├── GenealogyTree.vue           # Árbol genealógico
-│   │   ├── GenealogyTreePrint.vue      # Árbol genealógico para impresión
-│   │   ├── HealthHistoryCard.vue       # Historial de salud
-│   │   ├── SaleInfoCard.vue            # Información de venta del animal
-│   │   └── SaleModal.vue               # Modal de gestión de venta
-│   ├── corrals/                        # Componentes de gestión de corrales
-│   │   ├── AnimalDrag.vue              # Componente drag para arrastrar animales
-│   │   ├── AnimalDrop.vue              # Componente drop para soltar animales
-│   │   ├── DragDropAnimals.vue         # Gestión de drag & drop de animales
-│   │   └── modals/
-│   │       ├── CorralFormModal.vue     # Modal para crear/editar corral
-│   │       └── DeleteCorralModal.vue   # Modal para eliminar corral
-│   ├── dashboard/                      # Componentes para el dashboard principal
-│   │   ├── MetricsCards.vue            # Métricas clave de la app
-│   │   ├── SalesCharts.vue             # Gráficos de ventas
-│   │   └── StadisticCards.vue          # Tarjetas estadísticas del sistema
-│   ├── genealogy/                      # Componentes relacionados con reproducción/genealogía
-│   │   ├── DeleteReproductions.vue     # Modal para eliminar reproducciones
-│   │   ├── DrawerAnimals.vue           # Drawer para seleccionar animales
-│   │   ├── EditReproduction.vue        # Modal para editar una reproducción
-│   │   ├── GenealogyTable.vue          # Tabla de genealogías
-│   │   └── ReproductionCreateModal.vue # Modal para crear reproducción
-│   ├── navigation/                     # Componentes de navegación
-│   │   ├── BreadNav.vue                # Migas de pan
-│   │   ├── NavButtons.vue              # Botones de navegación
-│   │   └── Sidebar.vue                 # Barra lateral
-│   ├── pajillas/                       # Componentes de gestión de pajillas
-│   │   ├── PajillaCreateModal.vue      # Modal para crear nueva pajilla
-│   │   ├── PajillasTable.vue           # Tabla de pajillas
-│   │   └── SelectVacaDrawer.vue        # Drawer para seleccionar vaca
-│   ├── profiles/                       # Componentes de perfil de usuario
-│   │   ├── DeleteProfiles.vue          # Modal para eliminar perfiles
-│   │   ├── EditProfile.vue             # Modal para editar perfil
-│   │   ├── ProfileCreateModal.vue      # Modal para crear nuevo perfil
-│   │   ├── ProfileEditor.vue           # Editor de perfil
-│   │   ├── ProfilesTable.vue           # Tabla de perfiles
-│   │   └── SearchProfile.vue           # Buscador de perfiles
-│   ├── providers/                      # Componentes de proveedores
-│   │   ├── DeleteProvider.vue          # Modal para eliminar proveedores
-│   │   ├── ProviderAddModal.vue        # Modal para crear nuevo proveedor
-│   │   ├── ProviderExpanded.vue        # Vista expandida para editar proveedor
-│   │   └── ProviderTable.vue           # Tabla de proveedores
-│   ├── stock/                          # Componentes de inventario
-│   │   ├── DeleteStock.vue             # Modal para eliminar stock
-│   │   ├── DrawerProviders.vue         # Drawer para seleccionar proveedores
-│   │   ├── StockAddModal.vue           # Modal para agregar stock
-│   │   ├── StockExpandedCard.vue       # Tarjeta expandida de stock
-│   │   ├── StockStadistics.vue         # Estadísticas de stock
-│   │   └── StockTable.vue              # Tabla de stock
-│   ├── theming/                        # Componentes de personalización de temas
-│   │   ├── Theming.vue                 # Selector de tema
-│   │   └── ThemingText.vue             # Textos para personalización
+│   ├── animal/                         # Gestión animal (modales, tablas, detalles, búsqueda)
+│   ├── corrals/                        # Gestión de corrales y drag & drop
+│   │   └── modals/                     # Modales de corrales
+│   ├── dashboard/                      # Métricas, estadísticas y gráficos de ventas
+│   ├── genealogy/                      # Gestión de genealogía y reproducción (tablas, modales, búsqueda)
+│   ├── navigation/                     # Barra lateral, migas de pan, botones de navegación
+│   ├── pajillas/                       # Gestión de pajillas (modales, tablas, drawer de vaca, búsqueda)
+│   ├── profiles/                       # Gestión de perfiles de usuario (modales, tablas, búsqueda)
+│   ├── providers/                      # Gestión de proveedores (modales, tabla, drawer, búsqueda)
+│   ├── stock/                          # Gestión de inventario (modales, drawer de proveedores, búsqueda, tablas, estadísticas)
+│   ├── theming/                        # Personalización de temas (selector, textos)
 │   ├── Logout.vue                      # Componente de logout
 │   └── PrintHeader.vue                 # Encabezado para impresión
 ├── composables/                        # Funciones reutilizables (composables)
@@ -100,89 +50,16 @@
 │   ├── auth.global.ts                  # Autenticación global
 │   └── restricted.ts                   # Verificación de acceso
 ├── pages/                              # Vistas y rutas de la aplicación
-│   ├── index.vue                       # Página de inicio ("/")
+│   ├── index.vue                       # Dashboard principal (métricas, gráficos, ventas)
 │   ├── login.vue                       # Página de inicio de sesión
 │   ├── about.vue                       # Página "Acerca de"
 │   ├── settings.vue                    # Página de configuración
 │   ├── profiles.vue                    # Gestión de perfiles
-│   ├── animals/                        # Rutas de animales
-│   │   ├── genealogy.vue               # Página de genealogía de animales
-│   │   ├── index.vue                   # Listado de animales
-│   │   ├── reproduction.vue            # Página de reproducción animal
-│   │   └── specific/
-│   │       └── [id].vue                # Detalle de animal específico (ruta dinámica)
-│   ├── corrals/                        # Rutas de corrales
-│   │   └── index.vue                   # Gestión de corrales
-│   └── stock/                          # Rutas de inventario
-│       ├── index.vue                   # Listado de stock
-│       ├── pajillas.vue                # Gestión de pajillas
-│       └── providers.vue               # Gestión de proveedores
+│   ├── animals/                        # Rutas de animales (listado, genealogía, reproducción, detalle)
+│   ├── corrals/                        # Gestión de corrales
+│   └── stock/                          # Inventario, pajillas, proveedores
 ├── server/                             # Backend (API) del proyecto
-│   ├── tsconfig.json                   # Configuración TS del backend
-│   └── api/                            # Endpoints de la API
-│       ├── animal/
-│       │   ├── animals.get.ts          # Obtener todos los animales
-│       │   ├── animals.delete.ts       # Eliminar múltiples animales
-│       │   └── specific/
-│       │       ├── [id].get.ts         # Obtener animal por ID
-│       │       ├── [id].put.ts         # Actualizar animal por ID
-│       │       ├── [id].delete.ts      # Eliminar animal por ID
-│       │       └── [id]/
-│       │           └── image.delete.ts # Eliminar imagen de animal
-│       ├── corrales/                   # Gestión de corrales
-│       │   ├── corrales.get.ts         # Obtener todos los corrales
-│       │   ├── corrales.post.ts        # Crear nuevo corral
-│       │   ├── assign.put.ts           # Asignar animal a corral
-│       │   ├── assign/
-│       │   │   └── assigned.get.ts     # Obtener animales asignados
-│       │   ├── unassign/
-│       │   │   └── unassign.put.ts     # Desasignar animal de corral
-│       │   └── specific/
-│       │       ├── [id].put.ts         # Actualizar corral por ID
-│       │       └── [id].delete.ts      # Eliminar corral por ID
-│       ├── dashboard/
-│       │   └── metrics.get.ts          # Métricas para el dashboard
-│       ├── genealogy/
-│       │   └── id/
-│       │       └── [id].get.ts         # Obtener genealogía por ID
-│       ├── health/
-│       │   ├── health.post.ts          # Crear registro de salud
-│       │   └── specific/
-│       │       ├── [id].put.ts         # Actualizar registro de salud
-│       │       └── [id].delete.ts      # Eliminar registro de salud
-│       ├── pajillas/                   # Gestión de pajillas
-│       │   └── (archivos pendientes)   # Endpoints para pajillas
-│       ├── profiles/
-│       │   ├── delete.delete.ts        # Eliminar perfiles
-│       │   ├── profile.post.ts         # Crear nuevo perfil
-│       │   ├── profile.put.ts          # Actualizar perfil
-│       │   ├── profiles.get.ts         # Obtener lista de perfiles
-│       │   └── search.get.ts           # Buscar perfiles
-│       ├── providers/
-│       │   ├── providers.get.ts        # Obtener lista de proveedores
-│       │   ├── providers.post.ts       # Crear nuevo proveedor
-│       │   ├── providers.delete.ts     # Eliminar proveedor
-│       │   └── providers.put.ts        # Editar proveedor
-│       ├── reproduction/
-│       │   ├── reproductions.get.ts    # Listar reproducciones
-│       │   ├── reproductions.post.ts   # Crear reproducción
-│       │   ├── reproductions.delete.ts # Eliminar reproducciones
-│       │   └── specific/
-│       │       ├── [id].delete.ts      # Eliminar reproducción por ID
-│       │       └── [id].put.ts         # Actualizar reproducción por ID
-│       ├── sales/
-│       │   └── specific/
-│       │       ├── [id].post.ts        # Registrar venta por ID
-│       │       ├── [id].put.ts         # Actualizar venta por ID
-│       │       └── [id].delete.ts      # Eliminar venta por ID
-│       ├── stock/
-│       │   ├── stock.get.ts            # Obtener stock
-│       │   ├── items.post.ts           # Crear item de stock
-│       │   ├── stock.delete.ts         # Eliminar stock
-│       │   └── specific/
-│       │       ├── [id].get.ts         # Obtener stock por ID
-│       │       └── [id].put.ts         # Actualizar stock por ID
-│       └── test.get.ts                 # Endpoint de prueba
+│   └── api/                            # Endpoints de la API (animales, corrales, stock, ventas, etc)
 └── types/                              # Definiciones de tipos TypeScript
     ├── animal.ts                       # Interfaces relacionadas con animales
     ├── pajillas.ts                     # Interfaces relacionadas con pajillas
@@ -203,33 +80,127 @@
 # FUNCIONALIDADES PRINCIPALES
 
 ## 🐄 Gestión de Animales
-- Registro y seguimiento de animales
-- Historial de salud
-- Genealogía y reproducción
-- Gestión de ventas
+- Registro, edición y eliminación de animales
+- Historial de salud y ventas
+- Genealogía y reproducción (con búsqueda y filtros)
+- Modales para agregar/editar/eliminar
+- Búsqueda reactiva y filtrado en tablas
 
 ## 🏠 Gestión de Corrales
-- Creación y administración de corrales
-- Asignación de animales a corrales mediante drag & drop
-- Visualización de ocupación
+- Creación, edición y eliminación de corrales
+- Asignación de animales mediante drag & drop
+- Visualización de ocupación y estado de salud por corral
 
 ## 📦 Gestión de Inventario
-- Control de stock de productos
-- Gestión de proveedores
-- Sistema de pajillas para inseminación artificial
+- Control de stock de productos (agregar, editar, eliminar)
+- Gestión de proveedores (drawer, búsqueda, tarjetas)
+- Sistema de pajillas para inseminación artificial (con drawer de vaca)
+- Búsqueda y filtrado en tiempo real (incluye filtro por fecha)
+- Visualización de inventario con colores y estadísticas
+- Modales independientes para agregar y editar
 
 ## 👥 Gestión de Usuarios
-- Perfiles de usuario
-- Sistema de autenticación
-- Control de acceso
+- Perfiles de usuario (crear, editar, eliminar)
+- Sistema de autenticación y control de acceso
+- Búsqueda y filtrado en tablas
 
 ## 📊 Dashboard
 - Métricas en tiempo real
-- Gráficos de ventas
-- Estadísticas del sistema
+- Gráficos de ventas y estadísticas del sistema
+- Tarjetas estadísticas y visualización de datos clave
 
 ## 🎨 Personalización
-- Sistema de temas
-- Configuración de interfaz
-- Modo oscuro/claro
+- Sistema de temas (oscuro/claro)
+- Configuración de interfaz y textos personalizados
+
+# BUENAS PRÁCTICAS Y TROUBLESHOOTING
+
+- Mantén actualizado el archivo `.env` en la raíz del proyecto con las variables:
+  - `NUXT_SUPABASE_URL` y `NUXT_SUPABASE_KEY` (sin comillas ni espacios)
+- Reinicia el servidor de desarrollo tras cambios en `.env`
+- Usa siempre el prefijo `heroicons-outline:` para iconos de Iconify
+- Si un icono no carga, revisa el nombre exacto en https://icon-sets.iconify.design/heroicons-outline/
+- Si ves errores de variables de entorno, revisa el archivo `.env` y la configuración de despliegue
+- Para problemas con tipos de Supabase, asegúrate de importar con `import type { Database } from ...`
+- Consulta `SUPABASE_SETUP.md` para detalles de configuración de Supabase
+
+# NOTAS
+- Actualiza esta documentación si agregas o renombras componentes, rutas o funcionalidades clave.
+- Para flujos de trabajo y ejemplos prácticos, consulta el README.md o agrega una sección aquí si es necesario.
+
+# EJEMPLOS DE FLUJO DE TRABAJO
+
+## Registrar un animal y asignarlo a un corral
+1. Ve a la sección de Animales y haz clic en "Agregar Animal".
+2. Completa el formulario y guarda.
+3. Ve a la sección de Corrales, selecciona el corral y usa drag & drop para asignar el animal.
+
+## Agregar un proveedor y usarlo en inventario
+1. Ve a la sección de Proveedores y haz clic en "Agregar Proveedor".
+2. Completa el formulario y guarda.
+3. Al agregar o editar un producto en Inventario, selecciona el proveedor desde el drawer.
+
+## Filtrar inventario por fecha
+1. Ve a Inventario y usa el campo de búsqueda de fecha (formato dd/mm/yyyy).
+2. Los resultados se filtran en tiempo real.
+
+# TESTING
+
+- Actualmente no hay tests automatizados, pero se recomienda:
+  - Tests unitarios para composables y lógica de negocio.
+  - Tests de integración para endpoints de la API.
+  - Tests end-to-end (E2E) con Cypress o Playwright para flujos críticos.
+- Para agregar tests, crea una carpeta `tests/` y usa Vitest o Jest para unitarios.
+
+# CONVENCIONES DE CÓDIGO
+
+- Usa nombres en inglés para archivos y componentes, y español para textos de UI.
+- Componentes Vue: PascalCase (`AnimalTable.vue`), composables: camelCase (`useLogout.ts`).
+- Mantén los imports ordenados y usa `import type` para tipos.
+- Prefiere Composition API (`setup`) en componentes nuevos.
+- Usa comentarios claros para funciones complejas.
+
+# DESPLIEGUE Y VARIABLES DE ENTORNO
+
+- Proporciona un archivo `.env.example` con:
+  ```
+  NUXT_SUPABASE_URL=
+  NUXT_SUPABASE_KEY=
+  ```
+- Para Netlify/Vercel, configura las variables en el panel de control.
+- Para Docker, usa `--env-file .env` o define variables en el `docker-compose.yml`.
+- Reinicia siempre el servidor tras cambios en variables.
+
+# CHANGELOG (Historial de cambios)
+
+- v3.17.x: Refactor de inventario, drawer de proveedores, búsqueda reactiva, soporte de fechas, iconos con Iconify.
+- v3.16.x: Mejoras en genealogía, modales independientes, fixes de Supabase y types.
+- v3.15.x: Primeras versiones estables de gestión animal, corrales y usuarios.
+
+# FAQ (Preguntas frecuentes)
+
+**¿Por qué no se muestran los iconos?**
+- Verifica que el nombre sea correcto y tenga el prefijo `heroicons-outline:`.
+- Instala el paquete de iconos con `bun i -D @iconify-json/heroicons`.
+
+**¿Por qué sale error de variables de entorno de Supabase?**
+- Asegúrate de tener `.env` en la raíz y que las variables estén bien escritas y sin comillas.
+- Reinicia el servidor tras cambios.
+
+**¿Por qué no puedo eliminar una reproducción?**
+- Verifica que no haya restricciones de claves foráneas en la base de datos.
+- Usa los endpoints de eliminación múltiple para evitar errores de integridad.
+
+**¿Cómo agrego un nuevo tipo de estado de salud?**
+- Modifica el array `estadosSalud` en los componentes relacionados y actualiza la base de datos si es necesario.
+
+# BADGES Y ENLACES (para README)
+
+- Puedes agregar badges de estado de build, cobertura y versión en el README:
+  ```md
+  ![Build](https://img.shields.io/github/actions/workflow/status/tu-org/tu-repo/ci.yml)
+  ![Version](https://img.shields.io/github/package-json/v/tu-org/tu-repo)
+  ![License](https://img.shields.io/github/license/tu-org/tu-repo)
+  ```
+- Enlaza a la documentación, demo online, y panel de Supabase si es público.
 

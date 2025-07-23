@@ -57,10 +57,10 @@ const { isAdmin } = useUserRole()
 definePageMeta({ layout: "logged" });
 
 const views = computed(() => [
-  { id: 'metrics', label: 'Métricas', icon: 'i-heroicons-chart-bar-square' },
-  { id: 'charts', label: 'Gráficos', icon: 'i-heroicons-chart-pie' },
+  { id: 'metrics', label: 'Métricas', icon: 'heroicons-outline:chart-bar-square' },
+  { id: 'charts', label: 'Gráficos', icon: 'heroicons-outline:chart-pie' },
   // Solo mostrar la opción de ventas si es admin
-  ...(isAdmin.value ? [{ id: 'sales', label: 'Ventas', icon: 'i-heroicons-currency-dollar' }] : [])
+  ...(isAdmin.value ? [{ id: 'sales', label: 'Ventas', icon: 'heroicons-outline:currency-dollar' }] : [])
 ]);
 
 const currentView = ref('metrics');
@@ -68,7 +68,7 @@ const currentView = ref('metrics');
 const breadcrumbItems = ref<BreadcrumbItem[]>([
   {
     label: 'Dashboard',
-    icon: 'i-heroicons-home',
+    icon: 'heroicons-outline:home',
     to: '/'
   }
 ]);
