@@ -6,7 +6,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Animales por Tipo</span>
-            <UIcon name="i-heroicons-chart-pie" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:chart-pie" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
@@ -21,7 +21,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Animales por Tipo de Ganado</span>
-            <UIcon name="i-heroicons-pie-chart" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:pie-chart" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
@@ -36,7 +36,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Stock Bajo (Top 5)</span>
-            <UIcon name="i-heroicons-exclamation-triangle" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:exclamation-triangle" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
@@ -53,7 +53,7 @@
           <template #header>
             <div class="flex items-center justify-between p-2">
               <span class="text-lg font-medium">Animales por Corral/Lote</span>
-              <UIcon name="i-heroicons-rectangle-group" class="w-6 h-6 ml-2" />
+              <UIcon name="heroicons-outline:rectangle-group" class="w-6 h-6 ml-2" />
             </div>
           </template>
           <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
@@ -68,7 +68,7 @@
           <template #header>
             <div class="flex items-center justify-between p-2">
               <span class="text-lg font-medium">Animales por Estado de Salud</span>
-              <UIcon name="i-heroicons-heart" class="w-6 h-6 ml-2" />
+              <UIcon name="heroicons-outline:heart" class="w-6 h-6 ml-2" />
             </div>
           </template>
           <div class="h-[220px] md:h-[320px] p-4 overflow-x-auto">
@@ -85,7 +85,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Incremento Anual Promedio de Peso</span>
-            <UIcon name="i-heroicons-chart-line" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:chart-line" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4 overflow-y-auto">

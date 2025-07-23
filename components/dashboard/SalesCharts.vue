@@ -6,7 +6,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Ventas Mensuales por Animal</span>
-            <UIcon name="i-heroicons-bars-3-bottom-left" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:bars-3-bottom-left" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4">
@@ -15,7 +15,7 @@
             <div v-else-if="pending" class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
             <div v-else class="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div class="text-center">
-                <UIcon name="i-heroicons-chart-bar" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <UIcon name="heroicons-outline:chart-bar" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No hay datos de ventas disponibles</p>
               </div>
             </div>
@@ -26,7 +26,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Ventas Detalladas por año</span>
-            <UIcon name="i-heroicons-chart-line" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:chart-line" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="h-[320px] p-4">
@@ -35,7 +35,7 @@
             <div v-else-if="pending" class="h-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
             <div v-else class="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div class="text-center">
-                <UIcon name="i-heroicons-chart-line" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <UIcon name="heroicons-outline:chart-line" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No hay datos de ventas disponibles</p>
               </div>
             </div>
@@ -51,7 +51,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Total Ventas por Mes</span>
-            <UIcon name="i-heroicons-currency-dollar" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:currency-dollar" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="p-4">
@@ -84,7 +84,7 @@
         <template #header>
           <div class="flex items-center justify-between p-2">
             <span class="text-lg font-medium">Total Ventas por Año</span>
-            <UIcon name="i-heroicons-calendar" class="w-6 h-6 ml-2" />
+            <UIcon name="heroicons-outline:calendar" class="w-6 h-6 ml-2" />
           </div>
         </template>
         <div class="p-4">
