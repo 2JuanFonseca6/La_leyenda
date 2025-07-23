@@ -1,6 +1,6 @@
 [build]
   command = "bash ./install-bun.sh && bun run build"
-  publish = ".netlify"
+  publish = ".output"
 
 [build.environment]
   NODE_VERSION = "20"
