@@ -50,15 +50,12 @@ export default defineEventHandler(async (event) => {
   try {
     let countQuery = client
       .from("animals")
-      .select("*", { count: "exact", head: true })
-      .not("fecha_nacimiento", "is", null)
-      .is("fecha_fallecimiento", null);
+      .select("*", { count: "exact", head: true });
     let dataQuery = client
       .from("animals")
       .select("*")
       .order("fecha_nacimiento", { ascending: false })
-      .range(rangeFrom, rangeTo)
-      .is("fecha_fallecimiento", null);
+      .range(rangeFrom, rangeTo);
 
     // Excluir animales con ventas
     const { data: ventasAnimales, error: errVentasAnimales } = await client
@@ -74,12 +71,8 @@ export default defineEventHandler(async (event) => {
     if (searchTerm) {
       const safeSearch = String(searchTerm || '').trim();
       if (safeSearch.length > 0) {
-        // Solo buscar en id_animal, raza y estado_salud
-        const searchFilter = [
-          `(id_animal.ilike.%${safeSearch}%)`,
-          `(raza.ilike.%${safeSearch}%)`,
-          `(estado_salud.ilike.%${safeSearch}%)`
-        ].join(',');
+        // Buscar en id_animal, raza y tipo_animal
+        const searchFilter = `id_animal.ilike.%${safeSearch}%,raza.ilike.%${safeSearch}%,tipo_animal.ilike.%${safeSearch}%`;
         countQuery = countQuery.or(searchFilter);
         dataQuery = dataQuery.or(searchFilter);
       }
