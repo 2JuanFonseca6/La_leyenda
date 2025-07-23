@@ -1,11 +1,9 @@
 [build]
-  command = "bun run build"
-  publish = ".output/public" 
+  command = "bash ./install-bun.sh && bun run build"
+  publish = ".output/public"
 
 [build.environment]
   NODE_VERSION = "20"
-  BUN_INSTALL = "/opt/buildhome/.bun"
-  PATH = "/opt/buildhome/.bun/bin:$PATH"
 
 [[headers]]
   for = "/*"
@@ -18,4 +16,4 @@
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable" 
