@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npx nuxi build && echo 'BUILD DONE' && ls -l .output/public"
+  command = "npm install && npx nuxi build"
   publish = ".output/public"
 
 # [functions]
