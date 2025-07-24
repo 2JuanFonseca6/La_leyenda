@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxi build",
+    "postbuild": "mkdir -p .output/public",
     "start": "bunx .output/server/index.mjs",
     "dev": "bunx nuxt dev",
     "generate": "bunx nuxt generate",
