@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun run nuxi build",
-    "start": "bun .output/server/index.mjs",
-    "dev": "bun run nuxi dev",
-    "generate": "bun run nuxi generate",
-    "preview": "bun run nuxi preview",
-    "postinstall": "bun run nuxi prepare",
+    "build": "bunx run nuxt build",
+    "start": "bunx .output/server/index.mjs",
+    "dev": "bunx run nuxt dev",
+    "generate": "bunx run nuxt generate",
+    "preview": "bunx run nuxt preview",
+    "postinstall": "bunx run nuxt prepare",
     "build:preview": "bun run build && bun run preview"
   },
   "dependencies": {
