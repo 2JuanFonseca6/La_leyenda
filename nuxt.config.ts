@@ -16,7 +16,7 @@ export default defineNuxtConfig({
         { name: "viewport", content: "width=device-width, initial-scale=1" },
       ],
       link: [
-        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        { rel: "icon", href: "/img/logo/logo-black.webp", type: "image/webp", sizes: "any" },
         // Google Font
         {
           rel: "preconnect",
