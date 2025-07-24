@@ -28,7 +28,7 @@ onUnmounted(() => {
     <UInput
       v-model="searchTerm"
       placeholder="Buscar por código, animal, descripción..."
-      class="flex-1 font-mono"
+      class="flex-1"
       @keyup.enter="handleSearch"
     />
     <UButton

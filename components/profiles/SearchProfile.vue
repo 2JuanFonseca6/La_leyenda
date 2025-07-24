@@ -171,7 +171,7 @@ const deleteProfile = async () => {
           <div>
             <label
               class="text-sm font-medium text-[var(--color-custom-200)] dark:text-[var(--color-custom-400)]">ID</label>
-            <p class="mt-1 text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)] font-mono text-sm">
+            <p class="mt-1 text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)] text-sm">
               {{ selectedProfile.id }}
             </p>
           </div>

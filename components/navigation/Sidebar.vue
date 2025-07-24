@@ -3,10 +3,10 @@
     class="flex flex-col-reverse md:flex-row h-screen overflow-hidden bg-[var(--color-custom-500)] dark:bg-[var(--color-custom-50)] print-unset-height">
     <!-- Sidebar: bottom en móvil, izquierda en escritorio -->
     <div
-      class="w-full md:w-auto flex flex-row md:flex-col px-4 py-4 md:py-8 text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)] bg-[var(--color-custom-700)] md:bg-transparent flex-shrink-0">
+      class="w-full md:w-auto flex flex-row md:flex-col px-0 py-4 md:py-8 text-[var(--color-custom-50)] dark:text-[var(--color-custom-500)] bg-[var(--color-custom-700)] md:bg-transparent flex-shrink-0">
 
       <!-- Nav buttons: horizontal en móvil, vertical en escritorio -->
-      <div class="flex flex-1 justify-around md:justify-start md:items-center w-full md:flex-col gap-2">
+      <div class="flex flex-1 md:justify-start md:items-center md:flex-col gap-2 overflow-x-auto flex-nowrap no-scrollbar w-auto md:w-full">
         <!-- Logo: solo visible en desktop -->
         <div class="hidden md:flex flex-col items-center justify-center gap-2 mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"
@@ -38,7 +38,7 @@
 
     <!-- Main content -->
     <div
-      class="flex-1 overflow-auto p-4 md:p-6 bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] rounded-xl m-4 md:ml-0">
+      class="flex-1 overflow-auto p-0 md:p-6 bg-[var(--color-custom-50)] dark:bg-[var(--color-custom-500)] md:rounded-xl md:m-4 md:ml-0">
       <div>
         <div v-if="!isAppLoaded">Cargando...</div>
         <div v-else>

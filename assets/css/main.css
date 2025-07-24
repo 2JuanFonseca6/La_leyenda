@@ -20,8 +20,12 @@
   --ui-bg: var(--color-custom-50);
   --ui-text: var(--color-custom-500);
 
-  /* Default colors light mode */
-  --ui-primary: var(--color-custom-500);
+  /* Fuente global formal */
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+body, html, * {
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
 .dark {
@@ -214,4 +218,10 @@
   .vue-flow__background {
     display: none !important;
   }
+}
+
+/* Toasts: fuerza fuente normal para todo el contenido */
+.ui-toast, .ui-toast * {
+  font-family: inherit !important;
+  font-variant-numeric: normal !important;
 }

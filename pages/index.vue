@@ -17,8 +17,8 @@
         @click="currentView = view.id"
         class="flex-1 justify-center"
       >
-        <UIcon :name="view.icon" class="mr-2" />
-        {{ view.label }}
+        <UIcon :name="view.icon" class="mr-0 md:mr-2" />
+        <span class="hidden md:inline">{{ view.label }}</span>
       </UButton>
     </div>
 

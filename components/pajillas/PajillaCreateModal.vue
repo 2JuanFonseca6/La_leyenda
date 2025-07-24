@@ -3,10 +3,10 @@
     v-model:open="isOpen"
     title="Registrar Pajilla"
     description="Completa los datos para registrar una nueva pajilla"
-    class="max-w-3xl w-full"
+    class="max-w-lg p-0"
   >
     <template #body>
-      <UForm :schema="schema" :state="formState" @submit="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <UForm :schema="schema" :state="formState" @submit="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
         <!-- Código de Pajilla -->
         <UFormField name="pajilla">
           <template #label>
@@ -48,9 +48,9 @@
         </UFormField>
 
         <!-- Botones -->
-        <div class="col-span-2 flex justify-end gap-4 mt-4">
-          <UButton type="button" variant="ghost" @click="closeModal">Cancelar</UButton>
-          <UButton type="submit" color="primary">Guardar Pajilla</UButton>
+        <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-4 w-full">
+          <UButton type="button" variant="ghost" @click="closeModal" class="w-full sm:w-auto">Cancelar</UButton>
+          <UButton type="submit" color="primary" class="w-full sm:w-auto">Guardar Pajilla</UButton>
         </div>
       </UForm>
     </template>

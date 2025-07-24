@@ -28,7 +28,7 @@ onUnmounted(() => {
     <UInput
       v-model="searchTerm"
       placeholder="Buscar por ID de reproducción, madre o padre"
-      class="flex-1 font-mono"
+      class="flex-1"
       @keyup.enter="handleSearch"
     />
     <UButton

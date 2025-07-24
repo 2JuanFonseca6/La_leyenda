@@ -460,9 +460,9 @@
     </div>
 
     <!-- Modo Edición -->
-    <UModal v-model:open="isEditing" title="Editar Animal" description="Modifica los datos del animal" class="max-w-4xl w-full">
+    <UModal v-model:open="isEditing" title="Editar Animal" description="Modifica los datos del animal" class="max-w-lg p-0">
       <template #body>
-        <UForm :schema="schema" :state="formData" @submit="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <UForm :schema="schema" :state="formData" @submit="handleSubmit" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
           <!-- ID Animal (solo lectura) -->
           <UFormField name="id_animal" class="col-span-1">
             <template #label>

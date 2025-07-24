@@ -183,12 +183,12 @@ const handleHealthUpdated = () => {
 
     <div v-else-if="animal?.animal" class="max-w-4xl mx-auto p-6 print:max-w-full print:px-0">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
-        <UButton icon="i-heroicons-arrow-left" label="Volver" @click="router.back()" />
-        <div class="space-x-2">
+        <div class="flex flex-col gap-2 w-full md:w-auto md:flex-row md:gap-4">
+          <UButton icon="i-heroicons-arrow-left" label="Volver" @click="router.back()" class="w-full md:w-auto" />
           <UButton icon="i-heroicons-adjustments-horizontal"
             :label="showPrintOptions ? 'Ocultar opciones' : 'Seleccionar para imprimir'"
-            @click="showPrintOptions = !showPrintOptions" color="primary" />
-          <UButton icon="i-heroicons-printer" label="Imprimir" @click="printReport" />
+            @click="showPrintOptions = !showPrintOptions" color="primary" class="w-full md:w-auto" />
+          <UButton icon="i-heroicons-printer" label="Imprimir" @click="printReport" class="w-full md:w-auto" />
         </div>
       </div>
       <div v-if="showPrintOptions" class="flex flex-col md:flex-row gap-4 mb-6 print:hidden">

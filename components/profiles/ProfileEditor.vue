@@ -21,7 +21,7 @@
 
       <div class="space-y-2 mb-4">
         <p><strong class="font-medium">Rol:</strong> {{ userData.role || 'Sin rol asignado' }}</p>
-        <p><strong class="font-medium">UID:</strong> <span class="text-sm font-mono">{{ userData.id }}</span></p>
+        <p><strong class="font-medium">UID:</strong> <span class="text-sm">{{ userData.id }}</span></p>
       </div>
 
       <UForm v-if="isEditing" :state="editableUserData" @submit="saveChanges">

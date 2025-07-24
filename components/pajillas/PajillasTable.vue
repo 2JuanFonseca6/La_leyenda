@@ -100,12 +100,12 @@ const columns = computed<TableColumn<Pajilla>[]>(() => [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm text-muted' }, `#${row.original.id}`)
+    cell: ({ row }) => h('span', { class: 'text-sm text-muted' }, `#${row.original.id}`)
   },
   {
     accessorKey: 'pajilla',
     header: 'Código',
-    cell: ({ row }) => h('span', { class: 'font-medium text-primary font-mono' }, row.original.pajilla)
+    cell: ({ row }) => h('span', { class: 'font-medium text-primary' }, row.original.pajilla)
   },
   {
     accessorKey: 'fecha_ingreso',
@@ -118,17 +118,17 @@ const columns = computed<TableColumn<Pajilla>[]>(() => [
   {
     accessorKey: 'stock_inicial',
     header: 'Stock Inicial',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm' }, row.original.stock_inicial)
+    cell: ({ row }) => h('span', { class: 'text-sm' }, row.original.stock_inicial)
   },
   {
     accessorKey: 'total_salidas',
     header: 'Salida',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm text-red-700' }, row.original.total_salidas)
+    cell: ({ row }) => h('span', { class: 'text-sm text-red-700' }, row.original.total_salidas)
   },
   {
     accessorKey: 'inventario_final',
     header: 'Stock Final',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm', style: `color: ${row.original.inventario_final > 0 ? '#16a34a' : '#dc2626'}` }, row.original.inventario_final)
+    cell: ({ row }) => h('span', { class: 'text-sm', style: `color: ${row.original.inventario_final > 0 ? '#16a34a' : '#dc2626'}` }, row.original.inventario_final)
   },
   {
     accessorKey: 'descripcion',

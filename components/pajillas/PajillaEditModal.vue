@@ -1,7 +1,7 @@
 <template>
-  <UModal v-model:open="isOpen" title="Editar Pajilla" description="Modifica los datos de la pajilla seleccionada" class="max-w-3xl w-full">
+  <UModal v-model:open="isOpen" title="Editar Pajilla" description="Modifica los datos de la pajilla seleccionada" class="max-w-lg p-0">
     <template #body>
-      <UForm :state="form" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="handleSubmit">
+      <UForm :state="form" class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" @submit.prevent="handleSubmit">
         <UFormField name="id">
           <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">ID</span></template>
           <UInput v-model="form.id" readonly />
@@ -26,9 +26,9 @@
           <template #label><span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Descripción / Observaciones</span></template>
           <UTextarea v-model="form.descripcion" />
         </UFormField>
-        <div class="col-span-2 flex justify-end gap-4 mt-4">
-          <UButton type="button" variant="ghost" @click="close">Cancelar</UButton>
-          <UButton type="submit" color="primary" :loading="isLoading">Guardar</UButton>
+        <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-4 w-full">
+          <UButton type="button" variant="ghost" @click="close" class="w-full sm:w-auto">Cancelar</UButton>
+          <UButton type="submit" color="primary" :loading="isLoading" class="w-full sm:w-auto">Guardar</UButton>
         </div>
       </UForm>
     </template>

@@ -49,13 +49,13 @@ onUnmounted(() => { if (timeoutId) clearTimeout(timeoutId) })
     <UInput
       v-model="searchTerm"
       placeholder="Buscar por descripción, ID, tipo..."
-      class="flex-1 font-mono"
+      class="flex-1"
       @keyup.enter="handleSearch"
     />
     <UInput
       v-model="searchDate"
       placeholder="dd/mm/yyyy"
-      class="w-32 font-mono"
+      class="w-32"
       maxlength="10"
       @input="handleDateInput"
       @change="handleSearch"

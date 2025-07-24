@@ -3,7 +3,8 @@
   <PrintHeader title="Inventario de Pajillas" />
   
   <BreadNav :items="breadcrumbItems" />
-  <h1 class="text-3xl font-bold tracking-widest uppercase text-center">Inventario de Pajillas</h1>
+  <h1 class="text-3xl font-bold tracking-widest uppercase text-center">Pajillas</h1>
+  <PajillasSearch @search="onPajillaSearch" />
   
   <!-- Información del inventario de pajillas -->
   <div class="text-center my-6">
@@ -20,9 +21,6 @@
   </div>
 
   <div class="space-y-6">
-    <div class="w-full max-w-xl mx-auto p-4">
-      <PajillasSearch @search="onPajillaSearch" />
-    </div>
     <div class="relative">
       <div class="overflow-x-auto rounded-lg">
         <PajillasTable ref="tableRef" :search="pajillaSearchTerm" @add="openCreateModal" />

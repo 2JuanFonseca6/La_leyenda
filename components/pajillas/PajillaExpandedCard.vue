@@ -272,9 +272,9 @@ const totalSalidas = computed(() => {
       <UButton color="primary" @click="showDrawer = true">Asignar</UButton>
     </div>
     <!-- Modal de asignación de animal(es) -->
-    <UModal v-if="canEdit" v-model:open="showDrawer" title="Asignar Animal(es) a esta Pajilla" description="Registra la salida de pajilla para uno o más animales" class="max-w-3xl w-full">
+    <UModal v-if="canEdit" v-model:open="showDrawer" title="Asignar Animal(es) a esta Pajilla" description="Registra la salida de pajilla para uno o más animales" class="max-w-lg p-0">
       <template #body>
-        <UForm :state="salidaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="registrarSalida">
+        <UForm :state="salidaForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" @submit.prevent="registrarSalida">
           <UFormField name="cantidad">
             <template #label>
               <span class="text-[var(--color-custom-400)] dark:text-[var(--color-custom-100)]">Cantidad</span>
@@ -309,9 +309,9 @@ const totalSalidas = computed(() => {
             </template>
             <UTextarea v-model="salidaForm.observaciones" placeholder="Observaciones (opcional)" />
           </UFormField>
-          <div class="col-span-2 flex justify-end gap-4 mt-4">
-            <UButton type="button" variant="ghost" @click="showDrawer = false">Cancelar</UButton>
-            <UButton type="submit" color="primary" :loading="isLoading">Asignar</UButton>
+          <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-4 w-full">
+            <UButton type="button" variant="ghost" @click="showDrawer = false" class="w-full sm:w-auto">Cancelar</UButton>
+            <UButton type="submit" color="primary" :loading="isLoading" class="w-full sm:w-auto">Asignar</UButton>
           </div>
         </UForm>
       </template>
