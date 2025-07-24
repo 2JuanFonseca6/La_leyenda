@@ -1,6 +1,9 @@
 [build]
-  command = "bash ./install-bun.sh && bun install && bun run nuxi generate"
-  publish = "dist"
+  command = "bun run build"
+  publish = ".output/public"
+
+[functions]
+  directory = ".output/server/functions"
 
 [build.environment]
   NODE_VERSION = "20"

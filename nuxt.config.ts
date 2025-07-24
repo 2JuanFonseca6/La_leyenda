@@ -75,9 +75,6 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       wasm: true
-    },
-    output: {
-      publicDir: 'dist'
     }
   },
 });
