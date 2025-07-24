@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxi build",
-    "postbuild": "mkdir -p .output/public",
+    "postbuild": "mkdir -p ./_nuxt && mkdir -p ./_fonts && cp -r .output/public/_nuxt ./ && cp -r .output/public/_fonts ./ || true",
     "start": "bunx .output/server/index.mjs",
     "dev": "bunx nuxt dev",
     "generate": "bunx nuxt generate",
