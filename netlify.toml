@@ -1,5 +1,5 @@
 [build]
-  command = "curl -fsSL https://bun.sh/install | bash && export BUN_INSTALL=$HOME/.bun && export PATH=$BUN_INSTALL/bin:$PATH && bun install && bun run build && echo 'BUILD DONE' && ls -l .output/public"
+  command = "npm install && npx nuxi build && echo 'BUILD DONE' && ls -l .output/public"
   publish = ".output/public"
 
 # [functions]
