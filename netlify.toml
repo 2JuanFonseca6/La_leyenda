@@ -1,6 +1,6 @@
 [build]
   command = "npm install && npx nuxi build"
-  publish = "."
+  publish = ".output/public"
 
 # [functions]
 #   directory = ".output/server/functions"
