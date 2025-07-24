@@ -2,8 +2,8 @@
   command = "curl -fsSL https://bun.sh/install | bash && export BUN_INSTALL=$HOME/.bun && export PATH=$BUN_INSTALL/bin:$PATH && bun install && bun run build"
   publish = ".output/public"
 
-[functions]
-  directory = ".output/server/functions"
+# [functions]
+#   directory = ".output/server/functions"
 
 [build.environment]
   NODE_VERSION = "20"
